@@ -1,0 +1,20 @@
+# ProveDown — gitignore protections (never commit secrets)
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+keystores/
+.genlayer/
+.wrangler/
+node_modules/
+.next/
+dist/
+build/
+.pytest_cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+.vercel

@@ -9,7 +9,7 @@
 import { createClient, createAccount, isSuccessful } from 'genlayer-js';
 import { studioDevnet } from 'genlayer-js/chains';
 
-const C = process.argv[2] || process.env.NEXT_PUBLIC_PROVEDOWN_CONTRACT_STUDIO_DEV || '0x8faE0025892bA58e5c2E16D10cC414Af47D30d55';
+const C = process.argv[2] || process.env.NEXT_PUBLIC_PROVEDOWN_CONTRACT_STUDIO_DEV || '0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF';
 const B = process.env.NEXT_PUBLIC_BUNDLE_WORKER_URL || 'https://provedown-bundle.contentbounty.workers.dev/bundle';
 const SLO = JSON.stringify({ p95_threshold: 2000, error_threshold: 0.01, fill_threshold: 0.80, match_threshold: 0.85 });
 

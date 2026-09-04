@@ -130,7 +130,10 @@ class ProveDown(gl.contract.Contract):
         try:
             created_at = str(gl.message_raw["datetime"])
         except Exception:
-            created_at = str("")
+            try:
+                created_at = str(gl.block.timestamp)
+            except Exception:
+                created_at = str("")
         sla = {
             "sla_id": sla_id.strip(),
             "api_url": api_url.strip(),
@@ -159,7 +162,10 @@ class ProveDown(gl.contract.Contract):
         try:
             timestamp_local = str(gl.message_raw["datetime"])
         except Exception:
-            timestamp_local = str("")
+            try:
+                timestamp_local = str(gl.block.timestamp)
+            except Exception:
+                timestamp_local = str("")
 
         def run_judgment() -> dict:
             # fetch bundle (stable JSON) — independent per validator
@@ -190,17 +196,27 @@ class ProveDown(gl.contract.Contract):
                     "p95": "",
                     "status": "inconclusive",
                 }
-            # malformed bundle (not JSON dict with p95) -> inconclusive, don't hallucinate
+            # malformed/incomplete bundle -> inconclusive, never judge missing evidence.
+            # Requires a JSON dict with ALL five metrics present, non-null, numeric.
+            # (A null p95 like the empty preset, a missing fill, or a string
+            # "fast" must not become a definitive BREACH/NO_BREACH.)
+            # Note: every validator runs this identical deterministic check, so all
+            # validators refuse together -> validator_fn disagrees -> protocol
+            # UNDETERMINED -> stored as no_consensus (amber, retryable).
             try:
                 maybe = json.loads(clean)
-                if not isinstance(maybe, dict) or "p95" not in maybe:
+                metrics = ("p50", "p95", "error", "fill", "match")
+                if not isinstance(maybe, dict) or any(
+                    maybe.get(m) is None or not isinstance(maybe.get(m), (int, float))
+                    for m in metrics
+                ):
                     return {
                         "breach": False,
                         "reason": "UNAVAILABLE",
                         "confidence": 0,
-                        "reasoning": "malformed bundle",
+                        "reasoning": "incomplete evidence: missing metrics",
                         "evidence_hash": "",
-                        "evidence_summary": "malformed bundle",
+                        "evidence_summary": "incomplete evidence: missing metrics",
                         "p50": "",
                         "p95": "",
                         "status": "inconclusive",
@@ -257,8 +273,14 @@ class ProveDown(gl.contract.Contract):
             except Exception:
                 return False
             mine = run_judgment()
-            # if mine is inconclusive, disagree to force UNDETERMINED (honest split)
+            # Missing/invalid evidence: agree ONLY if leader also refused it.
+            # All validators run the identical deterministic guard, so unanimous
+            # refusal stores an explicit inconclusive (retryable). Any mixed
+            # verdict (resolved vs refused, or breach vs no-breach) disagrees
+            # and becomes no_consensus (UNDETERMINED honest split).
             if mine.get("status") == "inconclusive":
+                return leader_data.get("status") == "inconclusive"
+            if leader_data.get("status") == "inconclusive":
                 return False
             return leader_breach == bool(mine.get("breach"))
 

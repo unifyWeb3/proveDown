@@ -46,10 +46,10 @@ a { color: #60a5fa; }
 <h3>Demo Presets</h3>
 <p>All bundles from <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code> — hash-stable 116 chars 1/8 not 5/5. Not paywall/captcha (Gym direct).</p>
 <ul>
-<li><b>Healthy</b> → no_breach preset → <span class="verdict-ok">NO_BREACH</span> confidence 1000, hash 64e6..., p95 1600</li>
-<li><b>Breach</b> → breach preset → <span class="verdict-breach">BREACH</span> confidence 900, hash 9566..., p95 4800</li>
-<li><b>Ambig</b> → near threshold → BREACH low conf 800 or no_consensus (honest split)</li>
-<li><b>Empty</b> → INCONCLUSIVE</li>
+<li><b>Healthy</b> → no_breach preset → <span class="verdict-ok">NO_BREACH</span> confidence ~980-1000, hash 64e6..., p95 1600</li>
+<li><b>Breach</b> → breach preset → <span class="verdict-breach">BREACH</span> confidence ~999-1000, hash b4fc..., p95 4800, reason LATENCY (HTTP 200 but fill 72% &lt; 80% — this is the Uptime differentiator)</li>
+<li><b>Ambig</b> → near threshold → borderline verdict or no_consensus (honest split)</li>
+<li><b>Empty</b> → <span class="verdict-inconclusive">INCONCLUSIVE</span> conf 0 — missing metrics never become definitive</li>
 </ul>
 <p><b>Real vs Mock:</b> PRIMARY is Studio Next 61997 (`genlayer-js@2.0.0-rc.1`, fee-aware writes, `isSuccessful` = FINALIZED + FINISHED_WITH_RETURN). Bradbury 4221 `0x72a6...` kept as compatibility evidence only. Mocked bridge arrow to Base is labeled mock — never a real Hyperlane tx. Verdicts above are live studio-dev reads where available.</p>
 <p><b>Why not just Uptime?</b> Uptime checks factual reachability (`GET 200` → UP via strict consensus). ProveDown checks the functional obligation: same HTTP 200 with <b>fill 72% vs required 80% → BREACH</b> (see breach preset: p95 4800, fill 0.72, reason LATENCY, conf 999). Evidence hash + confidence + breach reason + reputation — not just up/down.</p>
@@ -60,7 +60,7 @@ import { createClient, isSuccessful } from "https://esm.sh/genlayer-js@2.0.0-rc.
 import { studioDevnet } from "https://esm.sh/genlayer-js@2.0.0-rc.1/chains";
 
 // PRIMARY hackathon target: Studio Next 61997 (Consensus v0.6 RC). Bradbury 0x72a6... kept as compatibility evidence only.
-const CONTRACT = "0x8faE0025892bA58e5c2E16D10cC414Af47D30d55"; // studio-dev 61997, deploy tx 0x5424f3d44de6d8543348301a475ff9f61887b7d5f7ebf914c09419a70c281711 FINALIZED FINISHED_WITH_RETURN
+const CONTRACT = "0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF"; // studio-dev 61997, deploy tx 0x5a34f359d575b4e74742ccc3ec7ea2e1d919911be90c47b9fdb125b53837a782 FINALIZED FINISHED_WITH_RETURN
 const EXPLORER = "https://explorer-studio-dev.genlayer.com";
 const WORKER_BASE = "https://provedown-bundle.contentbounty.workers.dev/bundle";
 const CHAIN_ID = 61997;
@@ -110,24 +110,29 @@ function verdictHtml(att, tx) {
   return `<span class="${cls}">${label}</span> conf ${att.confidence}/1000, p50 ${att.p50}, p95 ${att.p95}<br><span class="hash">sha256:${att.evidence_hash} — ${att.evidence_summary}</span>${link}`;
 }
 
-// Live studio-dev reads (v2 RC, no wallet needed). Real txs 2026-09-04:
-// deploy 0x5424f3d44de6d8543348301a475ff9f61887b7d5f7ebf914c09419a70c281711,
-// register healthy 0xdff058bc23c31facfc984258370a15ca165fa76ed4084f79ed452a6f651f9234,
-// register breach 0x3a11ea99e16262c3ac95b7d73ce9713f2bf50abe4b471130b315315003be3d45,
-// attest healthy 0x518a8c1c2ade7c00f7e137274c678874cb8dbf05c06ee314a41aadd08b3a7746 (NO_BREACH conf 996 hash 64e6c84f01418b89 p95 1600),
-// attest breach 0xe149c7e26ce2a8d1aaf10a30b1f2112d0602c1aede63c0ecf041ea8d83eb6635 (BREACH conf 999 hash b4fc2013862e316e p95 4800 reason LATENCY).
+// Live studio-dev reads (v2 RC, no wallet needed). Contract 0xeE85... deployed 0x5a34...,
+// hardened-guard version. Real txs:
+// register healthy 0xfbad72095fa21c3b6438bcb78143121f65c73a36e1add67c1e081a7b543db817,
+// register breach 0x91721ba5a9338ebb7281ebb32f2c049479afc2d1ac85714ca95d39ebaa60a047,
+// register empty 0x15832858c70c49c96da9523e6be5a79eba4f1cf659335cdec5895a90d754e6e1,
+// attest healthy 0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497 (NO_BREACH conf 980 hash 64e6c84f01418b89 p95 1600),
+// attest breach 0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383 (BREACH conf 1000 hash b4fc2013862e316e p95 4800 reason LATENCY),
+// attest empty 0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43 (INCONCLUSIVE conf 0 — incomplete evidence, non-definitive).
 async function liveRead() {
   const client = createClient({ chain: studioDevnet });
   try {
     const rep = await client.readContract({ address: CONTRACT, functionName: 'get_reputation', args: ['https://example.com'] });
     document.getElementById('reputation').innerHTML = `Reputation (live studio-dev 61997): score <b>${rep.score}</b> total ${rep.total} breaches ${rep.breaches} — <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">contract</a>. Mock bridge arrow to Base VerdictRegistry (AgentEscrow pattern) — not real Hyperlane tx.`;
   } catch(e){ document.getElementById('reputation').textContent = `Reputation read failed: ${e.message.slice(0,120)}`; }
-  for (const [id, tx] of [['1','0x518a8c1c2ade7c00f7e137274c678874cb8dbf05c06ee314a41aadd08b3a7746'],['2','0xe149c7e26ce2a8d1aaf10a30b1f2112d0602c1aede63c0ecf041ea8d83eb6635']]) {
+  const cases = [['1','0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497'],['2','0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383'],['3','0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43']];
+  const blocks = [];
+  for (const [id, tx] of cases) {
     try {
       const att = await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [id] });
-      if (id === '1') document.getElementById('verdict').innerHTML = verdictHtml(att, tx);
-    } catch(e){ /* attestation may not exist yet */ }
+      blocks.push(`<b>Case ${id}</b>: ` + verdictHtml(att, tx));
+    } catch(e){ blocks.push(`<b>Case ${id}</b>: not yet stored (${e.message.slice(0,60)})`); }
   }
+  document.getElementById('verdict').innerHTML = blocks.join('<br><br>');
   document.getElementById('explorer').innerHTML = `Explorer: <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${EXPLORER}/address/${CONTRACT}</a> (chain ${CHAIN_ID})<br>Bundle: ${WORKER_BASE}?preset=breach`;
 }
 liveRead();

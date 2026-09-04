@@ -131,8 +131,8 @@ Measured fees (studio-dev, `estimateTransactionFees({preset:'standard'})`, all p
 Real studio-dev proof (contract `0x8faE0025892bA58e5c2E16D10cC414Af47D30d55`):
 - deploy `0x5424f3d44de6d8543348301a475ff9f61887b7d5f7ebf914c09419a70c281711` FINALIZED FINISHED_WITH_RETURN isSuccessful=true.
 - register healthy `0xdff058bc23c31facfc984258370a15ca165fa76ed4084f79ed452a6f651f9234`, breach `0x3a11ea99e16262c3ac95b7d73ce9713f2bf50abe4b471130b315315003be3d45`, empty `0xed5e525abffafed0b7d07781993a34412ba5503a9571a6dcb511e63ae243a7b3` — all SUCCESS=true.
-- Case A healthy `0x518a8c1c2ade7c00f7e137274c678874cb8dbf05c06ee314a41aadd08b3a7746` → att 1 breach FALSE conf 996 hash `64e6c84f01418b89` p95 1600 reason OK resolved (NO_BREACH ✓).
-- Case B breach `0xe149c7e26ce2a8d1aaf10a30b1f2112d0602c1aede63c0ecf041ea8d83eb6635` → att 2 breach TRUE conf 999 hash `b4fc2013862e316e` p95 4800 reason LATENCY resolved (BREACH ✓ — HTTP 200 + fill 72% still breach, the Uptime differentiator).
-- Case C empty `0xaf1faec4924f35b07e758e014fc88de672f7a738117afece0e873701c914f05c` → att 3 resolved breach FALSE conf 0 p95 None (graceful consensus, not INCONCLUSIVE — P1: tighten null-p95 guard to return inconclusive).
-- reputation `{"score":66,"total":3,"breaches":1}` (Bayesian correct: (2+2)/(3+3)=66).
+- Case A healthy `0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497` → att 1 breach FALSE conf 980 hash `64e6c84f01418b89` p95 1600 reason OK resolved (NO_BREACH ✓, contract `0xeE85...` with strict evidence guard).
+- Case B breach `0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383` → att 2 breach TRUE conf 1000 hash `b4fc2013862e316e` p95 4800 reason LATENCY resolved (BREACH ✓ — HTTP 200 + fill 72% still breach, the Uptime differentiator).
+- Case C empty `0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43` → att 3 **INCONCLUSIVE** conf 0 reason UNAVAILABLE (missing metrics never definitive ✓).
+- reputation `{"score":60,"total":2,"breaches":1}` (resolved only; Bayesian (1+2)/(2+3)=60 ✓).
 - Minimal-probe contract `0x89aBdeBAE91857B6dcACF96d73c8A2b3101fA6ec` proved TreeMap/u256/inmem_allocate/message pattern before full rewrite.

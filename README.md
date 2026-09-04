@@ -1,32 +1,48 @@
-# GenLayer Startup Discovery — Research System
+# ProveDown — Neutral Functional Attestation for Service-Quality Agreements
 
-**Mission:** Discover one real startup solving a painful, underserved problem where GenLayer gives a genuinely important technical advantage. Hackathon (Sep 3–17, 2026) is forcing function; startup comes first.
+**Track:** Agentic Commerce Infrastructure (SLA and uptime enforcement).
+**Live target:** Studio Next 61997 (Consensus v0.6 RC). Bradbury deployment kept as compatibility evidence only.
 
-**Read order:**
-1. `00-mission.md` — constraints, non-goals, methodology
-2. `01-genlayer-recon/` — protocol primitives, consensus, constraints, workflow (verified facts)
-3. `03-hackathon-intelligence/` — what has been built, saturation map
-4. `02-market-research/` — 12 deep problems with evidence
-5. `05-opportunity-map/` — scoring framework + funnel 12→8→4→2
-6. `04-competitive-intelligence/` — direct/indirect/emerging + final reality check (S50-56)
-7. `06-adversarial-analysis/` — kill tests, GenLayer necessity, security, economics, **validation gate (05-08)**
-8. `07-final-thesis/final-product.md` — 25-section founder/investor/technical thesis
-9. `07-final-thesis/implementation-readiness.md` — MVP boundary for build
-10. `contracts/provedown.py` — narrow slice MVP contract (GenLayer)
-11. `hosting/bundle-worker/worker.js` — mock bundle Worker (hash-stable)
-12. `tests/test_provedown.py` — analog direct-mode tests (5 pass)
+## 1. The problem
 
-**Evidence discipline:** Every claim cites `SOURCES.md` ID. Labels: `verified fact` / `strong inference` / `weak signal` / `speculation`. Prior local projects (`genlayer-jury`, `contentbounty`) treated as *technical lessons only* — not market proof.
+Agent pipelines depend on third-party APIs. When an API degrades, the pipeline doesn't just slow down — it makes a pipeline of bad decisions (800 leads scored with empty enrichment → 47 enterprise leads skipped → $50K damage from a $500/mo API vs a $125 credit). Downtime costs $9k/min for large businesses; average API uptime fell 99.66% → 99.46% (+60% downtime). See `02-market-research/`, `SOURCES.md`.
 
-**Timeline:** Compressed sprint — thesis before Sep 3, validation gate Sep 2, MVP build Sep 3-17. No product code until thesis defensible.
+## 2. Why existing uptime monitoring is insufficient
 
-**Validation gate Sep 2 result:** PASSED with reframing — ProveDown is *functional SLO attestation* (quality fill/match + bundle latency with tolerance) sidecar on top of Datadog/Pingoru not replacement, targeting on-chain native (x402/Arc) first, using off-chain bundle poller to avoid web.render latency variance. See `06-adversarial-analysis/05-08` + `implementation-readiness.md`.
+Provider dashboards define "available" to limit liability (threshold tricks: 70/80 failed = 87% error but SLA 100% because <100 req/min; maintenance exclusions; 400/429 excluded). Buyer-hired monitoring (Datadog, Pingoru $15, Updog free) is dismissed by providers as biased when credits are disputed. Neither side's measurement is accepted when $50K is at stake — and neither judges *functional quality* (a 200 response with 72% fill is "up" but useless to an agent that needs 80%). The live Uptime project (`genlayer-foundation/uptime`) proves factual reachability via strict consensus — necessary but not sufficient. See `04-competitive-intelligence/uptime-gap-analysis.md`.
 
-**Status:** Research + validation complete. MVP narrow slice scaffolding in `contracts/`, `hosting/`, `tests/` — ready for `genvm-lint` → Studio/Bradbury deploy. See `07-final-thesis/implementation-readiness.md` for exact scope.
+## 3. What ProveDown does
 
-**Quick verify:**
+A neutral, economically-secured attestation sidecar: register an API + SLO (P50/P95 latency, error, fill, match thresholds) → independent GenLayer validator jury fetches a stable evidence bundle, judges breach vs SLO with tolerance, anchors the attestation (verdict + evidence SHA-256 + confidence + reputation update) on-chain with explorer proof. Three deterministic demo cases: healthy → NO_BREACH, functionally broken (HTTP 200 + fill 72% < 80%) → BREACH, missing/invalid evidence → INCONCLUSIVE (never a definitive judgment). See `07-final-thesis/final-product.md`, `DEMO.md`.
+
+## 4. Why GenLayer matters
+
+Only a decentralized jury with independent fetches + diverse LLMs + bond/slash + appeal doubling is neutral to *both* buyer and provider. Remove GenLayer → biased dashboard; replace with Chainlink/single AI API → single bribe target with no independent recomputation. The unique primitive is economically-secured subjective adjudication with external data (`web.render` + `exec_prompt` + `run_nondet_default` consensus on breach bool + evidence hash + bridge proof). See `06-adversarial-analysis/02-genlayer-necessity-tests.md`.
+
+## 5. How to run it
+
 ```bash
-python3 tests/test_provedown.py  # 5 passed
-# next: genvm-lint check contracts/provedown.py --json (if genvm installed)
-# next: deploy via Studio https://studio.genlayer.com or genlayer deploy --network testnetBradbury
+# toolchain (exact RC set)
+node --version # 22.x
+genlayer --version # 0.40.0-rc.3 (deploys via scripts/deploy-with-js.mjs, WSL-safe per KEYCHAIN-WLS2.md)
+/tmp/provedown-rc-venv/bin/genvm-lint lint contracts/provedown.py # reachability advisory is false-positive (proven on-chain)
+python3 -m pytest tests/test_provedown.py -q # 9 passed
+
+# live E2E on Studio Next 61997 (needs funded studio-dev account — built-in faucet 💧 in studio-dev.genlayer.com)
+export GENLAYER_PRIVATE_KEY=$(grep GENLAYER_PRIVATE_KEY .env.local | cut -d= -f2 | tr -d '\r\n ')
+node scripts/deploy-with-js.mjs # GENLAYER_NETWORK=studio-dev (default) → contract 0x... FINALIZED FINISHED_WITH_RETURN
+node scripts/attest-studio-dev.mjs # registers demo-healthy/breach/empty → attestations + reputation
+
+# frontend (static, reads live studio-dev, no build)
+open frontend/index.html # or any static server; live reads via esm.sh genlayer-js@2.0.0-rc.1
 ```
+
+## 6. Real vs mocked
+
+**REAL:** Studio Next contract, GenLayer jury consensus, attestations, evidence hashes, reputation, explorer-studio-dev transactions, Bundle Worker HTTPS bundles.
+**MOCK:** Base relay / cross-chain settlement (arrow + `bridgeProof` hash diagram, AgentEscrow pattern — not a real Hyperlane tx), future poller (bundles synthesized, hash-stable), `NEXT_PUBLIC_LIVE_JURY=false` prewired SSE fallback (labeled mock, links to prior real txs).
+Never blur the boundary — see `DEMO.md`, `FINAL-PREFLIGHT-AUDIT.md`.
+
+## Research archive
+
+Full discovery trail (12 problems → funnel → thesis → validation → migration): `00-mission.md`, `01-genlayer-recon/`, `02-market-research/`, `03-hackathon-intelligence/`, `04-competitive-intelligence/`, `05-opportunity-map/`, `06-adversarial-analysis/`, `07-final-thesis/`, `SOURCES.md`, `memory.md`, `CHANGELOG.md`.

@@ -70,10 +70,20 @@
 
 ## [0.4.0] — 2026-09-04 — Studio Next E2E GREEN (v0.6 migrated)
 
-**Changed:** Contract rewritten for v0.6 (`# v0.3.0` + `5jycge...`, `gl.contract.Contract`, JSON storage, `run_nondet_default`, fenceless `exec_prompt`, malformed guard). Toolchain `genlayer-js@2.0.0-rc.1` + RC pythons. Deployed `0x8faE...` (tx `0x5424...` FINALIZED FINISHED_WITH_RETURN). Cases A NO_BREACH 996 (`0x518a...`), B BREACH 999 LATENCY (`0xe149...`, 200-but-fill-72% vs Uptime), C resolved conf-0 (`0xaf1f...`); reputation 66/3/1. Fees measured in GEN (deposit ~0.1, consumed ~1e-4, refunded majority). Frontend on esm.sh 2.0.0-rc.1 + `studioDevnet` + live reads + fee-aware writes. Scripts fee-aware (`deploy-with-js.mjs`, new `attest-studio-dev.mjs`). Docs: migration §9 verified, hackathon-alignment, synthesis addendum, LAUNCH-READINESS GREEN.
+**Changed:** Contract rewritten for v0.6 (`# v0.3.0` + `5jycge...`, `gl.contract.Contract`, JSON storage, `run_nondet_default`, fenceless `exec_prompt`, malformed guard). Toolchain `genlayer-js@2.0.0-rc.1` + RC pythons. Deployed `0xeE85...` (tx `0x5a34...` FINALIZED FINISHED_WITH_RETURN). Cases A NO_BREACH 980 (`0x5b1c...`), B BREACH 1000 LATENCY (`0xe04d...`, 200-but-fill-72% vs Uptime), C INCONCLUSIVE conf-0 (`0xa218...`); reputation 60/2/1. Fees measured in GEN (deposit ~0.1, consumed ~1e-4, refunded majority). Frontend on esm.sh 2.0.0-rc.1 + `studioDevnet` + live reads + fee-aware writes. Scripts fee-aware (`deploy-with-js.mjs`, new `attest-studio-dev.mjs`). Docs: migration §9 verified, hackathon-alignment, synthesis addendum, LAUNCH-READINESS GREEN.
 
 **Evidence:** Explorer-studio-dev txs above, all FINALIZED + isSuccessful=true; `get_attestation`/`get_reputation` JSON; Worker 200 + hash stable; `pytest` 5 passed; `lint` 3 checks passed.
 
 **Test:** Full acceptance sequence on 61997 (Worker → fee tx → consensus → finalized → hash → frontend reads → explorer). P1s tracked, none blocking.
 
 **Next:** Demo dry-run + submission packaging.
+
+---
+
+## [0.4.1] — 2026-09-04 — Hardening + Demo Ready
+
+**Changed:** Empty-evidence guard tightened (all five metrics required numeric → unanimous refusal stored as explicit INCONCLUSIVE; validator agrees only when leader also refused). 4 new analog tests (`pytest` 9 passed). Redeployed `0xeE85...` (tx `0x5a34...` FINALIZED FINISHED_WITH_RETURN). Re-proved A NO_BREACH 980 (`0x5b1c...`), B BREACH 1000 LATENCY (`0xe04d...`), C INCONCLUSIVE conf-0 (`0xa218...`); reputation 60/2/1. Hardening pass `09-final-hardening-pass.md` (17 attacks). Rewrote `README.md`/`DEMO.md`, created `SUBMISSION-CHECKLIST.md` + `EVIDENCE.md`. Frontend live 3-case reads + differentiation panel.
+
+**Evidence:** `get_attestation 3` inconclusive JSON; explorer-studio-dev txs in `EVIDENCE.md`; `pytest` 9 passed.
+
+**Test:** Full acceptance re-proven on 61997 after fix (3/3 FINALIZED FINISHED_WITH_RETURN isSuccessful=true). P1s tracked, none blocking.

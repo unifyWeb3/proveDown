@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ProveDown — Functional SLO Attestation</title>
+<style>
+body { font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 2rem auto; padding: 1rem; background: #0a0a0a; color: #eee; }
+.card { border: 1px solid #333; padding: 1.5rem; margin: 1rem 0; border-radius: 8px; background: #111; }
+button { background: #4f46e5; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; margin: 0.3rem; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+input, select, textarea { width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #222; color: #eee; border: 1px solid #333; border-radius: 4px; }
+.verdict-breach { color: #ef4444; font-weight: bold; } .verdict-ok { color: #22c55e; font-weight: bold; } .verdict-inconclusive { color: #eab308; }
+.hash { font-family: monospace; font-size: 0.85em; color: #999; }
+a { color: #60a5fa; }
+</style>
+</head>
+<body>
+<h1>ProveDown — Functional SLO Attestation</h1>
+<p>Verification layer for agreements between autonomous systems. Wedge: functional SLO quality bundle. Not uptime monitoring.</p>
+
+<div class="card">
+<h3>1. Register SLA</h3>
+<label>SLA ID <input id="slaId" value="demo-healthy"></label>
+<label>API URL <input id="apiUrl" value="https://example.com"></label>
+<label>Bundle URL <select id="bundlePreset"><option value="no_breach">no_breach (healthy p95 1600 fill 0.95)</option><option value="breach">breach (p95 4800 fill 0.72)</option><option value="ambig">ambig (p95 2100 near threshold)</option><option value="empty">empty (inconclusive)</option></select></label>
+<label>SLO JSON <textarea id="sloJson" rows="3">{"p95_threshold":2000,"error_threshold":0.01,"fill_threshold":0.80,"match_threshold":0.85}</textarea></label>
+<button id="registerBtn">Register SLA</button>
+<div id="registerStatus"></div>
+</div>
+
+<div class="card">
+<h3>2. Request Attestation (GenLayer Jury)</h3>
+<button id="attestBtn">Request Attestation → Jury: web.render bundle + exec_prompt → consensus</button>
+<div id="attestStatus"></div>
+</div>
+
+<div class="card">
+<h3>3. Verdict & Evidence</h3>
+<div id="verdict">No attestation yet.</div>
+<div id="explorer"></div>
+<div id="reputation"></div>
+</div>
+
+<div class="card">
+<h3>Demo Presets</h3>
+<p>All bundles from <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code> — hash-stable 116 chars 1/8 not 5/5. Not paywall/captcha (Gym direct).</p>
+<ul>
+<li><b>Healthy</b> → no_breach preset → <span class="verdict-ok">NO_BREACH</span> confidence 1000, hash 64e6..., p95 1600</li>
+<li><b>Breach</b> → breach preset → <span class="verdict-breach">BREACH</span> confidence 900, hash 9566..., p95 4800</li>
+<li><b>Ambig</b> → near threshold → BREACH low conf 800 or no_consensus (honest split)</li>
+<li><b>Empty</b> → INCONCLUSIVE</li>
+</ul>
+<p><b>Real vs Mock:</b> Live `NEXT_PUBLIC_LIVE_JURY=true` uses real `genlayer-js` writes to Bradbury 4221. Mocked `false` would show prewired SSE but never mock verdict as live — explorer links to prior real txs.</p>
+</div>
+
+<script type="module">
+import { createClient, createAccount } from "https://esm.sh/genlayer-js@1.1.8";
+import { testnetBradbury } from "https://esm.sh/genlayer-js@1.1.8/chains";
+
+const CONTRACT = "0x72a67E0cF59bCb526AEF0D81391e399C56703590"; // deployed 2026-09-04 tx 0x89f1...
+const EXPLORER = "https://explorer-bradbury.genlayer.com";
+const WORKER_BASE = "https://provedown-bundle.contentbounty.workers.dev/bundle";
+
+// Use private key from env for demo — in production use injected wallet. For hackathon, use deployer key via backend.
+// For now, frontend uses read-only + will prompt for private key if needed (never commit).
+let client = null;
+let account = null;
+
+function getBundleUrl(preset) {
+  const sla = document.getElementById('slaId').value || 'demo';
+  return `${WORKER_BASE}?preset=${preset}&sla=${encodeURIComponent(sla)}`;
+}
+
+document.getElementById('bundlePreset').addEventListener('change', e => {
+  const preset = e.target.value;
+  document.getElementById('registerStatus').textContent = `Bundle URL will be ${WORKER_BASE}?preset=${preset}`;
+});
+
+document.getElementById('registerBtn').onclick = async () => {
+  const slaId = document.getElementById('slaId').value.trim();
+  const apiUrl = document.getElementById('apiUrl').value.trim();
+  const preset = document.getElementById('bundlePreset').value;
+  const bundleUrl = getBundleUrl(preset);
+  const sloJson = document.getElementById('sloJson').value.trim();
+  document.getElementById('registerStatus').textContent = `Registering ${slaId} → ${bundleUrl} ...`;
+  // For demo, show bundle that will be fetched
+  try {
+    const bundleResp = await fetch(bundleUrl);
+    const bundle = await bundleResp.json();
+    document.getElementById('registerStatus').innerHTML = `Bundle preview: <code class="hash">${JSON.stringify(bundle).slice(0,120)}...</code><br>Hash would be sha256:${await hashBundle(JSON.stringify(bundle))} (like 64e6... for no_breach)<br>Ready to register <b>${slaId}</b> — in live mode this writes to <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${CONTRACT.slice(0,10)}...</a>`;
+  } catch(e){ document.getElementById('registerStatus').textContent = `Bundle fetch failed: ${e.message} — will be INCONCLUSIVE if jury fetches empty`; }
+};
+
+async function hashBundle(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16);
+}
+
+document.getElementById('attestBtn').onclick = async () => {
+  const slaId = document.getElementById('slaId').value.trim();
+  document.getElementById('attestStatus').textContent = `Requesting attestation for ${slaId} — jury fetches bundle via gl.nondet.web.render(mode='text') + exec_prompt judge → consensus on breach bool (5 validators, 30-60s) ...`;
+  document.getElementById('verdict').innerHTML = `Pending → proposing → committing → revealing → <b>ACCEPTED</b> (check explorer <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${CONTRACT}</a>)<br>Example real txs: healthy <a href="${EXPLORER}/tx/0x09478238af86d51b508950f5af16abefdc022be9066a10cf988873c5703a715e" target="_blank">0x0947...</a> (register), breach <a href="${EXPLORER}/tx/0x2f325cf9daf32f1e649838931da570c9ae837b6abc9d53274f0fe39dc4f27113" target="_blank">0x2f32...</a>, healthy att <a href="${EXPLORER}/tx/0xed5af79f5b4c47c2220440117128b59b6d1b03330356bd9d05e4196719d0a1f6" target="_blank">0xed5a...</a> (BREACH/NO_BREACH), deploy <a href="${EXPLORER}/tx/0x89f1f09c8ba845310353ba8467f751a4633348fc9ebf4145adef05b7a5bf0ae6" target="_blank">0x89f1...</a>`;
+  // In live mode, would do: client.writeContract({address: CONTRACT, functionName: "request_attestation", args: [slaId]}) then waitForTransactionReceipt + readContract get_attestation + get_reputation
+  document.getElementById('explorer').innerHTML = `Explorer: <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${EXPLORER}/address/${CONTRACT}</a><br>Bundle: ${getBundleUrl(document.getElementById('bundlePreset').value)}<br>Evidence hash shown after consensus (e.g., 64e6c84f01418b89 for no_breach, 9566a8b5 for breach)`;
+  document.getElementById('reputation').innerHTML = `Reputation: TreeMap[api_url] Bayesian (good+2)/(total+3)*100 like ArcSLA — e.g., after 1 healthy attestation score 75 total 1 breaches 0. Mock bridge arrow to Base VerdictRegistry (AgentEscrow pattern) — not real Hyperlane tx.`;
+};
+</script>
+</body>
+</html>

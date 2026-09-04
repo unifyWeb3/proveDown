@@ -1,8 +1,15 @@
 name = "provedown-bundle"
 main = "worker.js"
 compatibility_date = "2024-12-01"
+account_id = "db5a771e35a0543bb7632c65261ee2af"
 
 # For hackathon demo: no secrets needed (public GET)
-# Deploy: npx wrangler deploy
-# Dev: npx wrangler dev --port 8787
-# URL: https://provedown-bundle.<your-subdomain>.workers.dev/bundle?sla=demo&preset=breach
+# IMPORTANT: run from this directory OR pass --cwd. Running `npx wrangler deploy`
+# from startup/ root triggers autoconfig static-assets detection and fails with
+# "Could not detect a directory containing static files" — that is a cwd error,
+# not a config error. Do NOT add an [assets] directory.
+# Deploy: npx wrangler deploy --cwd hosting/bundle-worker
+#   (or: workdir=/home/unify/startup/hosting/bundle-worker npx wrangler deploy)
+#   (or: npx wrangler deploy -c hosting/bundle-worker/wrangler.toml)
+# Dev: npx wrangler dev --port 8787 (from this directory)
+# URL: https://provedown-bundle.contentbounty.workers.dev/bundle?sla=demo&preset=breach

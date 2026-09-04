@@ -4,11 +4,11 @@
 import { readFileSync } from 'fs';
 import path from 'path';
 import { createClient, createAccount } from 'genlayer-js';
-import { testnetBradbury, studio } from 'genlayer-js/chains';
+import { testnetBradbury, studionet } from 'genlayer-js/chains';
 import { TransactionStatus } from 'genlayer-js/types';
 
 const network = process.env.GENLAYER_NETWORK || 'testnetBradbury';
-const chain = network === 'studionet' ? studio : testnetBradbury;
+const chain = network === 'studionet' ? studionet : testnetBradbury;
 
 const rawKey = process.env.GENLAYER_PRIVATE_KEY;
 if (!rawKey) {

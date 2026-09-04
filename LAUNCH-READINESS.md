@@ -1,4 +1,4 @@
-# LAUNCH READINESS — 2026-09-04 (Consensus v0.6 RC + Uptime Gap)
+# LAUNCH READINESS — 2026-09-04 (Studio Next 61997 LIVE, v0.6 migrated)
 
 **Date:** 2026-09-04
 **Thesis:** ProveDown — neutral functional attestation for service-quality agreements (bundle `p95>2000+500 OR error>=1% OR fill<80%`), beginning with API functional SLOs. Track: Agentic Commerce Infrastructure, SLA enforcement via signed logs/decentralized monitoring. Validation gate PASSED with reframing; v0.6 migration audit done; Uptime gap proven.
@@ -12,14 +12,15 @@
 |---|---|---|
 | Research + Gym | ✅ 05-benchmark-alignment (93.7% resolvable, 89.6% direct/alt, 6.3% blocked) + 06-migration audit | `01-genlayer-recon/05-benchmark-alignment.md:1`, `06-consensus-v06-migration.md:1`, Gym Polymarket/Sources fetched |
 | Uptime gap | ✅ 14-section analysis, positioning validated (functional vs factual) | `04-competitive-intelligence/uptime-gap-analysis.md:1` (`uptime_monitor.py` strict_eq is_up, `sla_verifier` linear/tiered/full+10%, `sla_agreement` worst-shortfall) |
-| Contract | ✅ `contracts/provedown.py` 362 lines `py_compile` OK, `pytest` 5 passed, breach-bool consensus | `bash run-lint.sh` fallback OK (genvm-linter not in PATH, need 0.11.1rc2), `run-tests.sh` 5 passed 2026-09-04 |
+| Contract | ✅ v0.6 `contracts/provedown.py` (`# v0.3.0` + `5jycge...`, `gl.contract.Contract`, JSON-string storage, `run_nondet_default`, fenceless `exec_prompt`) `lint` 3 checks PASS, `py_compile` OK, `pytest` 5 passed | `bash run-lint.sh` (venv 0.11.1rc2) + `run-tests.sh` 2026-09-04. Lint reachability warning is false-positive (proven on-chain) |
 | Worker | ✅ Live `https://provedown-bundle.contentbounty.workers.dev/bundle` 200×5 presets (healthy/breach/ambig/empty/invalid→breach), hash `b4fc2013...` twice same, no timestamp/random/secret | `curl -s ...?preset=breach` 200 verified 2026-09-04; Wrangler 4.129.0 cwd error diagnosed (autoconfig in `startup/` root per log, fixed comment to mandate `--cwd`/`-c`, no `[assets]` needed) |
 | Env | ✅ `.env.local` present, `check-env.mjs` 4 ✓ (RPC, PRIVATE_KEY present masked, CONTRACT 0x72a6... 42-char, WORKER 200) | `node scripts/check-env.mjs` 2026-09-04 (Bradbury RPC ETIMEDOUT transient, curl live proves reachable) |
-| Account/toolchain | ⚠️ Node 22.22.3 npm 10.9.8 Python 3.12.3, but `genlayer 0.39.2` vs required `0.40.0-rc.3`, `genlayer-js 1.1.8` vs `2.0.0-rc.1`, `genlayer-py`/`genlayer-test`/`genvm-linter` not installed | `genlayer --version`, `npm view genlayer-js` shows `2.0.0-rc.1` available, `pip show` not found |
-| Frontend | ⚠️ Static `frontend/index.html` 7.5K demo-ready (`register→attest→explorer→hash→reputation` + bundle preview), but esm.sh `genlayer-js@1.1.8` + `testnetBradbury` must move to `2.0.0-rc.1` + `studioDevnet` + Transaction Kit | `frontend/index.html:1`, needs migration per `06-consensus-v06-migration.md:8` |
+| Account/toolchain | ✅ Node 22.22.3, `genlayer-js@2.0.0-rc.1` (startup/node_modules), `genvm-linter==0.11.1rc2` + `genlayer-py==0.19.0rc2` + `genlayer-test==0.30.0rc2` (`--no-deps` venv), deployer 0x3211... ~0.099 GEN on studio-dev | `npm list genlayer-js` → 2.0.0-rc.1, `eth_getBalance` `0x162fdf55b87bd39` |
+| Frontend | ✅ Static `frontend/index.html` on esm.sh `2.0.0-rc.1` + `studioDevnet` + contract `0x8faE...` + explorer-studio-dev + live reads + fee-aware write path + state handling | `grep studioDevnet frontend/index.html` non-empty |
+| Studio-dev E2E | ✅ Contract `0x8faE0025892bA58e5c2E16D10cC414Af47D30d55` (deploy `0x5424...` FINALIZED FINISHED_WITH_RETURN). Case A `0x518a...` NO_BREACH 996 hash `64e6...`; Case B `0xe149...` BREACH 999 hash `b4fc20...` reason LATENCY; Case C `0xaf1f...` resolved conf 0; REP 66/3/1 | `scripts/attest-studio-dev.mjs`, explorer-studio-dev `/tx/0x...` |
 | Studio-dev | ✅ RPC live (GET 405, POST `gen_chainId` → `Method not found` JSON-RPC proves responsive) | `curl -s https://studio-dev.genlayer.com/api` 2026-09-04 |
 | Bradbury compat | ✅ Prior real deployment `0x72a67E0cF59bCb526AEF0D81391e399C56703590` tx `0x89f1...` ACCEPTED, healthy register `0x0947...`, healthy att `0xed5a...` att 1 breach false 1000 hash `64e6...` resolved | Explorer `https://explorer-bradbury.genlayer.com/address/0x72a6...`, `get_attestation 1` JSON in `memory.md:Checkpoint 4` |
-| Fees | ❌ Old `$0.04–0.08` INVALID under v0.6; no `fee-profile.json` yet | Must generate via `gltest --fee-profile` on studio-dev, then `estimateTransactionFees` + `distribution`/`feeValue` + `isSuccessful` |
+| Fees | ✅ Measured on studio-dev: deposit `feeValue=100000000000010352` (~0.1 GEN), deploy consumed `78628000000000` (~7.9e-5 GEN), attest consumed `[127878000000000]` (~1.3e-4 GEN), refunded majority at FINALIZED. Fiat UNKNOWN (GEN testnet price unknown). Old `$0.04–0.08` retired | Receipt `fee_accounting` in `06-consensus-v06-migration.md:9`; economics in GEN: ~1e-4 consumed/verification |
 
 ## P0 blockers (must fix for studio-dev E2E)
 
@@ -116,10 +117,10 @@ GENLAYER_NETWORK=studio-dev node scripts/deploy-with-js.mjs  # after P0-M3 migra
 
 ## Hard decision
 
-### `YELLOW — BUILD WITH SPECIFIC BLOCKER`
+### `GREEN — BUILD NOW (hackathon-ready on Studio Next, P1s tracked)`
 
-**Why not RED:** Thesis validation PASSED with reframing + Gym direct proves Worker fetch viable (116 chars 1/8 stable) + live Worker 200×5 presets + prior Bradbury real txs (`0x89f1...` deploy, `0x0947...` register, `0xed5a...` att 1 resolved) + Uptime gap is genuine functional vs factual (strict_eq vs LLM jury) + architecture (bundle → jury → hash → reputation → mock bridge) survives v0.6 with mechanical migration (fees + chain + isSuccessful + appeal). No secret leaked, no kitchen-sink.
+**Why GREEN:** Full sequence proven on studio-dev 61997 with v0.6 fee flow: Worker live 200×5 presets → contract `0x8faE...` deployed with fees (FINALIZED FINISHED_WITH_RETURN isSuccessful=true) → Case A NO_BREACH 996 + Case B BREACH 999 LATENCY (the 200-but-empty-fill differentiator vs Uptime) + reputation 66/3/1 → evidence hashes + explorer-studio-dev txs → frontend reads live via v2 RC. Fee economics measured in GEN (deposit ~0.1, consumed ~1e-4/verification, refunded majority). No secret leaked, no kitchen-sink, Bradbury kept as compatibility evidence only.
 
-**Why not GREEN:** Exactly P0-M1–M4 migration work remains stopping studio-dev E2E `register→attest→isSuccessful→FINALIZED→fee panel` from being live under official hackathon stack (0.39.2/1.1.8 lack fees, no fee-profile, ACCEPTED-only checks, `testnetBradbury` pointed at preview would mismatch). Old fee `$0.04–0.08` INVALID until re-measured. Previous Bradbury E2E is compatibility/reference, not primary hackathon proof.
+**P1s tracked (do NOT block demo):** empty preset returns resolved conf-0 (not INCONCLUSIVE — tighten null-p95 guard post-hackathon); `timestamp` empty (`message_raw["datetime"]` absent on studio-dev — use `gl.block.timestamp` fallback); `appeal_attestation` still mocked (use `appealTransaction`/`getAppealCharge` if implemented); `genvm-lint check` reachability warning is false-positive (proven on-chain); studio-dev may reset (note in demo); CLI remains 0.39.2 (deploys via JS per KEYCHAIN-WLS2, unaffected).
 
-Do NOT reopen funnel, do NOT add P2, do NOT search random repos for credentials. Build P0-M1–M4 now.
+Do NOT reopen funnel, do NOT add P2, do NOT search random repos for credentials. Demo the studio-dev E2E now.

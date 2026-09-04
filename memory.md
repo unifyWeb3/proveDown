@@ -81,3 +81,19 @@
 **Unresolved risk:** Fee economics UNKNOWN until profile measured on studio-dev; frontend esm.sh 1.1.8 must move to 2.0 RC + Transaction Kit; `py-genlayer:1jb45aa...` pragma must be re-linted with 0.11.1rc2; studio-dev may reset (note in demo).
 
 **Next action:** Install coherent RC set, generate `fee-profile.json`, redeploy to studio-dev via `deploy-with-js.mjs` + fees, verify one write/read/nondet with `isSuccessful` + FINALIZED, then update LAUNCH-READINESS to GREEN if E2E holds.
+
+---
+
+## Checkpoint 6 — Studio Next E2E GREEN (2026-09-04)
+
+**What changed:** Migrated to Consensus v0.6 RC and proved complete real E2E on studio-dev 61997. Contract rewritten (`# v0.3.0` + `5jycge...` hash from Studio-dev JS bundle, `import genlayer as gl` + `genlayer.types` + `TreeMap` from `genlayer.storage.tree_map`, `gl.contract.Contract`, JSON-string storage, `gl.storage.inmem_allocate`, `run_nondet_default`, fenceless `exec_prompt`, malformed-bundle inconclusive guard). Toolchain: `genlayer-js@2.0.0-rc.1` (startup/node_modules), `genvm-linter==0.11.1rc2`/`genlayer-py==0.19.0rc2`/`genlayer-test==0.30.0rc2` (`--no-deps` venv; `lint` 3 checks PASS, `validate` blocked by 310MB download at 100kB/s — Studio lints server-side). Deployed `0x8faE0025892bA58e5c2E16D10cC414Af47D30d55` (tx `0x5424...` FINALIZED FINISHED_WITH_RETURN isSuccessful=true). Cases: A healthy `0x518a...` NO_BREACH 996 hash `64e6...` p95 1600; B breach `0xe149...` BREACH 999 hash `b4fc20...` p95 4800 LATENCY (200-but-fill-72% differentiator vs Uptime); C empty `0xaf1f...` resolved conf-0 (graceful, P1 to tighten); reputation 66/3/1. Fees measured: deposit ~0.1 GEN, deploy consumed ~7.9e-5, attest ~1.3e-4, refunded majority; fiat UNKNOWN, old `$0.04–0.08` retired. Frontend migrated to esm.sh 2.0.0-rc.1 + `studioDevnet` + live reads + fee-aware write path + state handling. Scripts: `deploy-with-js.mjs` fee-aware dual-path (studio-dev default), new `attest-studio-dev.mjs`, `check-env.mjs` checks studio-dev contract + v2 version. Docs: `06-consensus-v06-migration.md:9` verified findings, `hackathon-alignment.md`, `feature-synthesis.md` addendum CORE/REINFORCING/90-DAY/LONG-TERM/REJECT, `LAUNCH-READINESS.md` GREEN.
+
+**Why:** Studio Next compulsory per GenLayer team; Bradbury/old SDK insufficient (no fees, wrong chain, ACCEPTED-only). Root-caused 3 successive deploy failures with real validator stderr: stale runner hash → `invalid_contract runner malformed`; `from genlayer import *` → `gl`/`allow_storage` NameError; `gl.Contract` → suggest `contract`; `run_nondet_unsafe` → suggest `run_nondet_default`. Each fixed from evidence (Studio JS bundle hash, working `0x6E68...` prediction-market source, `0xCC04...` TreeMap pattern, probe contract `0x89aB...`), not guesses.
+
+**Evidence:** Explorer-studio-dev txs above (all FINALIZED FINISHED_WITH_RETURN isSuccessful=true except where noted), `get_attestation 1/2/3` + `get_reputation` JSON, fee `feeValue=100000000000010352` + `executionConsumed=78628000000000` + `data_fees_consumed=[127878000000000]`, Worker 200×5 + hash stable, `pytest` 5 passed, `lint` 3 checks passed.
+
+**Test result:** E2E acceptance sequence complete (Worker → 61997 → fee-bearing tx → consensus → finalized → hash → frontend reads → explorer). P1s: empty→resolved-conf-0, timestamp empty, appeal mocked, lint false-positive, studio-dev reset risk, CLI 0.39.2 (JS path used).
+
+**Unresolved risk:** None blocking demo. Next: demo + submission packaging.
+
+**Next action:** Demo dry-run from `LAUNCH-READINESS.md`, then submission-ready build.

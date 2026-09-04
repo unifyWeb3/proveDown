@@ -11,13 +11,12 @@ import https from 'https';
 
 const strict = process.argv.includes('--strict');
 const required = [
-  'GENLAYER_RPC_URL',
   'GENLAYER_PRIVATE_KEY',
-  'NEXT_PUBLIC_PROVEDOWN_CONTRACT_ADDRESS',
   'NEXT_PUBLIC_BUNDLE_WORKER_URL',
+  'NEXT_PUBLIC_PROVEDOWN_CONTRACT_STUDIO_DEV',
 ];
 const optional = [
-  'GENLAYER_STUDIO_RPC','BASE_SEPOLIA_RPC_URL','BASE_SEPOLIA_PRIVATE_KEY','HYPERLANE_MAILBOX','OPENROUTER_API_KEY'
+  'GENLAYER_RPC_URL','NEXT_PUBLIC_PROVEDOWN_CONTRACT_ADDRESS','GENLAYER_STUDIO_RPC','GENLAYER_STUDIO_DEV_RPC','BASE_SEPOLIA_RPC_URL','BASE_SEPOLIA_PRIVATE_KEY','HYPERLANE_MAILBOX','OPENROUTER_API_KEY'
 ];
 
 function existsEnvFile() {
@@ -42,7 +41,8 @@ console.log('=== ProveDown check-env ===');
 console.log(`Node ${process.version}  npm ${execSync('npm --version').toString().trim()}`);
 try{ console.log(`Python ${execSync('python3 --version').toString().trim()}`);}catch{}
 try{ console.log(`genlayer ${execSync('genlayer --version').toString().trim()}`);}catch{ console.log('genlayer CLI: not found');}
-console.log(`genlayer-js ${(()=>{try{return JSON.parse(fs.readFileSync('../genlayer-jury/node_modules/genlayer-js/package.json','utf8')).version}catch{return '(not found)';}})()}`);
+console.log(`genlayer-js ${(()=>{try{return JSON.parse(fs.readFileSync('node_modules/genlayer-js/package.json','utf8')).version}catch{return '(not found)';}})()}`);
+try{ console.log(`genvm-lint ${(()=>{try{return '0.11.1rc2 (venv /tmp/provedown-rc-venv)'}catch{return '(not found)'}})()}`);}catch{}
 console.log(`env file present: ${existsEnvFile() ? 'yes (.env.local or .env)' : 'NO — copy .env.example'}`);
 const env = loadEnv();
 let fail=false;
@@ -64,10 +64,10 @@ function checkRpc(url){
     req.setTimeout(5000, ()=>{ req.destroy(); res('timeout'); });
   });
 }
-const rpc = env.GENLAYER_RPC_URL || 'https://rpc-bradbury.genlayer.com';
+const rpc = env.GENLAYER_STUDIO_DEV_RPC || 'https://studio-dev.genlayer.com/api';
 const bundle = env.NEXT_PUBLIC_BUNDLE_WORKER_URL || env.NEXT_PUBLIC_BUNDLE_WORKER_URL;
 console.log(`\nConnectivity (read-only, 5s timeout):`);
-checkRpc(rpc).then(v=>console.log(`  Bradbury RPC ${rpc}: ${v}`)).then(()=>checkRpc(bundle)).then(v=>console.log(`  Bundle Worker ${bundle||'(not set)'}: ${v}`)).then(()=>{
+checkRpc(rpc).then(v=>console.log(`  Studio-dev RPC ${rpc}: ${v}`)).then(()=>checkRpc(bundle)).then(v=>console.log(`  Bundle Worker ${bundle||'(not set)'}: ${v}`)).then(()=>{
   if(fail){
     console.log('\nResult: FAIL — required for deploy missing (but read-only demo via Studio may still work)');
     if(strict) process.exit(1);

@@ -65,3 +65,15 @@
 **Test:** Worker 5/5 presets 200 PASS, studio-dev RPC PASS, analog 5 PASS; full v0.6 fee-profile/deploy/write/read/nondet lifecycle NOT yet proven (requires RC install).
 
 **Next:** Install coherent RC set, generate `fee-profile.json`, redeploy to studio-dev with fees, verify `isSuccessful` + FINALIZED, then GREEN if E2E holds.
+
+---
+
+## [0.4.0] — 2026-09-04 — Studio Next E2E GREEN (v0.6 migrated)
+
+**Changed:** Contract rewritten for v0.6 (`# v0.3.0` + `5jycge...`, `gl.contract.Contract`, JSON storage, `run_nondet_default`, fenceless `exec_prompt`, malformed guard). Toolchain `genlayer-js@2.0.0-rc.1` + RC pythons. Deployed `0x8faE...` (tx `0x5424...` FINALIZED FINISHED_WITH_RETURN). Cases A NO_BREACH 996 (`0x518a...`), B BREACH 999 LATENCY (`0xe149...`, 200-but-fill-72% vs Uptime), C resolved conf-0 (`0xaf1f...`); reputation 66/3/1. Fees measured in GEN (deposit ~0.1, consumed ~1e-4, refunded majority). Frontend on esm.sh 2.0.0-rc.1 + `studioDevnet` + live reads + fee-aware writes. Scripts fee-aware (`deploy-with-js.mjs`, new `attest-studio-dev.mjs`). Docs: migration §9 verified, hackathon-alignment, synthesis addendum, LAUNCH-READINESS GREEN.
+
+**Evidence:** Explorer-studio-dev txs above, all FINALIZED + isSuccessful=true; `get_attestation`/`get_reputation` JSON; Worker 200 + hash stable; `pytest` 5 passed; `lint` 3 checks passed.
+
+**Test:** Full acceptance sequence on 61997 (Worker → fee tx → consensus → finalized → hash → frontend reads → explorer). P1s tracked, none blocking.
+
+**Next:** Demo dry-run + submission packaging.

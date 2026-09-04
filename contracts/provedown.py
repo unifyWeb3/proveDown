@@ -1,6 +1,7 @@
-# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+# v0.3.0
+# { "Depends": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng" }
 """
-ProveDown — Functional SLO Attestation (MVP narrow slice)
+ProveDown — Functional SLO Attestation (MVP narrow slice, Consensus v0.6)
 
 Validates via independent jury whether a pre-computed quality bundle
 breaches a buyer-defined SLO. Bundle is fetched as stable JSON from a
@@ -10,25 +11,29 @@ attestation is neutral, bonded, and bridged.
 Design per implementation-readiness.md:
 - register_sla (deterministic validation)
 - request_attestation (nondet: web.render bundle + exec_prompt judge → run_nondet_unsafe on breach bool only)
-- appeal_attestation (simple bond, MVP single re-jury)
 - views: get_attestation, get_reputation, get_sla
 
-Evidence pipeline from dispute_court_v2.py and content_bounty.py lessons:
-- plain locals, no self capture, sanitize, truncate 3000, sha256, HTTPS only, dedup
+v0.6 API (verified on studio-dev 61997):
+- import genlayer as gl / from genlayer.types import * / TreeMap from genlayer.storage.tree_map
+- gl.contract.Contract, gl.storage.inmem_allocate for TreeMap fields
+- Sla/Attestation stored as JSON strings (no custom dataclass types)
+- exec_prompt without response_format (strip fences + json.loads, prediction-market pattern)
+
+Evidence pipeline lessons preserved:
+- plain locals, no self capture, sanitize, truncate 3000, sha256, HTTPS only
 - INCONCLUSIVE retryable, UNDETERMINED first-class, consensus on breach bool
 """
 
 import hashlib
 import json
 import re
-from dataclasses import dataclass
 
-from genlayer import *
+import genlayer as gl
+from genlayer.types import *
+from genlayer.storage.tree_map import TreeMap
 
 MAX_BUNDLE_CHARS = 3000
 MAX_SLA_JSON = 2000
-MAX_IDS = 4
-MAX_URLS = 1  # MVP: single bundle URL (post-hackathon: 3)
 
 FORBIDDEN_TOKENS = (
     "ignore previous",
@@ -65,41 +70,30 @@ Respond ONLY JSON: {{"breach": true|false, "reason":"LATENCY|ERROR_QUALITY|UNAVA
 <BUNDLE>{bundle_block}</BUNDLE>"""
 
 
-@allow_storage
-@dataclass
-class Sla:
-    sla_id: str
-    api_url: str
-    bundle_url: str
-    slo_json: str
-    owner: str
-    created_at: str
+def parse_llm_json(raw) -> dict:
+    # v0.6 exec_prompt returns str (no response_format); strip fences like prediction-market pattern.
+    if isinstance(raw, dict):
+        return raw
+    try:
+        text = str(raw).replace("```json", "").replace("```", "").strip()
+        parsed = json.loads(text)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    return {}
 
 
-@allow_storage
-@dataclass
-class Attestation:
-    attestation_id: str
-    sla_id: str
-    requester: str
-    timestamp: str
-    breach: bool
-    reason: str
-    confidence: u16
-    evidence_hash: str
-    evidence_summary: str
-    p50: str
-    p95: str
-    status: str  # resolved | no_consensus | inconclusive
-
-
-class ProveDown(gl.Contract):
-    slas: TreeMap[str, Sla]
-    attestations: TreeMap[str, Attestation]
+class ProveDown(gl.contract.Contract):
+    slas: TreeMap[str, str]  # sla_id -> sla JSON string
+    attestations: TreeMap[str, str]  # attestation_id -> attestation JSON string
     reputation: TreeMap[str, str]  # api_url -> json {"score":int,"total":int,"breaches":int}
     next_attestation_id: u256
 
     def __init__(self) -> None:
+        self.slas = gl.storage.inmem_allocate(TreeMap[str, str])
+        self.attestations = gl.storage.inmem_allocate(TreeMap[str, str])
+        self.reputation = gl.storage.inmem_allocate(TreeMap[str, str])
         self.next_attestation_id = u256(1)
 
     # ------------------------------------------------------------------
@@ -112,13 +106,11 @@ class ProveDown(gl.Contract):
         if not isinstance(sla_id, str) or not sla_id.strip():
             raise gl.vm.UserError("[EXPECTED] sla_id must be non-empty string")
         if sla_id in self.slas:
-            return self._sla_to_dict(self.slas[sla_id])
+            return json.loads(self.slas[sla_id])
         if not isinstance(api_url, str) or not api_url.strip().startswith("https://"):
             raise gl.vm.UserError("[EXPECTED] api_url must be https://")
         if not isinstance(bundle_url, str) or not bundle_url.strip().startswith("https://"):
             raise gl.vm.UserError("[EXPECTED] bundle_url must be https://")
-        if bundle_url in [self.slas[k].bundle_url for k in self.slas] if len(self.slas) else False:
-            pass  # dedup not needed for MVP single bundle per sla
         if not isinstance(slo_json, str) or not slo_json.strip():
             raise gl.vm.UserError("[EXPECTED] slo_json must be non-empty JSON string")
         if len(slo_json) > MAX_SLA_JSON:
@@ -135,17 +127,20 @@ class ProveDown(gl.Contract):
             raise gl.vm.UserError("[EXPECTED] slo_json must be valid JSON")
 
         owner = str(gl.message.sender_address)
-        created_at = str(gl.message_raw["datetime"])
-        sla = Sla(
-            sla_id=sla_id.strip(),
-            api_url=api_url.strip(),
-            bundle_url=bundle_url.strip(),
-            slo_json=slo_json.strip(),
-            owner=owner,
-            created_at=created_at,
-        )
-        self.slas[sla_id] = sla
-        return self._sla_to_dict(sla)
+        try:
+            created_at = str(gl.message_raw["datetime"])
+        except Exception:
+            created_at = str("")
+        sla = {
+            "sla_id": sla_id.strip(),
+            "api_url": api_url.strip(),
+            "bundle_url": bundle_url.strip(),
+            "slo_json": slo_json.strip(),
+            "owner": owner,
+            "created_at": created_at,
+        }
+        self.slas[sla_id] = json.dumps(sla)
+        return sla
 
     # ------------------------------------------------------------------
     # Request attestation (nondet jury on breach bool)
@@ -154,13 +149,17 @@ class ProveDown(gl.Contract):
     def request_attestation(self, sla_id: str) -> dict:
         if not isinstance(sla_id, str) or sla_id not in self.slas:
             raise gl.vm.UserError("[EXPECTED] unknown sla_id")
-        sla = self.slas[sla_id]
+        sla = json.loads(self.slas[sla_id])
         # plain locals for closure
-        bundle_url_local = sla.bundle_url
-        slo_json_local = sla.slo_json
+        bundle_url_local = str(sla["bundle_url"])
+        slo_json_local = str(sla["slo_json"])
+        api_url_local = str(sla["api_url"])
         attestation_id_local = str(int(self.next_attestation_id))
         requester_local = str(gl.message.sender_address)
-        timestamp_local = str(gl.message_raw["datetime"])
+        try:
+            timestamp_local = str(gl.message_raw["datetime"])
+        except Exception:
+            timestamp_local = str("")
 
         def run_judgment() -> dict:
             # fetch bundle (stable JSON) — independent per validator
@@ -191,27 +190,38 @@ class ProveDown(gl.Contract):
                     "p95": "",
                     "status": "inconclusive",
                 }
-            digest = hashlib.sha256(clean.encode("utf-8")).hexdigest()
-            # keep hash for summary, not consensus
-            # parse p50/p95 for summary
-            p50 = ""
-            p95 = ""
+            # malformed bundle (not JSON dict with p95) -> inconclusive, don't hallucinate
             try:
                 maybe = json.loads(clean)
-                if isinstance(maybe, dict):
-                    p50 = str(maybe.get("p50", ""))[:40]
-                    p95 = str(maybe.get("p95", ""))[:40]
+                if not isinstance(maybe, dict) or "p95" not in maybe:
+                    return {
+                        "breach": False,
+                        "reason": "UNAVAILABLE",
+                        "confidence": 0,
+                        "reasoning": "malformed bundle",
+                        "evidence_hash": "",
+                        "evidence_summary": "malformed bundle",
+                        "p50": "",
+                        "p95": "",
+                        "status": "inconclusive",
+                    }
+                p50 = str(maybe.get("p50", ""))[:40]
+                p95 = str(maybe.get("p95", ""))[:40]
             except Exception:
-                pass
+                return {
+                    "breach": False,
+                    "reason": "UNAVAILABLE",
+                    "confidence": 0,
+                    "reasoning": "malformed bundle",
+                    "evidence_hash": "",
+                    "evidence_summary": "malformed bundle",
+                    "p50": "",
+                    "p95": "",
+                    "status": "inconclusive",
+                }
+            digest = hashlib.sha256(clean.encode("utf-8")).hexdigest()
             prompt = build_slo_judge_prompt(clean, slo_json_local)
-            response = gl.nondet.exec_prompt(prompt, response_format="json")
-            if not isinstance(response, dict):
-                try:
-                    response = json.loads(str(response))
-                except Exception:
-                    response = {}
-            if not isinstance(response, dict):
-                response = {}
+            response = parse_llm_json(gl.nondet.exec_prompt(prompt))
             breach = bool(response.get("breach", False))
             reason = str(response.get("reason", "OK")).upper().strip()
             if reason not in ("LATENCY", "ERROR_QUALITY", "UNAVAILABLE", "OK"):
@@ -252,48 +262,49 @@ class ProveDown(gl.Contract):
                 return False
             return leader_breach == bool(mine.get("breach"))
 
-        result = gl.vm.run_nondet_unsafe(run_judgment, validator_fn)
+        # v0.6: run_nondet_default (run_nondet_unsafe was removed; same leader/validator shape)
+        result = gl.vm.run_nondet_default(run_judgment, validator_fn)
 
         # deterministic settlement
         if not isinstance(result, dict):
             # protocol-level UNDETERMINED (no majority) — store as no_consensus
-            att = Attestation(
-                attestation_id=attestation_id_local,
-                sla_id=sla_id,
-                requester=requester_local,
-                timestamp=timestamp_local,
-                breach=False,
-                reason="OK",
-                confidence=u16(0),
-                evidence_hash="",
-                evidence_summary="no consensus (UNDETERMINED)",
-                p50="",
-                p95="",
-                status="no_consensus",
-            )
-            self.attestations[attestation_id_local] = att
+            att = {
+                "attestation_id": attestation_id_local,
+                "sla_id": sla_id,
+                "requester": requester_local,
+                "timestamp": timestamp_local,
+                "breach": False,
+                "reason": "OK",
+                "confidence": 0,
+                "evidence_hash": "",
+                "evidence_summary": "no consensus (UNDETERMINED)",
+                "p50": "",
+                "p95": "",
+                "status": "no_consensus",
+            }
+            self.attestations[attestation_id_local] = json.dumps(att)
             self.next_attestation_id = u256(int(self.next_attestation_id) + 1)
-            return self._att_to_dict(att)
+            return att
 
         # inconclusive from leader (fetch failed etc.)
         if result.get("status") == "inconclusive":
-            att = Attestation(
-                attestation_id=attestation_id_local,
-                sla_id=sla_id,
-                requester=requester_local,
-                timestamp=timestamp_local,
-                breach=False,
-                reason=str(result.get("reason", "UNAVAILABLE"))[:40],
-                confidence=u16(0),
-                evidence_hash=str(result.get("evidence_hash", ""))[:80],
-                evidence_summary=str(result.get("evidence_summary", ""))[:800],
-                p50=str(result.get("p50", ""))[:40],
-                p95=str(result.get("p95", ""))[:40],
-                status="inconclusive",
-            )
-            self.attestations[attestation_id_local] = att
+            att = {
+                "attestation_id": attestation_id_local,
+                "sla_id": sla_id,
+                "requester": requester_local,
+                "timestamp": timestamp_local,
+                "breach": False,
+                "reason": str(result.get("reason", "UNAVAILABLE"))[:40],
+                "confidence": 0,
+                "evidence_hash": str(result.get("evidence_hash", ""))[:80],
+                "evidence_summary": str(result.get("evidence_summary", ""))[:800],
+                "p50": str(result.get("p50", ""))[:40],
+                "p95": str(result.get("p95", ""))[:40],
+                "status": "inconclusive",
+            }
+            self.attestations[attestation_id_local] = json.dumps(att)
             self.next_attestation_id = u256(int(self.next_attestation_id) + 1)
-            return self._att_to_dict(att)
+            return att
 
         breach = bool(result.get("breach", False))
         reason = str(result.get("reason", "OK"))[:40]
@@ -302,48 +313,50 @@ class ProveDown(gl.Contract):
         except Exception:
             conf = 0
         conf = max(0, min(1000, conf))
-        att = Attestation(
-            attestation_id=attestation_id_local,
-            sla_id=sla_id,
-            requester=requester_local,
-            timestamp=timestamp_local,
-            breach=breach,
-            reason=reason,
-            confidence=u16(conf),
-            evidence_hash=str(result.get("evidence_hash", ""))[:80],
-            evidence_summary=str(result.get("evidence_summary", ""))[:800],
-            p50=str(result.get("p50", ""))[:40],
-            p95=str(result.get("p95", ""))[:40],
-            status="resolved",
-        )
-        self.attestations[attestation_id_local] = att
-        # reputation update (deterministic, confidence-weighted)
-        api_url = sla.api_url
-        rep_json = self.reputation.get(api_url, '{"score":66,"total":0,"breaches":0}') if api_url in self.reputation else '{"score":66,"total":0,"breaches":0}'
+        att = {
+            "attestation_id": attestation_id_local,
+            "sla_id": sla_id,
+            "requester": requester_local,
+            "timestamp": timestamp_local,
+            "breach": breach,
+            "reason": reason,
+            "confidence": conf,
+            "evidence_hash": str(result.get("evidence_hash", ""))[:80],
+            "evidence_summary": str(result.get("evidence_summary", ""))[:800],
+            "p50": str(result.get("p50", ""))[:40],
+            "p95": str(result.get("p95", ""))[:40],
+            "status": "resolved",
+        }
+        self.attestations[attestation_id_local] = json.dumps(att)
+        # reputation update (deterministic)
+        if api_url_local in self.reputation:
+            rep_json = self.reputation[api_url_local]
+        else:
+            rep_json = '{"score":66,"total":0,"breaches":0}'
         try:
             rep = json.loads(rep_json)
         except Exception:
             rep = {"score": 66, "total": 0, "breaches": 0}
         total = int(rep.get("total", 0)) + 1
         breaches = int(rep.get("breaches", 0)) + (1 if breach else 0)
-        # Bayesian (good+2)/(total+3)*100 like ArcSLA, but start 66 like docs
-        score = int(( (total - breaches + 2) / (total + 3) ) * 100)
+        # Bayesian (good+2)/(total+3)*100 like ArcSLA, start 66
+        score = int(((total - breaches + 2) / (total + 3)) * 100)
         score = max(0, min(100, score))
-        self.reputation[api_url] = json.dumps({"score": score, "total": total, "breaches": breaches})
+        self.reputation[api_url_local] = json.dumps({"score": score, "total": total, "breaches": breaches})
         self.next_attestation_id = u256(int(self.next_attestation_id) + 1)
-        return self._att_to_dict(att)
+        return att
 
     @gl.public.view
     def get_attestation(self, attestation_id: str) -> dict:
         if attestation_id not in self.attestations:
             raise gl.vm.UserError("[EXPECTED] attestation not found")
-        return self._att_to_dict(self.attestations[attestation_id])
+        return json.loads(self.attestations[attestation_id])
 
     @gl.public.view
     def get_sla(self, sla_id: str) -> dict:
         if sla_id not in self.slas:
             raise gl.vm.UserError("[EXPECTED] sla not found")
-        return self._sla_to_dict(self.slas[sla_id])
+        return json.loads(self.slas[sla_id])
 
     @gl.public.view
     def get_reputation(self, api_url: str) -> dict:
@@ -351,12 +364,6 @@ class ProveDown(gl.Contract):
             return {"api_url": api_url, "score": 66, "total": 0, "breaches": 0}
         try:
             rep = json.loads(self.reputation[api_url])
-            return {"api_url": api_url, "score": int(rep.get("score",66)), "total": int(rep.get("total",0)), "breaches": int(rep.get("breaches",0))}
+            return {"api_url": api_url, "score": int(rep.get("score", 66)), "total": int(rep.get("total", 0)), "breaches": int(rep.get("breaches", 0))}
         except Exception:
             return {"api_url": api_url, "score": 66, "total": 0, "breaches": 0}
-
-    def _sla_to_dict(self, s: Sla) -> dict:
-        return {"sla_id": s.sla_id, "api_url": s.api_url, "bundle_url": s.bundle_url, "slo_json": s.slo_json, "owner": s.owner, "created_at": s.created_at}
-
-    def _att_to_dict(self, a: Attestation) -> dict:
-        return {"attestation_id": a.attestation_id, "sla_id": a.sla_id, "requester": a.requester, "timestamp": a.timestamp, "breach": a.breach, "reason": a.reason, "confidence": int(a.confidence), "evidence_hash": a.evidence_hash, "evidence_summary": a.evidence_summary, "p50": a.p50, "p95": a.p95, "status": a.status}

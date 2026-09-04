@@ -107,3 +107,32 @@ New (0.40 RC + 2.0 RC):
 | `scripts/check-env.mjs` | checks `GENLAYER_RPC_URL`, `1.1.8` version | Outdated — must check `STUDIO_DEV_RPC`, `2.0.0-rc.1`, fee-profile exists | Update required list |
 
 Old fee estimate `$0.04–$0.08` in `07-final-thesis/final-product.md` is **INVALID** under v0.6 until re-measured via profile + live estimate on studio-dev. Do NOT reuse.
+
+## 9. Verified on Studio-dev 61997 (2026-09-04, real txs)
+
+Toolchain installed: `genlayer-js@2.0.0-rc.1` (npm, `studioDevnet` id 61997 RPC `https://studio-dev.genlayer.com/api` consensus `0xb727...`), `genlayer-py==0.19.0rc2` + `genlayer-test==0.30.0rc2` (`--no-deps`, metadata only), `genvm-linter==0.11.1rc2` (`lint` 3 checks PASS; `validate` needs 310MB GenVM download, blocked by 100kB/s bandwidth — Studio lints server-side on deploy instead). Deployer `0x3211...` funded (~0.099 GEN via `eth_getBalance`).
+
+Runner hash: Studio-dev frontend bundle (`/assets/index-Bwt_FM7z.js`) embeds `py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng` (not docs' `1jb45aa...`). v0.6 contract header is `# v0.3.0` + `# { "Depends": "py-genlayer:5jycge..." }`. Single-`Depends` (NOT `Seq` — `Seq` is embeddings-only per skills docs; a `Seq` single-item deploy failed with `invalid_contract runner malformed`).
+
+v0.6 Python API (proven by working studio-dev contracts `0x6E68...` prediction-market, `0xCC04...` policy attestation + our deploys):
+- `import genlayer as gl` + `from genlayer.types import *` (+ `from genlayer.storage.tree_map import TreeMap` for maps). `from genlayer import *` does NOT export `gl`, `Contract`, or `allow_storage` (deploy fails `NameError: gl/allow_storage not defined`).
+- `class X(gl.contract.Contract)` (lowercase; `gl.Contract` → `AttributeError`).
+- `gl.storage.inmem_allocate(TreeMap[str, str])` required for TreeMap fields in `__init__`.
+- `gl.nondet.web.render(url, mode="text")` unchanged; `gl.nondet.exec_prompt(task)` WITHOUT `response_format` (positional only — strip fences + `json.loads`, prediction-market pattern); `gl.vm.run_nondet_default(leader, validator)` replaces removed `run_nondet_unsafe`; `gl.vm.Return`, `gl.vm.UserError`, `gl.message.sender_address`, `gl.message_raw["datetime"]`, `gl.eq_principle.strict_eq` confirmed present on studio-dev.
+- Sla/Attestation stored as JSON strings (`TreeMap[str, str]`) — no custom dataclass types needed.
+- `genvm-lint lint` reachability warning (`gl.nondet.* not reachable from equivalence block` for nested-def-passed-as-arg) is a FALSE POSITIVE — same structure succeeds on-chain (prediction-market + our attestations).
+
+Measured fees (studio-dev, `estimateTransactionFees({preset:'standard'})`, all presets identical without profile):
+- deposit `feeValue=100000000000010352` (~0.1 GEN), policy `genPerTimeUnit=1, storageUnitPrice=250000000, receiptGasPrice=250000000, floor=76548000000000`.
+- deploy consumed `executionConsumed=78628000000000` (~7.9e-5 GEN), refunded `99921372000009529` (~0.0999 GEN).
+- attestation (web+LLM) consumed `data_fees_consumed=[127878000000000,...]` (~1.3e-4 GEN).
+- Fiat conversion UNKNOWN (GEN testnet price unknown) — economics must be quoted in GEN: ~1e-4 GEN consumed per verification, 0.1 GEN deposit (mostly refunded at FINALIZED). Old `$0.04–0.08` retired.
+
+Real studio-dev proof (contract `0x8faE0025892bA58e5c2E16D10cC414Af47D30d55`):
+- deploy `0x5424f3d44de6d8543348301a475ff9f61887b7d5f7ebf914c09419a70c281711` FINALIZED FINISHED_WITH_RETURN isSuccessful=true.
+- register healthy `0xdff058bc23c31facfc984258370a15ca165fa76ed4084f79ed452a6f651f9234`, breach `0x3a11ea99e16262c3ac95b7d73ce9713f2bf50abe4b471130b315315003be3d45`, empty `0xed5e525abffafed0b7d07781993a34412ba5503a9571a6dcb511e63ae243a7b3` — all SUCCESS=true.
+- Case A healthy `0x518a8c1c2ade7c00f7e137274c678874cb8dbf05c06ee314a41aadd08b3a7746` → att 1 breach FALSE conf 996 hash `64e6c84f01418b89` p95 1600 reason OK resolved (NO_BREACH ✓).
+- Case B breach `0xe149c7e26ce2a8d1aaf10a30b1f2112d0602c1aede63c0ecf041ea8d83eb6635` → att 2 breach TRUE conf 999 hash `b4fc2013862e316e` p95 4800 reason LATENCY resolved (BREACH ✓ — HTTP 200 + fill 72% still breach, the Uptime differentiator).
+- Case C empty `0xaf1faec4924f35b07e758e014fc88de672f7a738117afece0e873701c914f05c` → att 3 resolved breach FALSE conf 0 p95 None (graceful consensus, not INCONCLUSIVE — P1: tighten null-p95 guard to return inconclusive).
+- reputation `{"score":66,"total":3,"breaches":1}` (Bayesian correct: (2+2)/(3+3)=66).
+- Minimal-probe contract `0x89aBdeBAE91857B6dcACF96d73c8A2b3101fA6ec` proved TreeMap/u256/inmem_allocate/message pattern before full rewrite.

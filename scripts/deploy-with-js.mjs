@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 // Deploy ProveDown via genlayer-js (WSL-safe, no OS keychain)
-// Reuses genlayer-jury/deploy_dispute_court_v2.ts pattern
+// v0.6 fee-aware: studio-dev (primary, 61997) uses estimate + fees + FINALIZED + isSuccessful.
+// Bradbury (compat) keeps legacy no-fee path. See 01-genlayer-recon/06-consensus-v06-migration.md
 import { readFileSync } from 'fs';
 import path from 'path';
-import { createClient, createAccount } from 'genlayer-js';
-import { testnetBradbury, studionet } from 'genlayer-js/chains';
-import { TransactionStatus } from 'genlayer-js/types';
+import { createClient, createAccount, isSuccessful } from 'genlayer-js';
+import { testnetBradbury, studioDevnet } from 'genlayer-js/chains';
 
-const network = process.env.GENLAYER_NETWORK || 'testnetBradbury';
-const chain = network === 'studionet' ? studionet : testnetBradbury;
+const network = process.env.GENLAYER_NETWORK || 'studio-dev';
+const chain = network === 'testnetBradbury' ? testnetBradbury : studioDevnet;
 
 const rawKey = process.env.GENLAYER_PRIVATE_KEY;
 if (!rawKey) {
@@ -27,22 +27,31 @@ const account = createAccount(privateKey);
 const client = createClient({ chain, account });
 console.log(`Deployer: ${account.address}`);
 
-try { await client.initializeConsensusSmartContract(); } catch {}
-
-const deployTx = await client.deployContract({ code, args: [] });
+let deployTx;
+if (network === 'testnetBradbury') {
+  // Legacy compat path (pre-v0.6, no fees)
+  deployTx = await client.deployContract({ code, args: [] });
+} else {
+  // v0.6 fee-aware path
+  const est = await client.estimateTransactionFees({ preset: 'standard' });
+  console.log(`Fee quote: feeValue=${est.feeValue.toString()}`);
+  deployTx = await client.deployContract({ code, args: [], fees: { distribution: est.distribution, feeValue: est.feeValue } });
+}
 console.log(`Deploy transaction submitted: ${deployTx}`);
-console.log('Waiting for ACCEPTED (up to 5 min)...');
-const receipt = await client.waitForTransactionReceipt({ hash: deployTx, status: TransactionStatus.ACCEPTED, retries: 200 });
-console.log(`Receipt status: ${receipt.statusName} (${receipt.status})`);
-if (receipt.status !== 5 && receipt.status !== 6 && receipt.statusName !== 'ACCEPTED' && receipt.statusName !== 'FINALIZED') {
-  console.error(`Deployment failed. Receipt: ${JSON.stringify(receipt, null, 2)}`);
+console.log('Waiting for FINALIZED...');
+const receipt = await client.waitForTransactionReceipt({ hash: deployTx, waitUntil: 'finalized', retries: 200 });
+const ok = isSuccessful(receipt);
+console.log(`Receipt: status=${receipt.status_name} exec=${receipt.txExecutionResultName ?? receipt.txExecutionResult} isSuccessful=${ok}`);
+if (!ok) {
+  console.error('Deployment did NOT succeed (see status/exec above). Check explorer for details.');
   process.exit(1);
 }
 const r = receipt;
 const contractAddress = r?.txDataDecoded?.contractAddress ?? r?.toAddress ?? r?.to_address ?? r?.data?.contract_address;
+const explorer = chain.id === 4221 ? 'https://explorer-bradbury.genlayer.com' : 'https://explorer-studio-dev.genlayer.com';
 console.log(`\n✓ ProveDown deployed on ${network}!`);
 console.log(`  Contract address : ${contractAddress}`);
 console.log(`  Deploy tx hash   : ${deployTx}`);
-console.log(`  Explorer         : ${chain.id === 4221 ? 'https://explorer-bradbury.genlayer.com' : 'https://studio.genlayer.com'}/address/${contractAddress}`);
+console.log(`  Explorer         : ${explorer}/address/${contractAddress}`);
 console.log(`\nAdd to startup/.env.local:`);
-console.log(`  NEXT_PUBLIC_PROVEDOWN_CONTRACT_ADDRESS=${contractAddress}`);
+console.log(`  NEXT_PUBLIC_PROVEDOWN_CONTRACT_STUDIO_DEV=${contractAddress}`);

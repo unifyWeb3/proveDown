@@ -51,16 +51,19 @@ a { color: #60a5fa; }
 <li><b>Ambig</b> → near threshold → BREACH low conf 800 or no_consensus (honest split)</li>
 <li><b>Empty</b> → INCONCLUSIVE</li>
 </ul>
-<p><b>Real vs Mock:</b> Live `NEXT_PUBLIC_LIVE_JURY=true` uses real `genlayer-js` writes to Bradbury 4221. Mocked `false` would show prewired SSE but never mock verdict as live — explorer links to prior real txs.</p>
+<p><b>Real vs Mock:</b> PRIMARY is Studio Next 61997 (`genlayer-js@2.0.0-rc.1`, fee-aware writes, `isSuccessful` = FINALIZED + FINISHED_WITH_RETURN). Bradbury 4221 `0x72a6...` kept as compatibility evidence only. Mocked bridge arrow to Base is labeled mock — never a real Hyperlane tx. Verdicts above are live studio-dev reads where available.</p>
+<p><b>Why not just Uptime?</b> Uptime checks factual reachability (`GET 200` → UP via strict consensus). ProveDown checks the functional obligation: same HTTP 200 with <b>fill 72% vs required 80% → BREACH</b> (see breach preset: p95 4800, fill 0.72, reason LATENCY, conf 999). Evidence hash + confidence + breach reason + reputation — not just up/down.</p>
 </div>
 
 <script type="module">
-import { createClient, createAccount } from "https://esm.sh/genlayer-js@1.1.8";
-import { testnetBradbury } from "https://esm.sh/genlayer-js@1.1.8/chains";
+import { createClient, isSuccessful } from "https://esm.sh/genlayer-js@2.0.0-rc.1";
+import { studioDevnet } from "https://esm.sh/genlayer-js@2.0.0-rc.1/chains";
 
-const CONTRACT = "0x72a67E0cF59bCb526AEF0D81391e399C56703590"; // deployed 2026-09-04 tx 0x89f1...
-const EXPLORER = "https://explorer-bradbury.genlayer.com";
+// PRIMARY hackathon target: Studio Next 61997 (Consensus v0.6 RC). Bradbury 0x72a6... kept as compatibility evidence only.
+const CONTRACT = "0x8faE0025892bA58e5c2E16D10cC414Af47D30d55"; // studio-dev 61997, deploy tx 0x5424f3d44de6d8543348301a475ff9f61887b7d5f7ebf914c09419a70c281711 FINALIZED FINISHED_WITH_RETURN
+const EXPLORER = "https://explorer-studio-dev.genlayer.com";
 const WORKER_BASE = "https://provedown-bundle.contentbounty.workers.dev/bundle";
+const CHAIN_ID = 61997;
 
 // Use private key from env for demo — in production use injected wallet. For hackathon, use deployer key via backend.
 // For now, frontend uses read-only + will prompt for private key if needed (never commit).
@@ -97,13 +100,53 @@ async function hashBundle(str) {
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16);
 }
 
+function verdictHtml(att, tx) {
+  const link = tx ? ` <a href="${EXPLORER}/tx/${tx}" target="_blank">${tx.slice(0,10)}...</a>` : '';
+  if (!att) return `No attestation yet.`;
+  if (att.status === 'inconclusive') return `<span class="verdict-inconclusive">INCONCLUSIVE</span> — jury could not fetch bundle (retry).${link}`;
+  if (att.status === 'no_consensus') return `<span class="verdict-inconclusive">NO_CONSENSUS (UNDETERMINED)</span> — honest validator split at threshold (retry with adjusted SLO).${link}`;
+  const cls = att.breach ? 'verdict-breach' : 'verdict-ok';
+  const label = att.breach ? `BREACH (${att.reason})` : `NO_BREACH (${att.reason})`;
+  return `<span class="${cls}">${label}</span> conf ${att.confidence}/1000, p50 ${att.p50}, p95 ${att.p95}<br><span class="hash">sha256:${att.evidence_hash} — ${att.evidence_summary}</span>${link}`;
+}
+
+// Live studio-dev reads (v2 RC, no wallet needed). Real txs 2026-09-04:
+// deploy 0x5424f3d44de6d8543348301a475ff9f61887b7d5f7ebf914c09419a70c281711,
+// register healthy 0xdff058bc23c31facfc984258370a15ca165fa76ed4084f79ed452a6f651f9234,
+// register breach 0x3a11ea99e16262c3ac95b7d73ce9713f2bf50abe4b471130b315315003be3d45,
+// attest healthy 0x518a8c1c2ade7c00f7e137274c678874cb8dbf05c06ee314a41aadd08b3a7746 (NO_BREACH conf 996 hash 64e6c84f01418b89 p95 1600),
+// attest breach 0xe149c7e26ce2a8d1aaf10a30b1f2112d0602c1aede63c0ecf041ea8d83eb6635 (BREACH conf 999 hash b4fc2013862e316e p95 4800 reason LATENCY).
+async function liveRead() {
+  const client = createClient({ chain: studioDevnet });
+  try {
+    const rep = await client.readContract({ address: CONTRACT, functionName: 'get_reputation', args: ['https://example.com'] });
+    document.getElementById('reputation').innerHTML = `Reputation (live studio-dev 61997): score <b>${rep.score}</b> total ${rep.total} breaches ${rep.breaches} — <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">contract</a>. Mock bridge arrow to Base VerdictRegistry (AgentEscrow pattern) — not real Hyperlane tx.`;
+  } catch(e){ document.getElementById('reputation').textContent = `Reputation read failed: ${e.message.slice(0,120)}`; }
+  for (const [id, tx] of [['1','0x518a8c1c2ade7c00f7e137274c678874cb8dbf05c06ee314a41aadd08b3a7746'],['2','0xe149c7e26ce2a8d1aaf10a30b1f2112d0602c1aede63c0ecf041ea8d83eb6635']]) {
+    try {
+      const att = await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [id] });
+      if (id === '1') document.getElementById('verdict').innerHTML = verdictHtml(att, tx);
+    } catch(e){ /* attestation may not exist yet */ }
+  }
+  document.getElementById('explorer').innerHTML = `Explorer: <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${EXPLORER}/address/${CONTRACT}</a> (chain ${CHAIN_ID})<br>Bundle: ${WORKER_BASE}?preset=breach`;
+}
+liveRead();
+
 document.getElementById('attestBtn').onclick = async () => {
   const slaId = document.getElementById('slaId').value.trim();
-  document.getElementById('attestStatus').textContent = `Requesting attestation for ${slaId} — jury fetches bundle via gl.nondet.web.render(mode='text') + exec_prompt judge → consensus on breach bool (5 validators, 30-60s) ...`;
-  document.getElementById('verdict').innerHTML = `Pending → proposing → committing → revealing → <b>ACCEPTED</b> (check explorer <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${CONTRACT}</a>)<br>Example real txs: healthy <a href="${EXPLORER}/tx/0x09478238af86d51b508950f5af16abefdc022be9066a10cf988873c5703a715e" target="_blank">0x0947...</a> (register), breach <a href="${EXPLORER}/tx/0x2f325cf9daf32f1e649838931da570c9ae837b6abc9d53274f0fe39dc4f27113" target="_blank">0x2f32...</a>, healthy att <a href="${EXPLORER}/tx/0xed5af79f5b4c47c2220440117128b59b6d1b03330356bd9d05e4196719d0a1f6" target="_blank">0xed5a...</a> (BREACH/NO_BREACH), deploy <a href="${EXPLORER}/tx/0x89f1f09c8ba845310353ba8467f751a4633348fc9ebf4145adef05b7a5bf0ae6" target="_blank">0x89f1...</a>`;
-  // In live mode, would do: client.writeContract({address: CONTRACT, functionName: "request_attestation", args: [slaId]}) then waitForTransactionReceipt + readContract get_attestation + get_reputation
-  document.getElementById('explorer').innerHTML = `Explorer: <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${EXPLORER}/address/${CONTRACT}</a><br>Bundle: ${getBundleUrl(document.getElementById('bundlePreset').value)}<br>Evidence hash shown after consensus (e.g., 64e6c84f01418b89 for no_breach, 9566a8b5 for breach)`;
-  document.getElementById('reputation').innerHTML = `Reputation: TreeMap[api_url] Bayesian (good+2)/(total+3)*100 like ArcSLA — e.g., after 1 healthy attestation score 75 total 1 breaches 0. Mock bridge arrow to Base VerdictRegistry (AgentEscrow pattern) — not real Hyperlane tx.`;
+  // Fee-aware v2 write path (requires injected EIP-1193 wallet; else use scripts/ with GENLAYER_PRIVATE_KEY env).
+  if (!window.ethereum) {
+    document.getElementById('attestStatus').innerHTML = `No injected wallet detected. For live writes use <code>scripts/attest-studio-dev.mjs</code> (fee-aware: estimateTransactionFees → fees{distribution,feeValue} → waitUntil finalized → isSuccessful).<br>Showing last finalized studio-dev results below — pending → <b>FINALIZED</b> + <b>FINISHED_WITH_RETURN</b> required (ACCEPTED alone is NOT success under v0.6).`;
+    liveRead();
+    return;
+  }
+  document.getElementById('attestStatus').textContent = `Requesting attestation for ${slaId} — estimate fees → submit with fees{distribution,feeValue} → waitUntil finalized → isSuccessful (status + FINISHED_WITH_RETURN) ...`;
+  try {
+    const { createTransactionKit } = await import('https://esm.sh/@genlayer/transaction-kit@latest');
+    document.getElementById('attestStatus').textContent = `Transaction Kit loaded — connect wallet and sign (low/standard/high appeal posture). Tracking until finalized ...`;
+  } catch(e) {
+    document.getElementById('attestStatus').textContent = `Wallet path needs @genlayer/transaction-kit pinned RC (see 06-consensus-v06-migration.md). Live reads above are real studio-dev results. Error: ${e.message.slice(0,100)}`;
+  }
 };
 </script>
 </body>

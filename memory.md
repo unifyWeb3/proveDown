@@ -113,3 +113,19 @@
 **Unresolved risk:** P1s only (timestamp empty, appeal mocked, studio-dev reset, key reuse testnet-only). None block demo.
 
 **Next action:** Demo + submission packaging. Architecture frozen unless real blocker.
+
+---
+
+## Checkpoint 8 — HCI Design Phase (2026-09-05)
+
+**What changed:** Dedicated design (no implementation): created `design.md` (source of truth: personality, user, 10 UX principles, tokens, components, all states, REAL vs MOCK visual language, a11y, copy rules), `frontend-hci-audit.md` (15-criterion scorecard, mean 4.8, all below 8 with fixes), `frontend-gap-analysis.md` (7 P0 + 7 P1 + 7 P2, each HCI-justified). Researched Nielsen 10 heuristics (NN/g) + WCAG 2.2 AA baseline; tore down Cairn (receipt hierarchy to borrow), Clasp (state clarity, security lab, honesty table), Vigil (JS-gated, minimal signal Retrieved). Recovery system audited and preserved (AGENTS.md/memory/CHANGELOG/checkpoints/secret-scan intact). No frontend code touched.
+
+**Why:** User directive: design source of truth + actionable spec before any build pass; architecture frozen.
+
+**Evidence:** `design.md:1` (32 sections), `frontend-hci-audit.md:1` (15 scores), `frontend-gap-analysis.md:1` (P0-1..P0-7 minimal fix set). Browser automation unavailable — documented as limitation, static code inspection only, no pretended visual testing.
+
+**Test result:** N/A (design phase). Pre-existing verification still holds: `pytest` 9 passed, studio-dev E2E txs in `EVIDENCE.md`.
+
+**Unresolved risk:** Scores are single-evaluator heuristic review, not user testing — validate with 1-2 real user walkthroughs during build.
+
+**Next action:** Build phase implements P0-1..P0-7 per `design.md`, then re-audit.

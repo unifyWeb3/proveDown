@@ -87,3 +87,15 @@
 **Evidence:** `get_attestation 3` inconclusive JSON; explorer-studio-dev txs in `EVIDENCE.md`; `pytest` 9 passed.
 
 **Test:** Full acceptance re-proven on 61997 after fix (3/3 FINALIZED FINISHED_WITH_RETURN isSuccessful=true). P1s tracked, none blocking.
+
+---
+
+## [0.4.2] — 2026-09-05 — HCI Design Phase (no implementation)
+
+**Changed:** Created `design.md` (frontend source of truth), `frontend-hci-audit.md` (15 scores, mean 4.8), `frontend-gap-analysis.md` (7 P0 + 7 P1 + 7 P2 with HCI justification). Inputs: Nielsen 10 heuristics, WCAG 2.2 AA, Cairn/Clasp/Vigil teardowns (concepts only, nothing copied). No product/framework/architecture changes; no frontend code modified.
+
+**Evidence:** Three new docs at repo root; browser automation unavailable (documented limitation).
+
+**Test:** N/A. Existing E2E evidence unchanged (`EVIDENCE.md`).
+
+**Next:** Build phase per `design.md` P0 set, then re-audit.

@@ -11,6 +11,8 @@ npx wrangler deploy  # from hosting/bundle-worker/, outputs https://provedown-bu
 
 Set `NEXT_PUBLIC_BUNDLE_WORKER_URL` in `.env.local` to `https://.../bundle` (no preset param — contract appends `?sla=...&preset=...`).
 
+**Browser note:** responses include `Access-Control-Allow-Origin: *` so the frontend can preview bundles and recompute hashes in-browser (GenLayer validators fetch server-side and are unaffected). Bodies are byte-identical to before — jury evidence hashes unchanged.
+
 **Presets:**
 
 | preset | p50 | p95 | error | fill | match | expected jury | use |

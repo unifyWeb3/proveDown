@@ -84,10 +84,11 @@ Desktop: single 960px column, cards full-width; verdict card may split 2:1 (resu
 | `--bg` | `#0a0a0a` | page | dark instrument baseline; matches GenLayer/Clasp aesthetic |
 | `--surface` | `#141414` | cards | one step above bg; current `#111` kept within tolerance |
 | `--surface-2` | `#1c1c1c` | inputs, nested wells | distinguish interactive from static surfaces |
-| `--border` | `#2a2a2a` | card borders | visible but quiet; current `#333` acceptable |
+| `--border` | `#333333` | card borders (decorative — cards delineated by spacing + surface step) | WCAG 1.4.11 does not require decorative boundaries to hit 3:1 |
+| `--border-strong` | `#6b6b6b` | input/button boundaries | 3.2:1 vs inputs, 3.5:1 vs cards — meets 3:1 non-text contrast |
 | `--text` | `#ededed` | primary text | max contrast on dark |
-| `--text-2` | `#a8a8a8` | secondary, hashes, meta | ≥4.5:1 on surface (current `#999` is ~4.2:1 — raise it) |
-| `--accent` | `#6366f1` | actions, links | indigo = interactive only, never status |
+| `--text-2` | `#a8a8a8` | secondary, hashes, meta | 7.8:1 on surface (fixed from `#999` ≈ 4.2:1) |
+| `--accent` | `#5a5ee6` | actions (white text 5.0:1 ✓) | indigo = interactive only, never status; links stay `#7c8cf8` (6.6:1) |
 | `--ok` | `#22c55e` | NO_BREACH | |
 | `--bad` | `#ef4444` | BREACH | |
 | `--warn` | `#eab308` | pending, inconclusive, no-consensus, mock | |

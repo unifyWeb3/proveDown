@@ -109,3 +109,15 @@
 **Evidence:** `EVIDENCE.md` re-verification section; `pytest` 9 passed; lint 2 known false-positive advisories.
 
 **Test:** E2E RE-VERIFIED (reads byte-identical, writes 3/3 FINALIZED 43–111s).
+
+---
+
+## [0.5.1] — 2026-09-05 — HCI Build Pass (P0-1…P0-7 implemented)
+
+**Changed:** `frontend/index.html` rewritten per `design.md`: dominant verdict, skeleton + FINALIZED tracker, badge system, friendly errors, REAL/MOCK blocks, a11y baseline, observed-vs-limit rows. Worker: `Access-Control-Allow-Origin: *` added + redeployed (bodies identical, hashes unaffected). Tokens: `--accent` `#5a5ee6`, `--border-strong` `#6b6b6b`.
+
+**Evidence:** Screenshots read at 1280px + 390px (no overflow); CDP interaction tests pass; shipped render branches 10/10 incl. XSS; contrast computed; zero console errors. Re-audit mean 4.8 → 7.7 (`frontend-hci-audit.md`).
+
+**Test:** All 9 UI states verified (NO_CONSENSUS via unit test — no live example, documented).
+
+**Next:** P1 polish; submission packaging.

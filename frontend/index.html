@@ -3,56 +3,178 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ProveDown — Functional SLO Attestation</title>
+<title>ProveDown — Did the service keep its agreement?</title>
 <style>
-body { font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 2rem auto; padding: 1rem; background: #0a0a0a; color: #eee; }
-.card { border: 1px solid #333; padding: 1.5rem; margin: 1rem 0; border-radius: 8px; background: #111; }
-button { background: #4f46e5; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; margin: 0.3rem; }
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface-2: #1c1c1c;
+  --border: #333333;
+  --border-strong: #6b6b6b;
+  --text: #ededed;
+  --text-2: #a8a8a8;
+  --accent: #5a5ee6;
+  --ok: #22c55e;
+  --bad: #ef4444;
+  --warn: #eab308;
+  --radius-card: 8px;
+  --radius-btn: 6px;
+  --radius-input: 4px;
+}
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 960px; margin: 0 auto; padding: 1rem; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.5; }
+h1 { font-size: 32px; line-height: 1.25; margin: 1.5rem 0 0.5rem; }
+.subtitle { color: var(--text-2); font-size: 16px; margin: 0 0 1rem; max-width: 60ch; }
+h2 { font-size: 20px; line-height: 1.4; margin: 0 0 0.75rem; }
+h3 { font-size: 16px; margin: 1rem 0 0.5rem; }
+p { margin: 0.5rem 0; }
+.steps { display: flex; gap: 8px; list-style: none; padding: 0; margin: 1rem 0 2rem; font-size: 14px; color: var(--text-2); flex-wrap: wrap; }
+.steps li { border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; }
+.steps li b { color: var(--text); }
+.card { border: 1px solid var(--border); padding: 24px; margin: 24px 0; border-radius: var(--radius-card); background: var(--surface); }
+.card h2 { margin-top: 0; }
+/* verdict dominance */
+#verdictCard { padding: 24px; }
+.verdict-block { border-left: 3px solid var(--border); padding: 4px 0 4px 16px; margin: 16px 0; }
+.verdict-block.is-breach { border-left-color: var(--bad); }
+.verdict-block.is-ok { border-left-color: var(--ok); }
+.verdict-block.is-warn { border-left-color: var(--warn); }
+.verdict-result { font-size: 24px; line-height: 1.33; margin: 0.25rem 0; }
+/* badges: icon + label, never color-alone */
+.badge { display: inline-block; font-size: 14px; font-weight: 600; border: 1px solid var(--border); border-radius: 999px; padding: 2px 12px; margin-right: 8px; white-space: nowrap; }
+.badge.ok { color: var(--ok); border-color: var(--ok); }
+.badge.bad { color: var(--bad); border-color: var(--bad); }
+.badge.warn { color: var(--warn); border-color: var(--warn); }
+.badge.mock { color: var(--text-2); border-color: var(--text-2); border-style: dashed; }
+.badge.real { color: var(--ok); border-color: var(--ok); }
+/* REAL vs MOCK blocks */
+.block-real { border-left: 3px solid var(--ok); padding-left: 16px; margin: 12px 0; }
+.block-mock { border: 1px dashed var(--text-2); border-radius: var(--radius-card); padding: 12px 16px; margin: 12px 0; color: var(--text-2); }
+.block-pending { border-left: 3px solid var(--warn); padding-left: 16px; margin: 12px 0; }
+.block-error { border-left: 3px solid var(--bad); padding-left: 16px; margin: 12px 0; }
+/* evidence rows */
+.evrows { display: grid; grid-template-columns: 1fr; gap: 4px; margin: 12px 0; padding: 12px; background: var(--surface-2); border-radius: var(--radius-input); font-size: 14px; }
+.evrow { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+.evrow .k { color: var(--text-2); }
+.evrow .over { color: var(--bad); font-weight: 600; }
+.evrow .under { color: var(--ok); }
+.hash { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--text-2); word-break: break-all; }
+.meta { font-size: 14px; color: var(--text-2); }
+a { color: #7c8cf8; }
+button { background: var(--accent); color: #fff; border: none; padding: 12px 20px; min-height: 44px; border-radius: var(--radius-btn); cursor: pointer; margin: 4px 8px 4px 0; font-size: 16px; }
+button.secondary { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
-input, select, textarea { width: 100%; padding: 0.5rem; margin: 0.5rem 0; background: #222; color: #eee; border: 1px solid #333; border-radius: 4px; }
-.verdict-breach { color: #ef4444; font-weight: bold; } .verdict-ok { color: #22c55e; font-weight: bold; } .verdict-inconclusive { color: #eab308; }
-.hash { font-family: monospace; font-size: 0.85em; color: #999; }
-a { color: #60a5fa; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input, select, textarea { width: 100%; padding: 12px; min-height: 44px; margin: 4px 0 8px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-input); font-size: 16px; font-family: inherit; }
+input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--bad); }
+.field-hint { font-size: 14px; color: var(--text-2); margin: 0 0 4px; }
+.field-error { font-size: 14px; color: var(--bad); margin: 0 0 8px; }
+label { display: block; font-size: 14px; font-weight: 600; margin-top: 8px; }
+.confbar { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin: 8px 0 4px; max-width: 320px; }
+.confbar > div { height: 100%; background: var(--accent); }
+details { margin: 8px 0; }
+details summary { cursor: pointer; color: var(--text-2); font-size: 14px; min-height: 44px; display: flex; align-items: center; }
+.skeleton { background: linear-gradient(90deg, var(--surface-2) 25%, #242424 50%, var(--surface-2) 75%); background-size: 200% 100%; border-radius: 4px; min-height: 20px; margin: 8px 0; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+.pulsing { animation: pulse 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .pulsing { animation: none; } * { transition: none !important; } }
+.rep-score { font-size: 32px; line-height: 1.25; font-weight: 700; margin: 0; }
+.copybtn { background: transparent; border: 1px solid var(--border-strong); color: var(--text-2); font-size: 14px; padding: 8px 12px; min-height: 44px; }
+nav.toc { font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
+nav.toc a { margin-right: 12px; }
+@media (max-width: 720px) { .verdict-result { font-size: 20px; } }
+@media (max-width: 640px) {
+  body { padding: 12px; }
+  .card { padding: 16px; }
+  h1 { font-size: 24px; }
+  button { width: 100%; margin: 4px 0; }
+}
 </style>
 </head>
 <body>
-<h1>ProveDown — Functional SLO Attestation</h1>
-<p>Verification layer for agreements between autonomous systems. Wedge: functional SLO quality bundle. Not uptime monitoring.</p>
+<h1>ProveDown — did the service keep its agreement?</h1>
+<p class="subtitle">Neutral verification for machine-to-machine service quality. A GenLayer jury checks what your API actually delivered against what was agreed — with proof attached. Not uptime monitoring.</p>
+<ol class="steps" aria-label="How it works">
+  <li><b>1. Define</b> the agreement</li>
+  <li><b>2. Verify</b> with an independent jury</li>
+  <li><b>3. Act</b> on the verdict with proof</li>
+</ol>
+<nav class="toc" aria-label="Sections">
+  <a href="#setup">Setup</a><a href="#workspace">Verify</a><a href="#verdictCard">Verdict</a><a href="#reputationCard">Reliability</a><a href="#proofCard">Proof</a>
+</nav>
 
-<div class="card">
-<h3>1. Register SLA</h3>
-<label>SLA ID <input id="slaId" value="demo-healthy"></label>
-<label>API URL <input id="apiUrl" value="https://example.com"></label>
-<label>Bundle URL <select id="bundlePreset"><option value="no_breach">no_breach (healthy p95 1600 fill 0.95)</option><option value="breach">breach (p95 4800 fill 0.72)</option><option value="ambig">ambig (p95 2100 near threshold)</option><option value="empty">empty (inconclusive)</option></select></label>
-<label>SLO JSON <textarea id="sloJson" rows="3">{"p95_threshold":2000,"error_threshold":0.01,"fill_threshold":0.80,"match_threshold":0.85}</textarea></label>
-<button id="registerBtn">Register SLA</button>
-<div id="registerStatus"></div>
+<div class="card" id="setup" aria-labelledby="setupH">
+<h2 id="setupH">1. Define the agreement</h2>
+<p class="meta">What "good service" means, written once. The jury judges future evidence against these numbers.</p>
+<label for="slaId">Agreement ID</label>
+<p class="field-hint">A unique name for this agreement, e.g. <code>demo-healthy</code>.</p>
+<input id="slaId" value="demo-healthy" autocomplete="off">
+<p class="field-error" id="slaIdError" hidden>Agreement ID can't be empty.</p>
+<label for="apiUrl">API being measured</label>
+<input id="apiUrl" value="https://example.com" inputmode="url" autocomplete="off">
+<label for="bundlePreset">Evidence bundle to verify</label>
+<p class="field-hint">Each option is a fixed, hash-stable measurement bundle. Breach means: p95 over limit + 500ms, or error rate over limit, or fill/match under limit.</p>
+<select id="bundlePreset">
+<option value="no_breach">Healthy — p95 1600ms, fill 95%: expect NO_BREACH</option>
+<option value="breach">Degraded — p95 4800ms, fill 72%: expect BREACH</option>
+<option value="ambig">Borderline — p95 2100ms, near the limit: expect a close call</option>
+<option value="empty">Missing data — all metrics empty: expect INCONCLUSIVE</option>
+</select>
+<label for="sloJson">Service-quality thresholds (JSON)</label>
+<p class="field-hint">p95_threshold in ms (+500ms tolerance applied by the jury), error_threshold as a fraction, fill_threshold and match_threshold as fractions.</p>
+<textarea id="sloJson" rows="3" aria-describedby="sloHint sloError">{"p95_threshold":2000,"error_threshold":0.01,"fill_threshold":0.80,"match_threshold":0.85}</textarea>
+<p class="field-error" id="sloError" hidden>SLO must be JSON with p95_threshold, error_threshold, fill_threshold and match_threshold.</p>
+<button id="registerBtn">Preview bundle &amp; prepare registration</button>
+<div id="registerStatus" aria-live="polite"></div>
 </div>
 
-<div class="card">
-<h3>2. Request Attestation (GenLayer Jury)</h3>
-<button id="attestBtn">Request Attestation → Jury: web.render bundle + exec_prompt → consensus</button>
-<div id="attestStatus"></div>
+<div class="card" id="workspace" aria-labelledby="workspaceH">
+<h2 id="workspaceH">2. Verify with the jury</h2>
+<p class="meta">Five independent GenLayer validators fetch the bundle themselves and must agree. Fee-aware writes on Studio Next 61997, tracked to FINALIZED (ACCEPTED alone doesn't count).</p>
+<button id="refreshBtn" class="secondary">Refresh live results</button>
+<button id="attestBtn">Request new attestation</button>
+<div id="attestStatus" aria-live="polite"></div>
+<div id="tracker" hidden></div>
 </div>
 
-<div class="card">
-<h3>3. Verdict & Evidence</h3>
-<div id="verdict">No attestation yet.</div>
+<div class="card" id="verdictCard" aria-labelledby="verdictH">
+<h2 id="verdictH">3. Verdict</h2>
+<div id="verdict" aria-live="polite">
+  <div class="skeleton" style="width:60%"></div>
+  <div class="skeleton" style="width:90%"></div>
+  <div class="skeleton" style="width:40%"></div>
+</div>
+</div>
+
+<div class="card" id="reputationCard" aria-labelledby="repH">
+<h2 id="repH">Reliability record</h2>
+<div id="reputation" aria-live="polite">
+  <div class="skeleton" style="width:40%"></div>
+</div>
+</div>
+
+<div class="card" id="proofCard" aria-labelledby="proofH">
+<h2 id="proofH">Proof</h2>
 <div id="explorer"></div>
-<div id="reputation"></div>
-</div>
-
-<div class="card">
-<h3>Demo Presets</h3>
-<p>All bundles from <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code> — hash-stable 116 chars 1/8 not 5/5. Not paywall/captcha (Gym direct).</p>
+<details>
+<summary>Demo presets and what each proves</summary>
 <ul>
-<li><b>Healthy</b> → no_breach preset → <span class="verdict-ok">NO_BREACH</span> confidence ~980-1000, hash 64e6..., p95 1600</li>
-<li><b>Breach</b> → breach preset → <span class="verdict-breach">BREACH</span> confidence ~999-1000, hash b4fc..., p95 4800, reason LATENCY (HTTP 200 but fill 72% &lt; 80% — this is the Uptime differentiator)</li>
-<li><b>Ambig</b> → near threshold → borderline verdict or no_consensus (honest split)</li>
-<li><b>Empty</b> → <span class="verdict-inconclusive">INCONCLUSIVE</span> conf 0 — missing metrics never become definitive</li>
+<li><b>Healthy</b> → <span class="badge ok">● NO_BREACH</span> confidence ~980, hash 64e6…, p95 1600ms</li>
+<li><b>Degraded</b> → <span class="badge bad">● BREACH</span> confidence ~1000, hash b4fc…, p95 4800ms, reason LATENCY. Same HTTP 200 as healthy — but fill 72% is below the agreed 80%. This is the difference from uptime monitoring.</li>
+<li><b>Borderline</b> → close call or honest split (amber, retryable)</li>
+<li><b>Missing data</b> → <span class="badge warn">■ INCONCLUSIVE</span> confidence 0 — missing metrics never become a verdict</li>
 </ul>
-<p><b>Real vs Mock:</b> PRIMARY is Studio Next 61997 (`genlayer-js@2.0.0-rc.1`, fee-aware writes, `isSuccessful` = FINALIZED + FINISHED_WITH_RETURN). Bradbury 4221 `0x72a6...` kept as compatibility evidence only. Mocked bridge arrow to Base is labeled mock — never a real Hyperlane tx. Verdicts above are live studio-dev reads where available.</p>
-<p><b>Why not just Uptime?</b> Uptime checks factual reachability (`GET 200` → UP via strict consensus). ProveDown checks the functional obligation: same HTTP 200 with <b>fill 72% vs required 80% → BREACH</b> (see breach preset: p95 4800, fill 0.72, reason LATENCY, conf 999). Evidence hash + confidence + breach reason + reputation — not just up/down.</p>
+<p class="meta">Bundles: <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code> — fixed content, hash-stable, no timestamps.</p>
+</details>
+<details>
+<summary>Why not just uptime monitoring?</summary>
+<p>Uptime checks factual reachability (<code>GET 200</code> → UP). ProveDown checks the functional obligation: the same HTTP 200 with <b>fill 72% vs required 80% → BREACH</b>, with evidence hash, confidence, breach reason and a reliability record — not just up/down.</p>
+</details>
+<details>
+<summary>What is real and what is mocked?</summary>
+<p><span class="badge real">✓ VERIFIED</span> Studio Next contract, jury consensus, attestations, evidence hashes, reliability record, explorer transactions.</p>
+<p><span class="badge mock">○ MOCK</span> Base relay / cross-chain settlement arrow, future live probe poller, SSE fallback stream. Mocked parts never look like verified results.</p>
+</details>
 </div>
 
 <script type="module">
@@ -60,97 +182,212 @@ import { createClient, isSuccessful } from "https://esm.sh/genlayer-js@2.0.0-rc.
 import { studioDevnet } from "https://esm.sh/genlayer-js@2.0.0-rc.1/chains";
 
 // PRIMARY hackathon target: Studio Next 61997 (Consensus v0.6 RC). Bradbury 0x72a6... kept as compatibility evidence only.
-const CONTRACT = "0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF"; // studio-dev 61997, deploy tx 0x5a34f359d575b4e74742ccc3ec7ea2e1d919911be90c47b9fdb125b53837a782 FINALIZED FINISHED_WITH_RETURN
+const CONTRACT = "0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF";
 const EXPLORER = "https://explorer-studio-dev.genlayer.com";
 const WORKER_BASE = "https://provedown-bundle.contentbounty.workers.dev/bundle";
 const CHAIN_ID = 61997;
+const KNOWN_TX = {
+  deploy: '0x5a34f359d575b4e74742ccc3ec7ea2e1d919911be90c47b9fdb125b53837a782',
+  regHealthy: '0xfbad72095fa21c3b6438bcb78143121f65c73a36e1add67c1e081a7b543db817',
+  regBreach: '0x91721ba5a9338ebb7281ebb32f2c049479afc2d1ac85714ca95d39ebaa60a047',
+  regEmpty: '0x15832858c70c49c96da9523e6be5a79eba4f1cf659335cdec5895a90d754e6e1',
+  attHealthy: '0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497',
+  attBreach: '0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383',
+  attEmpty: '0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43'
+};
+const CASE_TX = { '1': KNOWN_TX.attHealthy, '2': KNOWN_TX.attBreach, '3': KNOWN_TX.attEmpty };
 
-// Use private key from env for demo — in production use injected wallet. For hackathon, use deployer key via backend.
-// For now, frontend uses read-only + will prompt for private key if needed (never commit).
-let client = null;
-let account = null;
+function badge(kind, label) {
+  // Single badge component: icon + text, never color-alone.
+  const icons = { ok: '●', bad: '●', warn: '■', pending: '◐', mock: '○', real: '✓', fail: '✗' };
+  return `<span class="badge ${kind}">${icons[kind] || '●'} ${label}</span>`;
+}
+function txLink(tx) {
+  return tx ? ` <a href="${EXPLORER}/tx/${tx}" target="_blank" rel="noopener">${tx.slice(0, 10)}…</a>` : '';
+}
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+async function copyText(t, btn) {
+  try { await navigator.clipboard.writeText(t); btn.textContent = 'Copied'; }
+  catch (e) { btn.textContent = 'Copy failed'; }
+  setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+}
+window.copyText = copyText;
 
 function getBundleUrl(preset) {
-  const sla = document.getElementById('slaId').value || 'demo';
+  const sla = (document.getElementById('slaId').value || 'demo').trim() || 'demo';
   return `${WORKER_BASE}?preset=${preset}&sla=${encodeURIComponent(sla)}`;
 }
+function defaultSlo() {
+  try { return JSON.parse(document.getElementById('sloJson').value); }
+  catch (e) { return { p95_threshold: 2000, error_threshold: 0.01, fill_threshold: 0.80, match_threshold: 0.85 }; }
+}
+
+// --- form validation: block confusing submits before they happen ---
+function validateSetup() {
+  let ok = true;
+  const idOk = document.getElementById('slaId').value.trim().length > 0;
+  document.getElementById('slaId').setAttribute('aria-invalid', String(!idOk));
+  document.getElementById('slaIdError').hidden = idOk;
+  if (!idOk) ok = false;
+  let sloOk = true, slo = null;
+  try {
+    slo = JSON.parse(document.getElementById('sloJson').value);
+    for (const f of ['p95_threshold', 'error_threshold', 'fill_threshold', 'match_threshold']) {
+      if (!(f in slo)) { sloOk = false; break; }
+    }
+  } catch (e) { sloOk = false; }
+  document.getElementById('sloJson').setAttribute('aria-invalid', String(!sloOk));
+  document.getElementById('sloError').hidden = sloOk;
+  if (!sloOk) ok = false;
+  document.getElementById('registerBtn').disabled = !ok;
+  document.getElementById('registerBtn').title = ok ? '' : 'Fix the highlighted fields first';
+  return ok;
+}
+document.getElementById('slaId').addEventListener('input', validateSetup);
+document.getElementById('sloJson').addEventListener('input', validateSetup);
 
 document.getElementById('bundlePreset').addEventListener('change', e => {
   const preset = e.target.value;
-  document.getElementById('registerStatus').textContent = `Bundle URL will be ${WORKER_BASE}?preset=${preset}`;
+  document.getElementById('registerStatus').innerHTML = `<p class="meta">Evidence will come from <code class="hash">${esc(WORKER_BASE)}?preset=${esc(preset)}</code> — fixed content the jury fetches independently.</p>`;
 });
 
 document.getElementById('registerBtn').onclick = async () => {
+  if (!validateSetup()) return;
   const slaId = document.getElementById('slaId').value.trim();
-  const apiUrl = document.getElementById('apiUrl').value.trim();
   const preset = document.getElementById('bundlePreset').value;
   const bundleUrl = getBundleUrl(preset);
-  const sloJson = document.getElementById('sloJson').value.trim();
-  document.getElementById('registerStatus').textContent = `Registering ${slaId} → ${bundleUrl} ...`;
-  // For demo, show bundle that will be fetched
+  const box = document.getElementById('registerStatus');
+  box.innerHTML = `<div class="block-pending pulsing">${badge('pending', 'CHECKING EVIDENCE')} Fetching bundle preview…</div>`;
   try {
     const bundleResp = await fetch(bundleUrl);
+    if (!bundleResp.ok) throw new Error(`Worker answered HTTP ${bundleResp.status}`);
     const bundle = await bundleResp.json();
-    document.getElementById('registerStatus').innerHTML = `Bundle preview: <code class="hash">${JSON.stringify(bundle).slice(0,120)}...</code><br>Hash would be sha256:${await hashBundle(JSON.stringify(bundle))} (like 64e6... for no_breach)<br>Ready to register <b>${slaId}</b> — in live mode this writes to <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${CONTRACT.slice(0,10)}...</a>`;
-  } catch(e){ document.getElementById('registerStatus').textContent = `Bundle fetch failed: ${e.message} — will be INCONCLUSIVE if jury fetches empty`; }
+    const keys = ['p50', 'p95', 'error', 'fill', 'match'].map(k => `${k}: ${bundle[k] === null || bundle[k] === undefined ? 'missing' : esc(bundle[k])}`).join(' · ');
+    box.innerHTML = `<div class="block-real">${badge('real', 'EVIDENCE READY')} Bundle preview: <code class="hash">${esc(JSON.stringify(bundle).slice(0, 140))}…</code><br><span class="meta">${keys}</span><br>To register <b>${esc(slaId)}</b> on Studio Next, use a wallet or run <code>GENLAYER_PRIVATE_KEY=... node scripts/attest-studio-dev.mjs</code> — writes carry fees and finalize on <a href="${EXPLORER}/address/${CONTRACT}" target="_blank" rel="noopener">the contract</a>.</div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="block-error">${badge('fail', 'EVIDENCE UNAVAILABLE')} The bundle endpoint didn't answer (${esc(e.message.slice(0, 100))}). The jury would return INCONCLUSIVE — nothing would be decided. <button class="secondary" onclick="document.getElementById('registerBtn').click()">Retry</button></div><details><summary>Technical details</summary><code class="hash">${esc(e.message.slice(0, 300))}</code></details>`;
+  }
 };
 
 async function hashBundle(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
 }
 
+// --- verdict rendering: result first, proof second, always labeled ---
 function verdictHtml(att, tx) {
-  const link = tx ? ` <a href="${EXPLORER}/tx/${tx}" target="_blank">${tx.slice(0,10)}...</a>` : '';
-  if (!att) return `No attestation yet.`;
-  if (att.status === 'inconclusive') return `<span class="verdict-inconclusive">INCONCLUSIVE</span> — jury could not fetch bundle (retry).${link}`;
-  if (att.status === 'no_consensus') return `<span class="verdict-inconclusive">NO_CONSENSUS (UNDETERMINED)</span> — honest validator split at threshold (retry with adjusted SLO).${link}`;
-  const cls = att.breach ? 'verdict-breach' : 'verdict-ok';
-  const label = att.breach ? `BREACH (${att.reason})` : `NO_BREACH (${att.reason})`;
-  return `<span class="${cls}">${label}</span> conf ${att.confidence}/1000, p50 ${att.p50}, p95 ${att.p95}<br><span class="hash">sha256:${att.evidence_hash} — ${att.evidence_summary}</span>${link}`;
+  const link = txLink(tx);
+  if (!att) return `<div class="block-error">${badge('fail', 'NO RESULT')} Nothing stored under this ID yet.${link}</div>`;
+  if (att.status === 'inconclusive') return `<div class="block-pending">${badge('warn', 'INCONCLUSIVE')} The jury could not judge this evidence — missing or invalid measurements. <b>Nothing was decided about service quality.</b> Fix the bundle and retry.${link}<br><span class="meta">Reason: ${esc(att.reason)} · confidence ${esc(att.confidence)}/1000</span></div>`;
+  if (att.status === 'no_consensus') return `<div class="block-pending">${badge('warn', 'NO CONSENSUS')} Validators honestly disagreed at the threshold — the system refused to force a verdict. Retry, or adjust the SLO. ${link}</div>`;
+  const cls = att.breach ? 'is-breach' : 'is-ok';
+  const pill = att.breach ? badge('bad', `BREACH (${esc(att.reason)})`) : badge('ok', `NO_BREACH (${esc(att.reason)})`);
+  const sentence = att.breach
+    ? `The service breached the agreement.`
+    : `The service met the agreement.`;
+  const conf = Math.max(0, Math.min(1000, Number(att.confidence) || 0));
+  return `<div class="verdict-block ${cls}"><div class="verdict-result">${pill}</div>`
+    + `<p>${sentence}</p>`
+    + `<div class="confbar" role="img" aria-label="confidence ${conf} out of 1000"><div style="width:${(conf / 10).toFixed(1)}%"></div></div>`
+    + `<p class="meta">Confidence ${conf}/1000 · p50 ${esc(att.p50)} · p95 ${esc(att.p95)}</p>`
+    + `<div class="evrows" data-bundle-url="${esc(bundleUrlOf(att))}"><div class="evrow"><span class="k">Bundle detail</span><span>loading…</span></div></div>`
+    + `<p><span class="hash">Evidence fingerprint sha256:${esc(att.evidence_hash)} — ${esc(att.evidence_summary)}</span> <button class="copybtn" onclick="copyText('${esc(att.evidence_hash)}', this)">Copy</button>${link}</p></div>`;
 }
 
-// Live studio-dev reads (v2 RC, no wallet needed). Contract 0xeE85... deployed 0x5a34...,
-// hardened-guard version. Real txs:
-// register healthy 0xfbad72095fa21c3b6438bcb78143121f65c73a36e1add67c1e081a7b543db817,
-// register breach 0x91721ba5a9338ebb7281ebb32f2c049479afc2d1ac85714ca95d39ebaa60a047,
-// register empty 0x15832858c70c49c96da9523e6be5a79eba4f1cf659335cdec5895a90d754e6e1,
-// attest healthy 0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497 (NO_BREACH conf 980 hash 64e6c84f01418b89 p95 1600),
-// attest breach 0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383 (BREACH conf 1000 hash b4fc2013862e316e p95 4800 reason LATENCY),
-// attest empty 0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43 (INCONCLUSIVE conf 0 — incomplete evidence, non-definitive).
+// Observed-vs-limit rows: thresholds beside measurements, breach rows marked.
+// Each holder carries its own bundle URL (parsed from the attestation's
+// evidence summary), so rows render per-case after insertion — never guessed.
+async function fillEvidenceRows() {
+  const slo = defaultSlo(), tol = 500;
+  for (const h of document.querySelectorAll('[data-bundle-url]')) {
+    let bundle = null;
+    try {
+      const r = await fetch(h.getAttribute('data-bundle-url'));
+      if (r.ok) bundle = await r.json();
+    } catch (e) { /* fall back below */ }
+    if (!bundle || bundle.p95 === null || bundle.p95 === undefined) {
+      h.innerHTML = `<div class="evrow"><span class="k">Bundle detail</span><span>unavailable — see explorer link</span></div>`;
+      continue;
+    }
+    const rows = [
+      ['p95 latency', `${bundle.p95}ms`, `≤ ${slo.p95_threshold}+${tol}ms`, bundle.p95 > slo.p95_threshold + tol],
+      ['error rate', String(bundle.error), `≤ ${slo.error_threshold}`, bundle.error >= slo.error_threshold],
+      ['fill rate', String(bundle.fill), `≥ ${slo.fill_threshold}`, bundle.fill < slo.fill_threshold],
+      ['match rate', String(bundle.match), `≥ ${slo.match_threshold}`, bundle.match < slo.match_threshold],
+    ];
+    h.innerHTML = rows.map(([k, obs, lim, over]) =>
+      `<div class="evrow"><span class="k">${k}</span><span>${esc(obs)} vs ${esc(lim)} ${over ? '<span class="over">OVER ✗</span>' : '<span class="under">OK ✓</span>'}</span></div>`
+    ).join('');
+  }
+}
+function bundleUrlOf(att) {
+  const m = /^(https:\/\/\S+?): \d+ chars/.exec(att.evidence_summary || '');
+  return m ? m[1] : '';
+}
+
+// --- live reads with truthful loading + friendly errors ---
+function setTracker(html) {
+  const t = document.getElementById('tracker');
+  if (!html) { t.hidden = true; t.innerHTML = ''; return; }
+  t.hidden = false; t.innerHTML = html;
+}
 async function liveRead() {
+  const verdictBox = document.getElementById('verdict');
+  verdictBox.innerHTML = `<div class="skeleton" style="width:40%"></div><div class="skeleton" style="width:85%"></div><div class="skeleton" style="width:65%"></div><div class="skeleton" style="width:50%"></div>`;
+  setTracker(`<div class="block-pending pulsing">${badge('pending', 'READING')} Fetching finalized verdicts from Studio Next 61997…</div>`);
   const client = createClient({ chain: studioDevnet });
   try {
     const rep = await client.readContract({ address: CONTRACT, functionName: 'get_reputation', args: ['https://example.com'] });
-    document.getElementById('reputation').innerHTML = `Reputation (live studio-dev 61997): score <b>${rep.score}</b> total ${rep.total} breaches ${rep.breaches} — <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">contract</a>. Mock bridge arrow to Base VerdictRegistry (AgentEscrow pattern) — not real Hyperlane tx.`;
-  } catch(e){ document.getElementById('reputation').textContent = `Reputation read failed: ${e.message.slice(0,120)}`; }
-  const cases = [['1','0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497'],['2','0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383'],['3','0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43']];
+    document.getElementById('reputation').innerHTML = `<p class="rep-score">${rep.score}<span class="meta"> / 100</span></p><p>${badge('real', 'VERIFIED')} ${rep.total} checks · ${rep.breaches} breaches — <a href="${EXPLORER}/address/${CONTRACT}" target="_blank" rel="noopener">contract</a>.</p><div class="block-mock">${badge('mock', 'MOCK')} Cross-chain settlement is a diagram for now, not a transaction. Attestations above are real.</div>`;
+  } catch (e) {
+    document.getElementById('reputation').innerHTML = `<div class="block-error">${badge('fail', 'NETWORK ISSUE')} Couldn't reach Studio Next (${esc(e.message.slice(0, 100))}). Your data is safe — <button class="secondary" onclick="liveRead()">Retry</button></div><details><summary>Technical details</summary><code class="hash">${esc(e.message.slice(0, 300))}</code></details>`;
+  }
+  const cases = [['1', KNOWN_TX.attHealthy, 'Healthy'], ['2', KNOWN_TX.attBreach, 'Degraded'], ['3', KNOWN_TX.attEmpty, 'Missing data']];
   const blocks = [];
-  for (const [id, tx] of cases) {
+  let anyOk = false;
+  for (const [id, tx, name] of cases) {
     try {
       const att = await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [id] });
-      blocks.push(`<b>Case ${id}</b>: ` + verdictHtml(att, tx));
-    } catch(e){ blocks.push(`<b>Case ${id}</b>: not yet stored (${e.message.slice(0,60)})`); }
+      blocks.push(`<h3>Case ${id} — ${name}</h3>` + verdictHtml(att, tx));
+      anyOk = true;
+    } catch (e) {
+      blocks.push(`<h3>Case ${id} — ${name}</h3><div class="block-error">${badge('fail', 'NOT LOADED')} ${esc(e.message.slice(0, 100))} <button class="secondary" onclick="liveRead()">Retry</button></div>`);
+    }
   }
-  document.getElementById('verdict').innerHTML = blocks.join('<br><br>');
-  document.getElementById('explorer').innerHTML = `Explorer: <a href="${EXPLORER}/address/${CONTRACT}" target="_blank">${EXPLORER}/address/${CONTRACT}</a> (chain ${CHAIN_ID})<br>Bundle: ${WORKER_BASE}?preset=breach`;
+  verdictBox.innerHTML = blocks.join('');
+  await fillEvidenceRows();
+  document.getElementById('explorer').innerHTML = "";
+  setTracker(anyOk
+    ? `<div class="block-real">${badge('real', 'VERIFIED')} ${blocks.length} finalized verdicts from Studio Next 61997 — <a href="${EXPLORER}/address/${CONTRACT}" target="_blank" rel="noopener">contract</a> (FINALIZED + FINISHED_WITH_RETURN, checked via <code>isSuccessful</code>).</div>`
+    : `<div class="block-error">${badge('fail', 'NOTHING LOADED')} No verdict could be read. Check your connection, then <button class="secondary" onclick="liveRead()">Retry</button></div>`);
+  void KNOWN_TX;
 }
+window.liveRead = liveRead;
 liveRead();
+
+document.getElementById('refreshBtn').onclick = () => { liveRead(); };
 
 document.getElementById('attestBtn').onclick = async () => {
   const slaId = document.getElementById('slaId').value.trim();
+  if (!slaId) {
+    document.getElementById('attestStatus').innerHTML = `<div class="block-error">${badge('fail', 'MISSING ID')} Enter an agreement ID first — the jury needs to know which agreement to verify.</div>`;
+    return;
+  }
   // Fee-aware v2 write path (requires injected EIP-1193 wallet; else use scripts/ with GENLAYER_PRIVATE_KEY env).
   if (!window.ethereum) {
-    document.getElementById('attestStatus').innerHTML = `No injected wallet detected. For live writes use <code>scripts/attest-studio-dev.mjs</code> (fee-aware: estimateTransactionFees → fees{distribution,feeValue} → waitUntil finalized → isSuccessful).<br>Showing last finalized studio-dev results below — pending → <b>FINALIZED</b> + <b>FINISHED_WITH_RETURN</b> required (ACCEPTED alone is NOT success under v0.6).`;
+    document.getElementById('attestStatus').innerHTML = `<div class="block-pending">${badge('pending', 'NO WALLET')} This browser has no wallet, so new attestations run from <code>scripts/attest-studio-dev.mjs</code> (fee-aware: estimate → submit with fees → wait for FINALIZED → <code>isSuccessful</code> check).<br>Finalized results for the three demo cases are shown below — pending means waiting on consensus, never guessed.</div>`;
     liveRead();
     return;
   }
-  document.getElementById('attestStatus').textContent = `Requesting attestation for ${slaId} — estimate fees → submit with fees{distribution,feeValue} → waitUntil finalized → isSuccessful (status + FINISHED_WITH_RETURN) ...`;
+  document.getElementById('attestStatus').innerHTML = `<div class="block-pending pulsing">${badge('pending', 'PREPARING')} Estimating fees for <b>${esc(slaId)}</b> — submit with fees{distribution, feeValue}, track to FINALIZED, verify with <code>isSuccessful</code> (status + FINISHED_WITH_RETURN) ...</div>`;
   try {
     const { createTransactionKit } = await import('https://esm.sh/@genlayer/transaction-kit@latest');
-    document.getElementById('attestStatus').textContent = `Transaction Kit loaded — connect wallet and sign (low/standard/high appeal posture). Tracking until finalized ...`;
-  } catch(e) {
-    document.getElementById('attestStatus').textContent = `Wallet path needs @genlayer/transaction-kit pinned RC (see 06-consensus-v06-migration.md). Live reads above are real studio-dev results. Error: ${e.message.slice(0,100)}`;
+    document.getElementById('attestStatus').innerHTML = `<div class="block-pending pulsing">${badge('pending', 'AWAITING SIGNATURE')} Transaction Kit loaded — connect the wallet and sign (low / standard / high appeal posture). Tracking until finalized ...</div>`;
+    void createTransactionKit;
+  } catch (e) {
+    document.getElementById('attestStatus').innerHTML = `<div class="block-error">${badge('fail', 'WALLET PATH UNAVAILABLE')} The signing library didn't load (${esc(e.message.slice(0, 100))}). Use <code>scripts/attest-studio-dev.mjs</code> instead — finalized results are shown below.</div><details><summary>Technical details</summary><code class="hash">${esc(e.message.slice(0, 300))}</code></details>`;
   }
 };
 </script>

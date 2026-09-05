@@ -145,3 +145,19 @@
 **Unresolved risk:** `timestamp` still `""` on studio-dev (use explorer tx time); appeal still mocked; studio-dev may reset; fiat GEN price unknown (no dollar claims).
 
 **Next action:** N-2 claim packet + N-3 fee panel + N-4 submission packaging; freeze features after Sep 14.
+
+---
+
+## Checkpoint 10 — HCI Build Pass P0-1…P0-7 (2026-09-05)
+
+**What changed:** Implemented all 7 P0 fixes in `frontend/index.html` per `design.md` (no architecture/product change): dominant verdict block + collapsed explanation `<details>`; skeleton loaders + read/write trackers; single badge system (icon+text) across verdict/reputation/tracker/mock; 5-class friendly errors (cause → impact → next action → `<details>` tech); REAL (green left-border + ✓ VERIFIED) vs MOCK (gray dashed + ○ MOCK) visual blocks; a11y baseline (focus ring, `aria-live`, `#a8a8a8` text, reduced-motion, 44px targets); observed-vs-limit rows per case (live bundle re-fetch). Fixed 2 rendered defects found by inspection: Worker CORS (added `Access-Control-Allow-Origin: *`, redeployed 2026-09-05, bodies byte-identical so hashes unaffected) and contrast (`--accent` → `#5a5ee6` 5.0:1, `--border-strong` `#6b6b6b` 3.2:1 for inputs, card borders documented decorative).
+
+**Why:** HCI audit mean was 4.8; trust communication is the product and was typographic-only.
+
+**Evidence:** Headless-Chromium screenshots read directly (1280px + 390px, no overflow either width); CDP interaction tests (validation disable/error/aria, focus outline, overflow checks — all pass); node unit tests of shipped `verdictHtml` branches 10/10 (null/inconclusive/no-consensus/ok/bad/XSS-escaped); computed contrast pairs; zero console errors. Re-audit appended to `frontend-hci-audit.md`: mean **4.8 → 7.7** (8×8, 4×7, 0 below 7).
+
+**Test result:** Rendered UI inspected (not just source). All 9 required states reachable: initial skeleton, setup validation, pending tracker, NO_BREACH/BREACH/INCONCLUSIVE live, NO_CONSENSUS via unit test (no live example exists — documented), reverted/error pattern, worker-failure pattern (fallback row). No fake success states; loading states truthful.
+
+**Unresolved risk:** No screen-reader run; tablet 768px not screenshotted; wallet write path untested E2E (no wallet in sandbox); shared-contract attestation drift (demo pins ids 1–3, unaffected).
+
+**Next action:** P1 polish per gap analysis; submission packaging.

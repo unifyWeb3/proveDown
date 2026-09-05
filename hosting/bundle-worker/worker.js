@@ -23,6 +23,7 @@ export default {
       headers: {
         "Content-Type": "application/json",
         "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*",
         "X-ProveDown-Bundle": sla,
         "X-ProveDown-Preset": preset
       }

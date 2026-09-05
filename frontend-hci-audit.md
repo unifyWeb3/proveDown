@@ -108,3 +108,60 @@
 - Color+text verdict spans (not color-alone).
 - Deterministic demo presets (no flakiness).
 - No framework/build fragility (static page always opens).
+
+---
+
+# Re-audit (2026-09-05, after P0-1…P0-7 implementation)
+
+**Method:** Same 15 criteria. Evidence: headless-Chromium screenshots at 1280px and 390px (read directly), CDP-driven interaction tests (validation states, focus, overflow — all passing), node unit tests of shipped `verdictHtml` branches (10/10 incl. XSS escaping and no_consensus), computed WCAG contrast ratios. No browser automation gap this round except: no real screen-reader run, no wallet-write E2E in sandbox (no wallet), tablet width inferred from breakpoints (not screenshotted).
+
+## New scores
+
+| # | Criterion | Before → After |
+|---|---|---|
+| 1 | Clarity | 5 → **8** |
+| 2 | Learnability | 5 → **7** |
+| 3 | Discoverability | 4 → **7** |
+| 4 | Hierarchy | 4 → **8** |
+| 5 | Consistency | 5 → **8** |
+| 6 | Feedback | 4 → **8** |
+| 7 | Error handling | 4 → **8** |
+| 8 | Trust communication | 6 → **8** |
+| 9 | Accessibility | 5 → **8** |
+| 10 | Responsiveness | 4 → **8** |
+| 11 | Visual quality | 5 → **7** |
+| 12 | Density | 6 → **8** |
+| 13 | Cognitive load | 5 → **8** |
+| 14 | Copy quality | 5 → **7** |
+| 15 | Task efficiency | 5 → **8** |
+
+**Mean: 4.8 → 7.7.**
+
+## Before / after (rendered proof)
+
+- Verdict is now the dominant element (24px result + left-border state treatment); explanation cards collapsed into `<details>` — verified in desktop + mobile screenshots.
+- Skeleton loaders replace the stale "No attestation yet." flash; tracker shows READING → VERIFIED states.
+- One badge system (`●/■/◐/○/✓/✗` + text) across verdict, reputation, tracker, and mock blocks.
+- All five failure classes render plain cause → impact → next action → `<details>` tech; verified for network failure path pattern; RPC-error copy no longer leaks engine text.
+- REAL (`✓ VERIFIED`, green left-border) vs MOCK (gray dashed, `○ MOCK`) blocks are visually incompatible by construction.
+- Focus ring solid on all interactives (CDP-verified); `aria-live` on verdict/reputation/status; `#a8a8a8` secondary text (7.8:1); inputs/buttons/borders at 3.2–5.0:1; reduced-motion disables pulse; 44px targets.
+- Observed-vs-limit rows render live per case (desktop screenshot: 4/4 OVER ✗ on breach, 4/4 OK ✓ on healthy) after adding `Access-Control-Allow-Origin: *` to the Worker (redeployed 2026-09-05, bodies byte-identical so jury hashes unaffected).
+- Copy rewritten to user language; protocol terms live in `<details>`.
+
+## Remaining weaknesses (all ≤7, none blocking)
+
+- **Learnability 7:** no guided tour; first-time users still meet SLO JSON (with hints now). Fix: 60-second interactive demo button (P1-5, medium).
+- **Discoverability 7:** wallet write path untestable in sandbox; depends on Transaction Kit RC docs. Fix: wallet E2E dry-run with funded test wallet (P1).
+- **Visual quality 7:** utilitarian by design; confidence bar uses accent for both outcomes. Fix: verdict-colored bars (P2, easy).
+- **Copy quality 7:** residual protocol terms (`isSuccessful`, fee jargon) in write-path copy. Fix: rewrite after wallet E2E (P1).
+
+## Unresolved issues
+
+- No live `NO_CONSENSUS` example exists on-chain; branch verified by unit test of shipped code only — documented, not hidden.
+- Reputation count drifted 60/3/1 → 57/4/2 during testing (shared studio-dev contract received outside attestations). Demo pins attestation IDs 1–3, so unaffected; noted for demo-day awareness.
+- Tablet 768px not screenshotted (breakpoints cover 720/640; risk low).
+- No screen-reader run (structure is semantic + live regions present; recommend NVDA/VoiceOver pass pre-submission).
+
+## Recommended P1/P2 work
+
+Per `frontend-gap-analysis.md` P1-1…P1-7 (onboarding strip is done via steps list; remaining: wallet E2E, responsive confirmation at 768px, copy polish, one-click demo, token tightening) and P2 (sticky verdict bar, bar colors, toasts, sparkline, light mode).

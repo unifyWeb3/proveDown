@@ -99,3 +99,13 @@
 **Test:** N/A. Existing E2E evidence unchanged (`EVIDENCE.md`).
 
 **Next:** Build phase per `design.md` P0 set, then re-audit.
+
+---
+
+## [0.5.0] — 2026-09-05 — Productization + Phase-0 re-verification (no implementation)
+
+**Changed:** 12 productization docs (thesis → system → workflow → CORE_NOW/PLATFORM_VISION → roadmap → business/competitive/metrics → post-hackathon → decision) + 5 build-prep docs (interface contract, downstream action, build queue, fee economics, claim packet). Fresh Studio Next E2E: atts 4/5/6 FINALIZED (`0x68cf…`/`0x9f31…`/`0x67a8…`), reputation 57/4/2, fee estimate unchanged. No contract/frontend/worker code modified.
+
+**Evidence:** `EVIDENCE.md` re-verification section; `pytest` 9 passed; lint 2 known false-positive advisories.
+
+**Test:** E2E RE-VERIFIED (reads byte-identical, writes 3/3 FINALIZED 43–111s).

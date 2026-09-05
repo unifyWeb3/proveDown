@@ -24,6 +24,18 @@ All 6 writes + 3 attestations: FINALIZED + FINISHED_WITH_RETURN + `isSuccessful`
 
 Reputation: `{"api_url":"https://example.com","breaches":1,"score":60,"total":2}` (resolved attestations only — inconclusive excluded; Bayesian (1 good +2)/(2 total +3) = 3/5 = 60 ✓).
 
+## Re-verification 2026-09-05 (fresh writes, same contract — no reset)
+
+Read-only check: SLAs demo-healthy/breach/empty present, atts 1/2/3 byte-identical to above, chain 61997, SDK `genlayer-js@2.0.0-rc.1`, Worker presets hash-stable (`b4fc2013…`/`64e6c84f…` 2/2).
+
+| Case | Attest tx (FINALIZED + FINISHED_WITH_RETURN + isSuccessful) | Att | Verdict | Conf | Hash | Latency req→FINALIZED |
+|---|---|---|---|---|---|---|
+| A healthy | `0x68cf3412b4db4f32e1d8d594d1191fb4c6faa7800c9e1ac2ec26947044890a03` | 4 | NO_BREACH | 950 | `64e6c84f…` | 111s |
+| B breach | `0x9f311b965d2c436fbb1e6eff7f56dcb56cbc0d90e8b777b280227e4d90c3f4fc` | 5 | BREACH LATENCY | 1000 | `b4fc2013…` | 44s |
+| C empty | `0x67a88f200c7264bded15954b2c343f86b30c8007ae3950573e0a09d9ca751cd3` | 6 | inconclusive UNAVAILABLE | 0 | (refused) | 43s |
+
+Reputation after: `{"score":57,"total":4,"breaches":2}` — Bayesian (2 good +2)/(4+3) = 4/7 = 57 ✓. Fee estimate unchanged `feeValue=100000000000010352`. Explorer: `https://explorer-studio-dev.genlayer.com/tx/<hash>`. Frontend `index.html` points at `0xeE85…`/61997/`studioDevnet` (verified via grep, not modified).
+
 ## Worker
 
 - URL: `https://provedown-bundle.contentbounty.workers.dev/bundle`

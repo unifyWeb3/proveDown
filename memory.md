@@ -129,3 +129,19 @@
 **Unresolved risk:** Scores are single-evaluator heuristic review, not user testing — validate with 1-2 real user walkthroughs during build.
 
 **Next action:** Build phase implements P0-1..P0-7 per `design.md`, then re-audit.
+
+---
+
+## Checkpoint 9 — Productization + Phase-0 Re-verification (2026-09-05)
+
+**What changed:** Wrote 12 productization docs (`PRODUCT-THESIS/SYSTEM`, `CUSTOMER-WORKFLOW`, `CORE_NOW`, `PLATFORM_VISION`, `ROADMAP`, `IMPLEMENTATION-ORDER`, `BUSINESS-MODEL`, `COMPETITIVE-POSITION`, `PRODUCT-METRICS`, `POST-HACKATHON`, `DECISION-LOG` D-01..D-06, `ROADMAP-DECISION`) + 5 build-prep docs (`PRODUCT-INTERFACE-CONTRACT`, `DOWNSTREAM-ACTION`, `NEXT-BUILD-QUEUE`, `FEE-ECONOMICS`, `CLAIM-PACKET`). Re-ran full E2E on Studio Next with **fresh writes** (not old hashes): atts 4 (NO_BREACH 950), 5 (BREACH 1000 LATENCY), 6 (INCONCLUSIVE 0), all FINALIZED + isSuccessful; reputation 57/4/2 formula-verified; fee estimate unchanged. No contract/frontend/worker modifications (HCI session owns `frontend/index.html` + `design.md` + Worker CORS line — left untouched, alignment verified via structural grep: all 4 verdict states + REAL/MOCK + fees + reputation + explorer present).
+
+**Why:** Productization converts proven core into ordered build queues; fresh-tx re-verification proves the workspace still works (old hashes alone insufficient per operating rules).
+
+**Evidence:** Txs `0x68cf…`/`0x9f31…`/`0x67a8…` FINALIZED FINISHED_WITH_RETURN isSuccessful=true, `EVIDENCE.md` re-verification section, `pytest` 9 passed, lint 2 known false-positive advisories (proven on-chain ×12 txs).
+
+**Test result:** E2E RE-VERIFIED. Worker 4/4 presets 200 + hash-stable; reads (SLAs + atts 1-3 byte-identical, no reset); writes 3/3 FINALIZED 43–111s.
+
+**Unresolved risk:** `timestamp` still `""` on studio-dev (use explorer tx time); appeal still mocked; studio-dev may reset; fiat GEN price unknown (no dollar claims).
+
+**Next action:** N-2 claim packet + N-3 fee panel + N-4 submission packaging; freeze features after Sep 14.

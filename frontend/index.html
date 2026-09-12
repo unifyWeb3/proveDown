@@ -2,394 +2,702 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ProveDown — Did the service keep its agreement?</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="description" content="ProveDown verifies whether a machine-to-machine service agreement was fulfilled, with evidence and GenLayer proof attached.">
+<meta property="og:title" content="ProveDown - functional service verification">
+<meta property="og:description" content="HTTP 200 is reachability, not proof of functional fulfillment.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ProveDown - functional service verification">
+<meta name="twitter:description" content="Agreement, observed evidence, GenLayer decision, proof, and reputation in one read-only workspace.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%235a5ee6'/%3E%3Cpath d='M8 8h16v4H12v4h9v4h-9v4H8z' fill='white'/%3E%3C/svg%3E">
+<title>ProveDown - did the service keep its agreement?</title>
 <style>
 :root {
   --bg: #0a0a0a;
   --surface: #141414;
   --surface-2: #1c1c1c;
+  --surface-3: #242424;
   --border: #333333;
   --border-strong: #6b6b6b;
   --text: #ededed;
   --text-2: #a8a8a8;
-  --accent: #5a5ee6;
+  --text-3: #7d7d7d;
+  --accent: #7c8cf8;
+  --accent-strong: #5a5ee6;
   --ok: #22c55e;
   --bad: #ef4444;
   --warn: #eab308;
+  --real: #34d399;
   --radius-card: 8px;
   --radius-btn: 6px;
   --radius-input: 4px;
 }
 * { box-sizing: border-box; }
-body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 960px; margin: 0 auto; padding: 1rem; background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.5; }
-h1 { font-size: 32px; line-height: 1.25; margin: 1.5rem 0 0.5rem; }
-.subtitle { color: var(--text-2); font-size: 16px; margin: 0 0 1rem; max-width: 60ch; }
-h2 { font-size: 20px; line-height: 1.4; margin: 0 0 0.75rem; }
-h3 { font-size: 16px; margin: 1rem 0 0.5rem; }
-p { margin: 0.5rem 0; }
-.steps { display: flex; gap: 8px; list-style: none; padding: 0; margin: 1rem 0 2rem; font-size: 14px; color: var(--text-2); flex-wrap: wrap; }
-.steps li { border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; }
-.steps li b { color: var(--text); }
-.card { border: 1px solid var(--border); padding: 24px; margin: 24px 0; border-radius: var(--radius-card); background: var(--surface); }
-.card h2 { margin-top: 0; }
-/* verdict dominance */
-#verdictCard { padding: 24px; }
-.verdict-block { border-left: 3px solid var(--border); padding: 4px 0 4px 16px; margin: 16px 0; }
-.verdict-block.is-breach { border-left-color: var(--bad); }
-.verdict-block.is-ok { border-left-color: var(--ok); }
-.verdict-block.is-warn { border-left-color: var(--warn); }
-.verdict-result { font-size: 24px; line-height: 1.33; margin: 0.25rem 0; }
-/* badges: icon + label, never color-alone */
-.badge { display: inline-block; font-size: 14px; font-weight: 600; border: 1px solid var(--border); border-radius: 999px; padding: 2px 12px; margin-right: 8px; white-space: nowrap; }
-.badge.ok { color: var(--ok); border-color: var(--ok); }
-.badge.bad { color: var(--bad); border-color: var(--bad); }
-.badge.warn { color: var(--warn); border-color: var(--warn); }
-.badge.mock { color: var(--text-2); border-color: var(--text-2); border-style: dashed; }
-.badge.real { color: var(--ok); border-color: var(--ok); }
-/* REAL vs MOCK blocks */
-.block-real { border-left: 3px solid var(--ok); padding-left: 16px; margin: 12px 0; }
-.block-mock { border: 1px dashed var(--text-2); border-radius: var(--radius-card); padding: 12px 16px; margin: 12px 0; color: var(--text-2); }
-.block-pending { border-left: 3px solid var(--warn); padding-left: 16px; margin: 12px 0; }
-.block-error { border-left: 3px solid var(--bad); padding-left: 16px; margin: 12px 0; }
-/* evidence rows */
-.evrows { display: grid; grid-template-columns: 1fr; gap: 4px; margin: 12px 0; padding: 12px; background: var(--surface-2); border-radius: var(--radius-input); font-size: 14px; }
-.evrow { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
-.evrow .k { color: var(--text-2); }
-.evrow .over { color: var(--bad); font-weight: 600; }
-.evrow .under { color: var(--ok); }
-.hash { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--text-2); word-break: break-all; }
-.meta { font-size: 14px; color: var(--text-2); }
-a { color: #7c8cf8; }
-button { background: var(--accent); color: #fff; border: none; padding: 12px 20px; min-height: 44px; border-radius: var(--radius-btn); cursor: pointer; margin: 4px 8px 4px 0; font-size: 16px; }
-button.secondary { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-input, select, textarea { width: 100%; padding: 12px; min-height: 44px; margin: 4px 0 8px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-input); font-size: 16px; font-family: inherit; }
-input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--bad); }
-.field-hint { font-size: 14px; color: var(--text-2); margin: 0 0 4px; }
-.field-error { font-size: 14px; color: var(--bad); margin: 0 0 8px; }
-label { display: block; font-size: 14px; font-weight: 600; margin-top: 8px; }
-.confbar { height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin: 8px 0 4px; max-width: 320px; }
-.confbar > div { height: 100%; background: var(--accent); }
-details { margin: 8px 0; }
-details summary { cursor: pointer; color: var(--text-2); font-size: 14px; min-height: 44px; display: flex; align-items: center; }
-.skeleton { background: linear-gradient(90deg, var(--surface-2) 25%, #242424 50%, var(--surface-2) 75%); background-size: 200% 100%; border-radius: 4px; min-height: 20px; margin: 8px 0; }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
-.pulsing { animation: pulse 1.2s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .pulsing { animation: none; } * { transition: none !important; } }
-.rep-score { font-size: 32px; line-height: 1.25; font-weight: 700; margin: 0; }
-.copybtn { background: transparent; border: 1px solid var(--border-strong); color: var(--text-2); font-size: 14px; padding: 8px 12px; min-height: 44px; }
-nav.toc { font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
-nav.toc a { margin-right: 12px; }
-@media (max-width: 720px) { .verdict-result { font-size: 20px; } }
-@media (max-width: 640px) {
-  body { padding: 12px; }
-  .card { padding: 16px; }
-  h1 { font-size: 24px; }
-  button { width: 100%; margin: 4px 0; }
-}
+body { max-width: 1120px; margin: 0 auto; padding: 0 24px 48px; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 16px; line-height: 1.5; }
+main { display: grid; gap: 24px; min-width: 0; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { margin-bottom: 12px; font-size: 42px; line-height: 1.12; }
+h2 { margin-bottom: 8px; font-size: 22px; line-height: 1.25; }
+h3 { margin-bottom: 8px; font-size: 16px; line-height: 1.35; }
+p { margin-bottom: 12px; }
+a { color: var(--accent); }
+a:hover { color: #aeb7ff; }
+code, pre, .hash, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+code { color: #d7d9ff; }
+.masthead { padding: 32px 0 24px; border-bottom: 1px solid var(--border); }
+.brand-line, .section-kicker, .signal-label, .truth-label { color: var(--text-2); font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+.brand-line { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.brand-mark { display: inline-grid; width: 28px; height: 28px; place-items: center; border-radius: 6px; background: var(--accent-strong); color: #fff; font-size: 11px; letter-spacing: 0; }
+.mode-chip, .network-chip { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 8px; border: 1px solid var(--border-strong); border-radius: 999px; color: var(--text-2); font-size: 11px; letter-spacing: 0; }
+.mode-chip { border-style: dashed; }
+.lede { max-width: 68ch; margin-bottom: 18px; color: var(--text-2); font-size: 18px; }
+.thesis-line { max-width: 78ch; margin: 0; padding: 12px 16px; border-left: 3px solid var(--bad); background: var(--surface); }
+.thesis-line strong { color: #fff; }
+.mast-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; color: var(--text-2); font-size: 13px; }
+.section-nav { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 14px 0 4px; color: var(--text-2); font-size: 13px; }
+.section-nav a { text-decoration: none; }
+.section-nav a:hover { text-decoration: underline; }
+.overview-band { min-width: 0; padding: 24px 0 0; }
+.section-kicker { margin-bottom: 6px; }
+.overview-title { max-width: 54ch; }
+.overview-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .85fr); gap: 16px; margin-top: 18px; }
+.signal-card, .truth-card { min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); }
+.signal-card { padding: 22px 24px; border-left: 4px solid var(--accent-strong); }
+.signal-card.is-breach { border-left-color: var(--bad); }
+.signal-card.is-ok { border-left-color: var(--ok); }
+.signal-card.is-warn { border-left-color: var(--warn); }
+.signal-label { margin-bottom: 12px; }
+.signal-result { margin-bottom: 8px; font-size: 30px; font-weight: 750; line-height: 1.15; }
+.signal-context { margin-bottom: 0; color: var(--text-2); }
+.truth-card { padding: 18px 20px; }
+.truth-label { margin-bottom: 12px; }
+.truth-list { display: grid; gap: 10px; margin: 0; }
+.truth-row { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: start; }
+.truth-row dt { color: var(--text-2); font-size: 13px; }
+.truth-row dd { margin: 0; font-size: 14px; }
+.flow-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; min-width: 0; margin: 18px 0 0; padding: 0; list-style: none; }
+.flow-step { min-width: 0; padding: 10px 12px; border-top: 2px solid var(--border-strong); background: var(--surface); }
+.flow-step strong { display: block; font-size: 13px; }
+.flow-step span { display: block; color: var(--text-2); font-size: 12px; }
+.card { min-width: 0; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); }
+.card-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; align-items: start; margin-bottom: 18px; }
+.card-header p { max-width: 72ch; margin-bottom: 0; color: var(--text-2); }
+.step-number { color: var(--text-3); font-size: 13px; font-weight: 700; }
+.field { margin: 16px 0; }
+label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 650; }
+.field-hint { margin: 0 0 6px; color: var(--text-2); font-size: 13px; }
+.field-error { margin: 5px 0 0; color: #ff8a8a; font-size: 13px; }
+input, select, textarea { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-input); background: var(--surface-2); color: var(--text); font: inherit; }
+textarea { min-height: 92px; resize: vertical; line-height: 1.45; }
+input::placeholder, textarea::placeholder { color: var(--text-3); }
+input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--bad); }
+button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--accent-strong); border-radius: var(--radius-btn); background: var(--accent-strong); color: #fff; cursor: pointer; font: inherit; font-weight: 650; }
+button.secondary { border-color: var(--border-strong); background: transparent; color: var(--text); }
+button.inline-action { min-height: 36px; padding: 6px 10px; font-size: 13px; }
+button:disabled { border-color: var(--border); background: var(--surface-2); color: var(--text-3); cursor: not-allowed; opacity: 1; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.action-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 18px; }
+.action-row button { margin: 0; }
+.write-notice, .status-line { margin: 12px 0 0; color: var(--text-2); font-size: 13px; }
+.write-notice { padding: 10px 12px; border-left: 3px solid var(--warn); background: var(--surface-2); }
+.workspace-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.workspace-actions button { margin: 0; }
+.network-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 18px; color: var(--text-2); font-size: 14px; }
+.badge { display: inline-flex; align-items: center; gap: 5px; min-height: 24px; padding: 2px 8px; border: 1px solid var(--border-strong); border-radius: 999px; color: var(--text); font-size: 12px; font-weight: 750; letter-spacing: 0; white-space: nowrap; }
+.badge.ok, .badge.real { border-color: var(--ok); color: var(--ok); }
+.badge.bad, .badge.fail { border-color: var(--bad); color: #ff8a8a; }
+.badge.warn, .badge.pending { border-color: var(--warn); color: #f6d365; }
+.badge.mock { border-style: dashed; color: var(--text-2); }
+.tracker-wrap { margin-top: 16px; }
+.tracker-wrap[hidden] { display: none; }
+.tracker { margin: 0; padding: 0; list-style: none; }
+.tracker li { display: flex; gap: 10px; align-items: center; margin: 7px 0; color: var(--text-2); font-size: 13px; }
+.tracker li::before { content: "○"; color: var(--text-3); }
+.tracker li.current::before { content: "◐"; color: var(--warn); }
+.tracker li.done::before { content: "✓"; color: var(--ok); }
+.tracker li.failed::before { content: "✗"; color: var(--bad); }
+.tracker code { color: var(--text-2); }
+.verdict-card { border-top: 3px solid var(--accent-strong); }
+.verdict-card .card-header { margin-bottom: 14px; }
+.verdict-legend { color: var(--text-2); font-size: 13px; }
+.case-grid { display: grid; gap: 16px; }
+.case-card { min-width: 0; padding: 20px; border: 1px solid var(--border); border-left: 4px solid var(--border-strong); background: var(--surface-2); }
+.case-card.is-breach { border-left-color: var(--bad); }
+.case-card.is-ok { border-left-color: var(--ok); }
+.case-card.is-warn { border-left-color: var(--warn); }
+.case-card.is-error { border-left-color: var(--bad); }
+.case-card.featured { padding: 24px; background: #181818; }
+.case-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 14px; align-items: center; margin-bottom: 14px; }
+.case-name { margin: 0; font-size: 17px; }
+.verdict-result { margin-bottom: 10px; font-size: 25px; line-height: 1.2; }
+.case-card.featured .verdict-result { font-size: 30px; }
+.result-sentence { max-width: 74ch; margin-bottom: 14px; font-size: 17px; }
+.reason-line { margin-bottom: 14px; color: var(--text-2); font-size: 14px; }
+.confidence-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; max-width: 560px; margin: 12px 0 18px; }
+.confidence-track { height: 9px; overflow: hidden; border-radius: 5px; background: #303030; }
+.confidence-fill { height: 100%; background: var(--accent-strong); }
+.is-breach .confidence-fill { background: var(--bad); }
+.is-ok .confidence-fill { background: var(--ok); }
+.confidence-label { color: var(--text-2); font-size: 13px; white-space: nowrap; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+.metric-row { min-width: 0; padding: 11px 12px; border: 1px solid var(--border); background: var(--surface); }
+.metric-row.is-over { border-color: #9e3434; }
+.metric-label { display: block; margin-bottom: 7px; color: var(--text-2); font-size: 12px; }
+.metric-values { display: grid; gap: 3px; }
+.metric-values span { display: block; overflow-wrap: anywhere; }
+.metric-values .observed { font-size: 16px; font-weight: 700; }
+.metric-values .required { color: var(--text-2); font-size: 13px; }
+.metric-result { margin-top: 7px; font-size: 12px; font-weight: 750; }
+.metric-result.over { color: #ff8a8a; }
+.metric-result.ok { color: var(--ok); }
+.metric-result.unavailable { color: var(--warn); }
+.evidence-block { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.evidence-title { margin-bottom: 7px; color: var(--text-2); font-size: 13px; font-weight: 700; }
+.hash-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.hash-value { display: inline-block; max-width: min(100%, 600px); overflow-wrap: anywhere; color: #d7d9ff; font-size: 12px; }
+.hash-value.short { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copybtn { min-height: 36px; padding: 6px 10px; border-color: var(--border-strong); background: transparent; color: var(--text-2); font-size: 13px; }
+.tx-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-top: 9px; color: var(--text-2); font-size: 13px; }
+.tx-link { font-weight: 650; }
+.tx-full { max-width: 100%; overflow-wrap: anywhere; color: var(--text-3); font-size: 11px; }
+.evidence-holder { min-height: 42px; margin-top: 10px; }
+.evidence-note { margin: 8px 0 0; color: var(--text-2); font-size: 12px; }
+.evidence-warning { padding: 10px 12px; border-left: 3px solid var(--warn); background: #202018; color: #f6d365; font-size: 13px; }
+.evidence-json { margin-top: 10px; }
+.evidence-json summary { color: var(--text-2); }
+pre { max-height: 220px; overflow: auto; margin: 8px 0 0; padding: 12px; border: 1px solid var(--border); background: #101010; color: var(--text-2); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.state-copy { max-width: 74ch; }
+.next-step { margin: 14px 0 0; padding: 10px 12px; border-left: 3px solid var(--warn); background: var(--surface); color: var(--text-2); }
+.error-box { padding: 12px 14px; border-left: 3px solid var(--bad); background: #211616; }
+.error-box p { margin-bottom: 6px; }
+.error-box .next-step { margin-bottom: 0; border-left-color: var(--bad); }
+.meta { color: var(--text-2); font-size: 13px; }
+.skeleton { height: 18px; margin: 9px 0; border-radius: 3px; background: var(--surface-3); }
+.skeleton.wide { width: 88%; }
+.skeleton.medium { width: 62%; }
+.skeleton.short { width: 38%; }
+.reputation-layout { display: grid; grid-template-columns: minmax(180px, .65fr) minmax(0, 1.35fr); gap: 22px; align-items: start; }
+.score-label { color: var(--text-2); font-size: 13px; }
+.rep-score { margin: 2px 0 3px; font-size: 48px; font-weight: 750; line-height: 1; }
+.rep-score small { color: var(--text-2); font-size: 17px; font-weight: 500; }
+.rep-bar { height: 8px; margin: 13px 0 0; background: var(--surface-3); }
+.rep-bar span { display: block; height: 100%; background: var(--ok); }
+.rep-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.rep-fact { padding: 12px; border: 1px solid var(--border); background: var(--surface-2); }
+.rep-fact dt { color: var(--text-2); font-size: 12px; }
+.rep-fact dd { margin: 3px 0 0; font-size: 18px; font-weight: 700; }
+.proof-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.proof-item { min-width: 0; padding: 13px; border: 1px solid var(--border); background: var(--surface-2); }
+.proof-item h3 { margin-bottom: 6px; }
+.proof-item p { margin-bottom: 5px; font-size: 13px; }
+.proof-item .hash-value { display: block; margin-top: 5px; }
+.fee-panel { margin-top: 16px; padding: 14px; border: 1px solid var(--border); background: var(--surface-2); }
+.fee-panel h3 { margin-bottom: 10px; }
+.fee-row { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.fee-row:first-of-type { border-top: 0; }
+.fee-row .label { color: var(--text-2); }
+.mock-panel { margin-top: 16px; padding: 13px 14px; border: 1px dashed var(--border-strong); color: var(--text-2); }
+.mock-panel p:last-child { margin-bottom: 0; }
+details { margin-top: 14px; }
+summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--text-2); font-size: 14px; }
+ul { margin: 8px 0 0; padding-left: 20px; }
+li { margin: 7px 0; }
+.footer { padding-top: 26px; color: var(--text-3); font-size: 12px; }
+@media (max-width: 840px) { body { padding-right: 18px; padding-left: 18px; } h1 { font-size: 36px; } .overview-grid { grid-template-columns: 1fr; } .flow-strip { grid-template-columns: repeat(5, minmax(120px, 1fr)); overflow-x: auto; padding-bottom: 4px; } .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { body { padding: 0 12px 34px; } .masthead { padding-top: 22px; } h1 { font-size: 30px; } .lede { font-size: 16px; } .card { padding: 17px; } .signal-card { padding: 18px; } .signal-result { font-size: 25px; } .case-card.featured { padding: 18px; } .case-card.featured .verdict-result { font-size: 25px; } .metric-grid, .proof-grid, .reputation-layout { grid-template-columns: 1fr; } .rep-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .action-row, .workspace-actions { display: grid; grid-template-columns: 1fr; } .action-row button, .workspace-actions button { width: 100%; } .truth-row { grid-template-columns: 84px minmax(0, 1fr); } .fee-row { grid-template-columns: 1fr; gap: 2px; } .hash-value.short { max-width: calc(100vw - 96px); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; } }
 </style>
 </head>
 <body>
-<h1>ProveDown — did the service keep its agreement?</h1>
-<p class="subtitle">Neutral verification for machine-to-machine service quality. A GenLayer jury checks what your API actually delivered against what was agreed — with proof attached. Not uptime monitoring.</p>
-<ol class="steps" aria-label="How it works">
-  <li><b>1. Define</b> the agreement</li>
-  <li><b>2. Verify</b> with an independent jury</li>
-  <li><b>3. Act</b> on the verdict with proof</li>
-</ol>
-<nav class="toc" aria-label="Sections">
-  <a href="#setup">Setup</a><a href="#workspace">Verify</a><a href="#verdictCard">Verdict</a><a href="#reputationCard">Reliability</a><a href="#proofCard">Proof</a>
+<header class="masthead">
+  <div class="brand-line"><span class="brand-mark" aria-hidden="true">PD</span><span>ProveDown</span><span class="mode-chip">READ-ONLY REVIEW</span></div>
+  <h1>Did the service keep its agreement?</h1>
+  <p class="lede">A neutral functional-attestation layer for machine-to-machine service agreements. ProveDown compares what an API delivered with what the buyer agreed to, then attaches evidence to a GenLayer decision.</p>
+  <p class="thesis-line"><strong>HTTP 200 is reachability, not fulfillment.</strong> A response can be reachable and still miss the agreed fill, match, error, or latency limits.</p>
+  <div class="mast-meta"><span>Agreement → evidence → decision → proof → reputation</span><span>Studio Next · chain 61997</span><span>No wallet or transaction is requested in this review</span></div>
+</header>
+
+<nav class="section-nav" aria-label="Page sections">
+  <a href="#overview">Overview</a><a href="#setup">Define</a><a href="#workspace">Verify</a><a href="#verdictCard">Verdict</a><a href="#reputationCard">Reputation</a><a href="#proofCard">Proof</a>
 </nav>
 
-<div class="card" id="setup" aria-labelledby="setupH">
-<h2 id="setupH">1. Define the agreement</h2>
-<p class="meta">What "good service" means, written once. The jury judges future evidence against these numbers.</p>
-<label for="slaId">Agreement ID</label>
-<p class="field-hint">A unique name for this agreement, e.g. <code>demo-healthy</code>.</p>
-<input id="slaId" value="demo-healthy" autocomplete="off">
-<p class="field-error" id="slaIdError" hidden>Agreement ID can't be empty.</p>
-<label for="apiUrl">API being measured</label>
-<input id="apiUrl" value="https://example.com" inputmode="url" autocomplete="off">
-<label for="bundlePreset">Evidence bundle to verify</label>
-<p class="field-hint">Each option is a fixed, hash-stable measurement bundle. Breach means: p95 over limit + 500ms, or error rate over limit, or fill/match under limit.</p>
-<select id="bundlePreset">
-<option value="no_breach">Healthy — p95 1600ms, fill 95%: expect NO_BREACH</option>
-<option value="breach">Degraded — p95 4800ms, fill 72%: expect BREACH</option>
-<option value="ambig">Borderline — p95 2100ms, near the limit: expect a close call</option>
-<option value="empty">Missing data — all metrics empty: expect INCONCLUSIVE</option>
-</select>
-<label for="sloJson">Service-quality thresholds (JSON)</label>
-<p class="field-hint">p95_threshold in ms (+500ms tolerance applied by the jury), error_threshold as a fraction, fill_threshold and match_threshold as fractions.</p>
-<textarea id="sloJson" rows="3" aria-describedby="sloHint sloError">{"p95_threshold":2000,"error_threshold":0.01,"fill_threshold":0.80,"match_threshold":0.85}</textarea>
-<p class="field-error" id="sloError" hidden>SLO must be JSON with p95_threshold, error_threshold, fill_threshold and match_threshold.</p>
-<button id="registerBtn">Preview bundle &amp; prepare registration</button>
-<div id="registerStatus" aria-live="polite"></div>
-</div>
+<main>
+  <section class="overview-band" id="overview" aria-labelledby="overviewTitle">
+    <p class="section-kicker">THE DECISION PATH</p>
+    <h2 class="overview-title" id="overviewTitle">Read the obligation, inspect the observed bundle, and follow the proof.</h2>
+    <div class="overview-grid">
+      <article class="signal-card" id="heroSignal" aria-labelledby="heroSignalLabel">
+        <p class="signal-label" id="heroSignalLabel">LIVE CONTRACT READ</p>
+        <div id="heroVerdict" class="signal-result" aria-live="polite">Loading a finalized result…</div>
+        <p id="heroContext" class="signal-context">The current attestation and its evidence will appear below after the Studio read completes.</p>
+      </article>
+      <aside class="truth-card" aria-labelledby="truthTitle">
+        <p class="truth-label" id="truthTitle">WHAT THE LABELS MEAN</p>
+        <dl class="truth-list">
+          <div class="truth-row"><dt>REAL</dt><dd><strong>Studio reads and finalized proof</strong></dd></div>
+          <div class="truth-row"><dt>DERIVED</dt><dd>Bars, comparisons, and plain-language summaries</dd></div>
+          <div class="truth-row"><dt>SYNTHETIC</dt><dd>Deterministic Worker fixture bundles</dd></div>
+          <div class="truth-row"><dt>MOCK</dt><dd>Downstream relay and future automation paths</dd></div>
+        </dl>
+      </aside>
+    </div>
+    <ol class="flow-strip" aria-label="Verification sequence">
+      <li class="flow-step"><strong>1 · Define</strong><span>Agree on limits</span></li>
+      <li class="flow-step"><strong>2 · Observe</strong><span>Read the bundle</span></li>
+      <li class="flow-step"><strong>3 · Decide</strong><span>GenLayer jury result</span></li>
+      <li class="flow-step"><strong>4 · Prove</strong><span>Hash and receipt</span></li>
+      <li class="flow-step"><strong>5 · Act</strong><span>Use reputation</span></li>
+    </ol>
+  </section>
 
-<div class="card" id="workspace" aria-labelledby="workspaceH">
-<h2 id="workspaceH">2. Verify with the jury</h2>
-<p class="meta">Five independent GenLayer validators fetch the bundle themselves and must agree. Fee-aware writes on Studio Next 61997, tracked to FINALIZED (ACCEPTED alone doesn't count).</p>
-<button id="refreshBtn" class="secondary">Refresh live results</button>
-<button id="attestBtn">Request new attestation</button>
-<div id="attestStatus" aria-live="polite"></div>
-<div id="tracker" hidden></div>
-</div>
+  <section class="card" id="setup" aria-labelledby="setupTitle">
+    <div class="card-header"><div><span class="step-number">01 / DEFINE</span><h2 id="setupTitle">Set the service agreement</h2><p>Use the form to inspect a fixture bundle and compare it with a proposed agreement. Editing this form never changes the contract in read-only review.</p></div></div>
+    <form id="setupForm" novalidate>
+      <div class="field"><label for="slaId">Agreement ID</label><p class="field-hint" id="slaIdHint">The live browser-smoke agreement is preselected for the reputation read.</p><input id="slaId" value="browser-smoke-20260909-01" autocomplete="off" aria-describedby="slaIdHint slaIdError"><p class="field-error" id="slaIdError" hidden>Enter an agreement ID before previewing evidence.</p></div>
+      <div class="field"><label for="apiUrl">API being measured</label><p class="field-hint" id="apiUrlHint">Use an HTTPS endpoint. The stored contract value, not this editable field, is used for a live reputation read.</p><input id="apiUrl" value="https://example.com" inputmode="url" autocomplete="off" aria-describedby="apiUrlHint apiUrlError"><p class="field-error" id="apiUrlError" hidden>Use a valid HTTPS URL.</p></div>
+      <div class="field"><label for="bundlePreset">Fixture evidence to preview</label><p class="field-hint" id="presetHint">These bundles are synthetic, deterministic fixtures. A breach can exist even when the endpoint returns HTTP 200.</p><select id="bundlePreset" aria-describedby="presetHint"><option value="breach">Degraded · p95 4800 ms, fill 72% · expect BREACH</option><option value="no_breach">Healthy · p95 1600 ms, fill 95% · expect NO_BREACH</option><option value="ambig">Borderline · near the limit · expect an uncertain outcome</option><option value="empty">Missing data · metrics unavailable · expect INCONCLUSIVE</option></select></div>
+      <div class="field"><label for="sloJson">Service-quality limits</label><p class="field-hint" id="sloHint">p95 is milliseconds; the other limits are fractions from 0 to 1. The jury applies a 500 ms p95 tolerance.</p><textarea id="sloJson" rows="3" aria-describedby="sloHint sloError">{"p95_threshold":2000,"error_threshold":0.01,"fill_threshold":0.80,"match_threshold":0.85}</textarea><p class="field-error" id="sloError" hidden>Provide JSON with finite p95, error, fill, and match limits in safe ranges.</p></div>
+      <div class="action-row"><button id="previewBtn" type="button">Preview evidence</button><button id="registerBtn" class="secondary" type="button" disabled aria-describedby="writeNotice">Register agreement</button></div>
+      <p class="write-notice" id="writeNotice"><span class="badge mock">○ MOCKED OUT</span> Contract writes are disabled for this frontend review. Preview is local/read-only; no wallet access, signature, or transaction is requested.</p>
+      <div id="registerStatus" class="status-line" aria-live="polite"></div>
+    </form>
+  </section>
 
-<div class="card" id="verdictCard" aria-labelledby="verdictH">
-<h2 id="verdictH">3. Verdict</h2>
-<div id="verdict" aria-live="polite">
-  <div class="skeleton" style="width:60%"></div>
-  <div class="skeleton" style="width:90%"></div>
-  <div class="skeleton" style="width:40%"></div>
-</div>
-</div>
+  <section class="card" id="workspace" aria-labelledby="workspaceTitle">
+    <div class="card-header"><div><span class="step-number">02 / VERIFY</span><h2 id="workspaceTitle">Inspect finalized attestations</h2><p>These reads come from the Studio Next contract. Select a case set, then refresh the read; the page never treats a pending or missing result as a verdict.</p></div></div>
+    <p class="network-line"><span class="network-chip">STUDIO NEXT · 61997</span><span>Contract <code>0x278CbC20…7d407aC1</code></span><span>Five independent validators must agree on the breach decision.</span></p>
+    <div class="field case-selector"><label for="caseSet">Case set</label><select id="caseSet" aria-describedby="caseSetHint"><option value="breach-focus">Breach-first · cases 2, 4, 3</option><option value="browser-smoke">Supplied browser route · cases 4, 1, 2</option><option value="three-case">Three-case demo · cases 1, 2, 3</option></select><p class="field-hint" id="caseSetHint">Case 2 is the functional-breach centerpiece; case 4 is the current browser-smoke read.</p></div>
+    <div class="workspace-actions"><button id="refreshBtn" class="secondary" type="button">Refresh live results</button><button id="attestBtn" type="button" disabled aria-describedby="attestNotice">Request new attestation</button></div>
+    <p class="write-notice" id="attestNotice"><span class="badge mock">○ MOCKED OUT</span> New attestations are intentionally unavailable in this pass. The existing finalized records remain inspectable and no wallet prompt can open.</p>
+    <details class="write-lifecycle"><summary>Attestation lifecycle (write path not exercised here)</summary><ol class="tracker" aria-label="Attestation write lifecycle"><li>REQUESTED</li><li>SUBMITTED</li><li>FINALIZING</li><li>FINALIZED</li></ol><p class="meta">A finalized result requires a successful receipt and contract readback. This review creates neither.</p></details>
+    <div id="attestStatus" class="status-line" aria-live="polite"></div><div id="tracker" class="tracker-wrap" aria-live="polite"></div>
+  </section>
 
-<div class="card" id="reputationCard" aria-labelledby="repH">
-<h2 id="repH">Reliability record</h2>
-<div id="reputation" aria-live="polite">
-  <div class="skeleton" style="width:40%"></div>
-</div>
-</div>
+  <section class="card verdict-card" id="verdictCard" aria-labelledby="verdictTitle">
+    <div class="card-header"><div><span class="step-number">03 / DECIDE</span><h2 id="verdictTitle">What the jury decided</h2><p>The result is shown before protocol detail. Every comparison is tied to the agreement and the evidence fingerprint that the contract stored.</p></div><p class="verdict-legend">● fulfilled · ● breached · ■ no definitive decision · ■ validators did not agree</p></div>
+    <div id="verdict" aria-live="polite" aria-busy="true"><div class="skeleton wide"></div><div class="skeleton medium"></div><div class="skeleton short"></div></div>
+  </section>
 
-<div class="card" id="proofCard" aria-labelledby="proofH">
-<h2 id="proofH">Proof</h2>
-<div id="explorer"></div>
-<details>
-<summary>Demo presets and what each proves</summary>
-<ul>
-<li><b>Healthy</b> → <span class="badge ok">● NO_BREACH</span> confidence ~980, hash 64e6…, p95 1600ms</li>
-<li><b>Degraded</b> → <span class="badge bad">● BREACH</span> confidence ~1000, hash b4fc…, p95 4800ms, reason LATENCY. Same HTTP 200 as healthy — but fill 72% is below the agreed 80%. This is the difference from uptime monitoring.</li>
-<li><b>Borderline</b> → close call or honest split (amber, retryable)</li>
-<li><b>Missing data</b> → <span class="badge warn">■ INCONCLUSIVE</span> confidence 0 — missing metrics never become a verdict</li>
-</ul>
-<p class="meta">Bundles: <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code> — fixed content, hash-stable, no timestamps.</p>
-</details>
-<details>
-<summary>Why not just uptime monitoring?</summary>
-<p>Uptime checks factual reachability (<code>GET 200</code> → UP). ProveDown checks the functional obligation: the same HTTP 200 with <b>fill 72% vs required 80% → BREACH</b>, with evidence hash, confidence, breach reason and a reliability record — not just up/down.</p>
-</details>
-<details>
-<summary>What is real and what is mocked?</summary>
-<p><span class="badge real">✓ VERIFIED</span> Studio Next contract, jury consensus, attestations, evidence hashes, reliability record, explorer transactions.</p>
-<p><span class="badge mock">○ MOCK</span> Base relay / cross-chain settlement arrow, future live probe poller, SSE fallback stream. Mocked parts never look like verified results.</p>
-</details>
-</div>
+  <section class="card" id="reputationCard" aria-labelledby="reputationTitle">
+    <div class="card-header"><div><span class="step-number">04 / ACT</span><h2 id="reputationTitle">Reliability record</h2><p>Reputation is read from the stored agreement's API URL. It is a compact history signal, not a replacement for the evidence attached to each verdict.</p></div></div>
+    <div id="reputation" aria-live="polite"><div class="skeleton medium"></div><div class="skeleton wide"></div></div>
+  </section>
+
+  <section class="card" id="proofCard" aria-labelledby="proofTitle">
+    <div class="card-header"><div><span class="step-number">05 / PROOF</span><h2 id="proofTitle">Proof and boundaries</h2><p>Use the full transaction links and evidence hash when you need to verify what was finalized. Details stay secondary so the decision remains readable.</p></div></div>
+    <div id="proofReference" class="proof-grid">
+      <article class="proof-item"><h3>Browser registration</h3><p><span class="badge real">✓ VERIFIED REFERENCE</span> browser-smoke-20260909-01</p><p><a class="tx-link" href="https://explorer-studio-dev.genlayer.com/tx/0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a" target="_blank" rel="noopener">Open finalized registration</a></p><code class="hash-value">0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a</code></article>
+      <article class="proof-item"><h3>Browser attestation</h3><p><span class="badge real">✓ VERIFIED REFERENCE</span> attestation 4 · NO_BREACH</p><p><a class="tx-link" href="https://explorer-studio-dev.genlayer.com/tx/0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110" target="_blank" rel="noopener">Open finalized attestation</a></p><code class="hash-value">0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110</code></article>
+      <article class="proof-item"><h3>Stored evidence fingerprint</h3><p><span class="badge real">✓ VERIFIED READBACK</span> current browser-smoke bundle</p><code class="hash-value">sha256:e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3</code><button class="copybtn" type="button" data-copy-hash="e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3">Copy hash</button></article>
+      <article class="proof-item"><h3>Current reputation snapshot</h3><p><span class="badge real">✓ VERIFIED READBACK</span> Studio Next</p><p><strong>66 / 100</strong> · 3 checks · 1 breach</p><p class="meta">A snapshot from the supplied finalized browser proof; the live card above reads the contract again.</p></article>
+    </div>
+    <div class="fee-panel" aria-labelledby="feeTitle"><h3 id="feeTitle">Receipt fee accounting</h3><div class="fee-row"><span class="label">Deposit</span><span>Unavailable in this read-only view; no receipt was created here.</span></div><div class="fee-row"><span class="label">Consumed</span><span>Unavailable in this read-only view; no value is inferred.</span></div><div class="fee-row"><span class="label">Refund</span><span>Unavailable in this read-only view; no value is inferred.</span></div><p class="meta">When a finalized receipt exposes these fields, show the returned GEN values only. Measured on Studio-dev under that transaction/configuration.</p></div>
+    <details><summary>Three fixture cases and what they demonstrate</summary><ul><li><strong>Healthy</strong> → NO_BREACH when observed metrics stay within the stored limits.</li><li><strong>Degraded</strong> → BREACH: p95 4800 ms and fill 72% can violate p95 ≤ 2500 ms and fill ≥ 80% even when HTTP returns 200.</li><li><strong>Missing data</strong> → INCONCLUSIVE: no definitive decision is made when required metrics are absent.</li></ul><p class="meta">Worker: <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code>. Its deterministic content is synthetic fixture evidence, not a live customer probe.</p></details>
+    <details><summary>What is real, derived, synthetic, or mocked?</summary><p><span class="badge real">✓ REAL</span> Studio contract reads, finalized attestation records, evidence hashes, reputation readback, and the full Explorer references above.</p><p><span class="badge warn">◆ DERIVED</span> Confidence bars, observed-versus-required comparisons, case labels, and the plain-language summaries are views of returned data.</p><p><span class="badge mock">○ SYNTHETIC / MOCK</span> Worker bundles are deterministic fixtures. Base/Hyperlane relay, future polling, and any SSE fallback are mocked and never represented as a finalized verdict.</p></details>
+    <details><summary>Protocol detail</summary><p class="meta">The contract stores a resolved, inconclusive, or no_consensus status. A result is presented as definitive only when the stored record is readable; this page does not create or approve a new transaction.</p></details>
+  </section>
+</main>
+<footer class="footer">ProveDown is a functional-quality attestation surface, not uptime monitoring. Current Worker evidence is synthetic and downstream settlement remains mocked.</footer>
 
 <script type="module">
-import { createClient, isSuccessful } from "https://esm.sh/genlayer-js@2.0.0-rc.1";
+import { createClient } from "https://esm.sh/genlayer-js@2.0.0-rc.1";
 import { studioDevnet } from "https://esm.sh/genlayer-js@2.0.0-rc.1/chains";
 
-// PRIMARY hackathon target: Studio Next 61997 (Consensus v0.6 RC). Bradbury 0x72a6... kept as compatibility evidence only.
-const CONTRACT = "0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF";
+const QS = new URLSearchParams(location.search);
 const EXPLORER = "https://explorer-studio-dev.genlayer.com";
 const WORKER_BASE = "https://provedown-bundle.contentbounty.workers.dev/bundle";
 const CHAIN_ID = 61997;
+const CURRENT_AGREEMENT = "browser-smoke-20260909-01";
+const CURRENT_EVIDENCE_HASH = "e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3";
 const KNOWN_TX = {
-  deploy: '0x5a34f359d575b4e74742ccc3ec7ea2e1d919911be90c47b9fdb125b53837a782',
-  regHealthy: '0xfbad72095fa21c3b6438bcb78143121f65c73a36e1add67c1e081a7b543db817',
-  regBreach: '0x91721ba5a9338ebb7281ebb32f2c049479afc2d1ac85714ca95d39ebaa60a047',
-  regEmpty: '0x15832858c70c49c96da9523e6be5a79eba4f1cf659335cdec5895a90d754e6e1',
-  attHealthy: '0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497',
-  attBreach: '0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383',
-  attEmpty: '0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43'
+  registration: "0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a",
+  attestation4: "0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110",
+  attHealthy: "0xa5a1aae059d49895719afed202f58804a12b7bcab28d90b3eee63e0942cc0faf",
+  attBreach: "0xf566a8305212cc52e899ed2a1294eea5d9ed4b89fec3aba5d5e1eb24fb8ed505",
+  attEmpty: "0x90b9e1b983b3ebe2490f812b6696317031ce6b4cb65c7c3a7bb75b51a5af6f8a"
 };
-const CASE_TX = { '1': KNOWN_TX.attHealthy, '2': KNOWN_TX.attBreach, '3': KNOWN_TX.attEmpty };
+const CASE_TX = { '1': KNOWN_TX.attHealthy, '2': KNOWN_TX.attBreach, '3': KNOWN_TX.attEmpty, '4': KNOWN_TX.attestation4 };
+const CASE_NAMES = { '1': 'Healthy fixture', '2': 'Functional breach fixture', '3': 'Missing-data fixture', '4': 'Browser-smoke read' };
+const CASE_SETS = {
+  'breach-focus': ['2', '4', '3'],
+  'browser-smoke': ['4', '1', '2'],
+  'three-case': ['1', '2', '3']
+};
+const CONTRACT = validAddress(QS.get('contract')) || "0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1";
+const parsedCases = parseCases(QS.get('cases'));
+let visibleCaseIds = parsedCases || CASE_SETS['breach-focus'].slice();
+let readInFlight = null;
+let previewInFlight = null;
 
+function validAddress(value) {
+  return /^0x[0-9a-fA-F]{40}$/.test(String(value || '')) ? String(value) : null;
+}
+function parseCases(value) {
+  if (!value) return null;
+  const ids = String(value).split(',').map(function (item) { return item.trim(); }).filter(function (item) { return /^[0-9]{1,6}$/.test(item); });
+  return ids.length >= 1 && ids.length <= 4 ? ids : null;
+}
+function esc(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 function badge(kind, label) {
-  // Single badge component: icon + text, never color-alone.
-  const icons = { ok: '●', bad: '●', warn: '■', pending: '◐', mock: '○', real: '✓', fail: '✗' };
-  return `<span class="badge ${kind}">${icons[kind] || '●'} ${label}</span>`;
+  var icons = { ok: '●', bad: '●', warn: '■', pending: '◐', mock: '○', real: '✓', fail: '✗' };
+  return '<span class="badge ' + kind + '">' + (icons[kind] || '◆') + ' ' + esc(label) + '</span>';
 }
-function txLink(tx) {
-  return tx ? ` <a href="${EXPLORER}/tx/${tx}" target="_blank" rel="noopener">${tx.slice(0, 10)}…</a>` : '';
+function shortHash(value, size) {
+  var text = String(value || '');
+  var width = size || 10;
+  return text.length > width * 2 ? text.slice(0, width) + '…' + text.slice(-width) : text;
 }
-function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function txHtml(tx, label) {
+  var safe = /^0x[0-9a-fA-F]{64}$/.test(String(tx || '')) ? String(tx) : '';
+  if (!safe) return '<span class="meta">Explorer proof is not mapped for this custom ID.</span>';
+  return '<a class="tx-link" href="' + EXPLORER + '/tx/' + safe + '" target="_blank" rel="noopener" aria-label="' + esc(label || 'Explorer proof') + ' ' + esc(safe) + '">' + esc(label || 'Explorer proof') + ' ↗</a><code class="tx-full">' + esc(safe) + '</code>';
 }
-async function copyText(t, btn) {
-  try { await navigator.clipboard.writeText(t); btn.textContent = 'Copied'; }
-  catch (e) { btn.textContent = 'Copy failed'; }
-  setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+function retryHtml(label, action) {
+  return '<button type="button" class="secondary inline-action" data-action="' + esc(action || 'refresh') + '">' + esc(label || 'Retry live read') + '</button>';
 }
-window.copyText = copyText;
-
-function getBundleUrl(preset) {
-  const sla = (document.getElementById('slaId').value || 'demo').trim() || 'demo';
-  return `${WORKER_BASE}?preset=${preset}&sla=${encodeURIComponent(sla)}`;
+function errorText(error) {
+  var values = [error && error.message, error && error.shortMessage, error && error.details, error && error.cause && error.cause.message].filter(function (value) { return typeof value === 'string' && value.trim(); });
+  return Array.from(new Set(values)).join(' | ') || String(error || 'Unknown error');
 }
-function defaultSlo() {
-  try { return JSON.parse(document.getElementById('sloJson').value); }
-  catch (e) { return { p95_threshold: 2000, error_threshold: 0.01, fill_threshold: 0.80, match_threshold: 0.85 }; }
+function errorHtml(title, cause, impact, next, technical, action) {
+  return '<div class="error-box">' + badge('fail', title) +
+    '<p><strong>What happened:</strong> ' + esc(cause) + '</p>' +
+    '<p><strong>Why it matters:</strong> ' + esc(impact) + '</p>' +
+    '<p class="next-step"><strong>Next:</strong> ' + esc(next) + (action === false ? '' : ' ' + retryHtml(action === 'preview' ? 'Retry preview' : 'Retry live read', action === 'preview' ? 'preview' : 'refresh')) + '</p>' +
+    (technical ? '<details><summary>Technical detail</summary><code class="hash-value">' + esc(String(technical).slice(0, 320)) + '</code></details>' : '') +
+    '</div>';
 }
-
-// --- form validation: block confusing submits before they happen ---
-function validateSetup() {
-  let ok = true;
-  const idOk = document.getElementById('slaId').value.trim().length > 0;
-  document.getElementById('slaId').setAttribute('aria-invalid', String(!idOk));
-  document.getElementById('slaIdError').hidden = idOk;
-  if (!idOk) ok = false;
-  let sloOk = true, slo = null;
+function clampConfidence(value) {
+  return Math.max(0, Math.min(1000, Number(value) || 0));
+}
+function formatRate(value) {
+  var number = Number(value);
+  if (!Number.isFinite(number)) return 'Unavailable';
+  var percent = number * 100;
+  return percent.toFixed(percent % 1 ? 1 : 0) + '%';
+}
+function formatMetric(key, value) {
+  if (value === null || value === undefined || value === '') return 'Unavailable';
+  return key === 'p50' || key === 'p95' ? String(value) + ' ms' : formatRate(value);
+}
+function formatLimit(key, value, tolerance) {
+  var number = Number(value);
+  if (!Number.isFinite(number)) return 'Unavailable';
+  if (key === 'p95') return '≤ ' + (number + (tolerance || 0)) + ' ms';
+  return (key === 'fill' || key === 'match' ? '≥ ' : '≤ ') + formatRate(number);
+}
+function resultFor(key, observed, limit, tolerance) {
+  var actual = Number(observed);
+  var target = Number(limit);
+  if (!Number.isFinite(actual) || !Number.isFinite(target)) return 'unavailable';
+  var over = key === 'p95' ? actual > target + (tolerance || 0) : key === 'error' ? actual >= target : actual < target;
+  return over ? 'over' : 'ok';
+}
+function metricRowsHtml(bundle, slo) {
+  var defs = [['p95', 'p95 latency', 500], ['error', 'error rate', 0], ['fill', 'fill rate', 0], ['match', 'match rate', 0]];
+  var limits = { p95: slo.p95_threshold, error: slo.error_threshold, fill: slo.fill_threshold, match: slo.match_threshold };
+  return '<div class="metric-grid">' + defs.map(function (def) {
+    var key = def[0];
+    var state = resultFor(key, bundle[key], limits[key], def[2]);
+    var label = state === 'over' ? 'OVER' : state === 'ok' ? 'OK' : 'UNAVAILABLE';
+    return '<div class="metric-row ' + (state === 'over' ? 'is-over' : '') + '"><span class="metric-label">' + def[1] + '</span><div class="metric-values"><span class="observed">Observed ' + esc(formatMetric(key, bundle[key])) + '</span><span class="required">Required ' + esc(formatLimit(key, limits[key], def[2])) + '</span></div><div class="metric-result ' + state + '">' + label + ' ' + (state === 'over' ? '✗' : state === 'ok' ? '✓' : '·') + '</div></div>';
+  }).join('') + '</div>';
+}
+function workerUrl(value) {
   try {
-    slo = JSON.parse(document.getElementById('sloJson').value);
-    for (const f of ['p95_threshold', 'error_threshold', 'fill_threshold', 'match_threshold']) {
-      if (!(f in slo)) { sloOk = false; break; }
-    }
-  } catch (e) { sloOk = false; }
-  document.getElementById('sloJson').setAttribute('aria-invalid', String(!sloOk));
-  document.getElementById('sloError').hidden = sloOk;
-  if (!sloOk) ok = false;
-  document.getElementById('registerBtn').disabled = !ok;
-  document.getElementById('registerBtn').title = ok ? '' : 'Fix the highlighted fields first';
-  return ok;
-}
-document.getElementById('slaId').addEventListener('input', validateSetup);
-document.getElementById('sloJson').addEventListener('input', validateSetup);
-
-document.getElementById('bundlePreset').addEventListener('change', e => {
-  const preset = e.target.value;
-  document.getElementById('registerStatus').innerHTML = `<p class="meta">Evidence will come from <code class="hash">${esc(WORKER_BASE)}?preset=${esc(preset)}</code> — fixed content the jury fetches independently.</p>`;
-});
-
-document.getElementById('registerBtn').onclick = async () => {
-  if (!validateSetup()) return;
-  const slaId = document.getElementById('slaId').value.trim();
-  const preset = document.getElementById('bundlePreset').value;
-  const bundleUrl = getBundleUrl(preset);
-  const box = document.getElementById('registerStatus');
-  box.innerHTML = `<div class="block-pending pulsing">${badge('pending', 'CHECKING EVIDENCE')} Fetching bundle preview…</div>`;
-  try {
-    const bundleResp = await fetch(bundleUrl);
-    if (!bundleResp.ok) throw new Error(`Worker answered HTTP ${bundleResp.status}`);
-    const bundle = await bundleResp.json();
-    const keys = ['p50', 'p95', 'error', 'fill', 'match'].map(k => `${k}: ${bundle[k] === null || bundle[k] === undefined ? 'missing' : esc(bundle[k])}`).join(' · ');
-    box.innerHTML = `<div class="block-real">${badge('real', 'EVIDENCE READY')} Bundle preview: <code class="hash">${esc(JSON.stringify(bundle).slice(0, 140))}…</code><br><span class="meta">${keys}</span><br>To register <b>${esc(slaId)}</b> on Studio Next, use a wallet or run <code>GENLAYER_PRIVATE_KEY=... node scripts/attest-studio-dev.mjs</code> — writes carry fees and finalize on <a href="${EXPLORER}/address/${CONTRACT}" target="_blank" rel="noopener">the contract</a>.</div>`;
-  } catch (e) {
-    box.innerHTML = `<div class="block-error">${badge('fail', 'EVIDENCE UNAVAILABLE')} The bundle endpoint didn't answer (${esc(e.message.slice(0, 100))}). The jury would return INCONCLUSIVE — nothing would be decided. <button class="secondary" onclick="document.getElementById('registerBtn').click()">Retry</button></div><details><summary>Technical details</summary><code class="hash">${esc(e.message.slice(0, 300))}</code></details>`;
-  }
-};
-
-async function hashBundle(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
-}
-
-// --- verdict rendering: result first, proof second, always labeled ---
-function verdictHtml(att, tx) {
-  const link = txLink(tx);
-  if (!att) return `<div class="block-error">${badge('fail', 'NO RESULT')} Nothing stored under this ID yet.${link}</div>`;
-  if (att.status === 'inconclusive') return `<div class="block-pending">${badge('warn', 'INCONCLUSIVE')} The jury could not judge this evidence — missing or invalid measurements. <b>Nothing was decided about service quality.</b> Fix the bundle and retry.${link}<br><span class="meta">Reason: ${esc(att.reason)} · confidence ${esc(att.confidence)}/1000</span></div>`;
-  if (att.status === 'no_consensus') return `<div class="block-pending">${badge('warn', 'NO CONSENSUS')} Validators honestly disagreed at the threshold — the system refused to force a verdict. Retry, or adjust the SLO. ${link}</div>`;
-  const cls = att.breach ? 'is-breach' : 'is-ok';
-  const pill = att.breach ? badge('bad', `BREACH (${esc(att.reason)})`) : badge('ok', `NO_BREACH (${esc(att.reason)})`);
-  const sentence = att.breach
-    ? `The service breached the agreement.`
-    : `The service met the agreement.`;
-  const conf = Math.max(0, Math.min(1000, Number(att.confidence) || 0));
-  return `<div class="verdict-block ${cls}"><div class="verdict-result">${pill}</div>`
-    + `<p>${sentence}</p>`
-    + `<div class="confbar" role="img" aria-label="confidence ${conf} out of 1000"><div style="width:${(conf / 10).toFixed(1)}%"></div></div>`
-    + `<p class="meta">Confidence ${conf}/1000 · p50 ${esc(att.p50)} · p95 ${esc(att.p95)}</p>`
-    + `<div class="evrows" data-bundle-url="${esc(bundleUrlOf(att))}"><div class="evrow"><span class="k">Bundle detail</span><span>loading…</span></div></div>`
-    + `<p><span class="hash">Evidence fingerprint sha256:${esc(att.evidence_hash)} — ${esc(att.evidence_summary)}</span> <button class="copybtn" onclick="copyText('${esc(att.evidence_hash)}', this)">Copy</button>${link}</p></div>`;
-}
-
-// Observed-vs-limit rows: thresholds beside measurements, breach rows marked.
-// Each holder carries its own bundle URL (parsed from the attestation's
-// evidence summary), so rows render per-case after insertion — never guessed.
-async function fillEvidenceRows() {
-  const slo = defaultSlo(), tol = 500;
-  for (const h of document.querySelectorAll('[data-bundle-url]')) {
-    let bundle = null;
-    try {
-      const r = await fetch(h.getAttribute('data-bundle-url'));
-      if (r.ok) bundle = await r.json();
-    } catch (e) { /* fall back below */ }
-    if (!bundle || bundle.p95 === null || bundle.p95 === undefined) {
-      h.innerHTML = `<div class="evrow"><span class="k">Bundle detail</span><span>unavailable — see explorer link</span></div>`;
-      continue;
-    }
-    const rows = [
-      ['p95 latency', `${bundle.p95}ms`, `≤ ${slo.p95_threshold}+${tol}ms`, bundle.p95 > slo.p95_threshold + tol],
-      ['error rate', String(bundle.error), `≤ ${slo.error_threshold}`, bundle.error >= slo.error_threshold],
-      ['fill rate', String(bundle.fill), `≥ ${slo.fill_threshold}`, bundle.fill < slo.fill_threshold],
-      ['match rate', String(bundle.match), `≥ ${slo.match_threshold}`, bundle.match < slo.match_threshold],
-    ];
-    h.innerHTML = rows.map(([k, obs, lim, over]) =>
-      `<div class="evrow"><span class="k">${k}</span><span>${esc(obs)} vs ${esc(lim)} ${over ? '<span class="over">OVER ✗</span>' : '<span class="under">OK ✓</span>'}</span></div>`
-    ).join('');
+    var candidate = new URL(String(value || ''));
+    var worker = new URL(WORKER_BASE);
+    return candidate.origin === worker.origin && candidate.pathname === worker.pathname ? candidate.href : '';
+  } catch (error) {
+    return '';
   }
 }
 function bundleUrlOf(att) {
-  const m = /^(https:\/\/\S+?): \d+ chars/.exec(att.evidence_summary || '');
-  return m ? m[1] : '';
+  var direct = typeof att.evidence_url === 'string' ? att.evidence_url : '';
+  if (workerUrl(direct)) return workerUrl(direct);
+  var match = String(att.evidence_summary || '').match(/https:\/\/[^\s<>)]+/);
+  return match ? workerUrl(match[0].replace(/[.,;:]+$/, '')) : '';
 }
-
-// --- live reads with truthful loading + friendly errors ---
-function setTracker(html) {
-  const t = document.getElementById('tracker');
-  if (!html) { t.hidden = true; t.innerHTML = ''; return; }
-  t.hidden = false; t.innerHTML = html;
+function evidenceHolderHtml(att) {
+  return '<div class="evidence-holder" data-bundle-url="' + esc(bundleUrlOf(att)) + '" data-evidence-hash="' + esc(att.evidence_hash || '') + '" data-sla-id="' + esc(att.sla_id || '') + '"><div class="meta">Checking the current bundle against the stored fingerprint…</div></div>';
 }
-async function liveRead() {
-  const verdictBox = document.getElementById('verdict');
-  verdictBox.innerHTML = `<div class="skeleton" style="width:40%"></div><div class="skeleton" style="width:85%"></div><div class="skeleton" style="width:65%"></div><div class="skeleton" style="width:50%"></div>`;
-  setTracker(`<div class="block-pending pulsing">${badge('pending', 'READING')} Fetching finalized verdicts from Studio Next 61997…</div>`);
-  const client = createClient({ chain: studioDevnet });
+function verdictHtml(att, tx, id, featured, readError) {
+  var name = CASE_NAMES[id] || 'Stored attestation ' + id;
+  var head = '<div class="case-head"><h3 class="case-name">Case ' + esc(id) + ' · ' + esc(name) + '</h3><span class="meta">attestation ' + esc(att && att.attestation_id != null ? att.attestation_id : id) + '</span></div>';
+  var proof = '<div class="tx-line"><span>Finalized proof:</span>' + txHtml(tx) + '</div>';
+  var className = 'case-card ' + (featured ? 'featured ' : '');
+  if (!att) return '<article class="' + className + 'is-error">' + head + errorHtml(isMissingAttestation(readError) ? 'NOT FOUND' : 'CHAIN READ FAILED', isMissingAttestation(readError) ? 'No attestation is stored under this ID.' : 'The contract read did not return this attestation.', 'The page cannot support a quality claim without a stored record.', 'Choose a known case or refresh the contract read.', errorText(readError || 'No record returned.')) + proof + '</article>';
+  var status = String(att.status || '').toLowerCase();
+  if (status === 'inconclusive') return '<article class="' + className + 'is-warn">' + head + '<div class="verdict-result">' + badge('warn', 'INCONCLUSIVE') + '</div><div class="state-copy"><p class="result-sentence"><strong>No definitive decision was made.</strong> Required evidence was missing or invalid, so this record is not a pass or a failure.</p><p class="reason-line">Reason: ' + esc(att.reason || 'UNAVAILABLE') + ' · confidence ' + esc(att.confidence == null ? 0 : att.confidence) + '/1000</p><p class="next-step"><strong>Next:</strong> fix the bundle and retry the read or attestation.</p></div>' + proof + '</article>';
+  if (status === 'no_consensus') return '<article class="' + className + 'is-warn">' + head + '<div class="verdict-result">' + badge('warn', 'NO CONSENSUS') + '</div><div class="state-copy"><p class="result-sentence"><strong>Validators did not agree.</strong> The system refused to force a quality verdict at this threshold.</p><p class="next-step"><strong>Next:</strong> retry with the same evidence or adjust the agreement tolerance.</p></div>' + proof + '</article>';
+  if (status !== 'resolved' || typeof att.breach !== 'boolean') return '<article class="' + className + 'is-error">' + head + errorHtml('UNREADABLE RESULT', 'The stored verdict shape was not recognized.', 'A malformed result must not be treated as fulfilled or breached.', 'Refresh the contract read and inspect the Explorer record.', errorText(att)) + proof + '</article>';
+  var breach = att.breach;
+  var confidence = clampConfidence(att.confidence);
+  var reason = att.reason || (breach ? 'QUALITY' : 'WITHIN_LIMITS');
+  var sentence = breach ? 'The service breached the agreement.' : 'The service met the agreement.';
+  var explanation = breach ? 'Functional quality missed at least one agreed limit, even if the endpoint responded HTTP 200.' : 'The observed bundle stayed within the agreed functional limits.';
+  return '<article class="' + className + (breach ? 'is-breach' : 'is-ok') + '">' + head +
+    '<div class="verdict-result">' + badge(breach ? 'bad' : 'ok', breach ? 'BREACH' : 'NO_BREACH') + '</div>' +
+    '<p class="result-sentence"><strong>' + sentence + '</strong> ' + explanation + '</p>' +
+    '<p class="reason-line">Reason tag: <code>' + esc(reason) + '</code></p>' +
+    '<div class="confidence-row"><div class="confidence-track" role="img" aria-label="Confidence ' + confidence + ' out of 1000"><span class="confidence-fill" style="width:' + (confidence / 10).toFixed(1) + '%"></span></div><span class="confidence-label">' + confidence + '/1000 confidence</span></div>' +
+    '<div class="evidence-block"><p class="evidence-title">Observed versus required</p>' + evidenceHolderHtml(att) + '<p class="evidence-note">Rows appear only after the current Worker response matches the stored fingerprint. The contract hashes sanitized/truncated bytes; any raw mismatch is withheld, not reinterpreted.</p></div>' +
+    '<div class="evidence-block"><p class="evidence-title">Evidence fingerprint</p><div class="hash-line"><code class="hash-value short" title="' + esc(att.evidence_hash || '') + '" aria-label="Evidence hash ' + esc(att.evidence_hash || 'unavailable') + '">sha256:' + esc(shortHash(att.evidence_hash || 'unavailable', 12)) + '</code><button class="copybtn" type="button" data-copy-hash="' + esc(att.evidence_hash || '') + '">Copy hash</button></div><p class="meta">' + esc(att.evidence_summary || 'Stored evidence summary unavailable.') + '</p>' + proof + '<details class="evidence-json"><summary>Protocol fields</summary><dl class="truth-list"><div class="truth-row"><dt>Status</dt><dd>' + esc(status) + '</dd></div><div class="truth-row"><dt>p50 / p95</dt><dd>' + esc(formatMetric('p50', att.p50)) + ' / ' + esc(formatMetric('p95', att.p95)) + '</dd></div><div class="truth-row"><dt>Source</dt><dd>Contract readback; Worker content is synthetic fixture evidence.</dd></div></dl></details></div></article>';
+}
+function setHero(att, id) {
+  var signal = document.getElementById('heroSignal');
+  var verdict = document.getElementById('heroVerdict');
+  var context = document.getElementById('heroContext');
+  signal.classList.remove('is-breach', 'is-ok', 'is-warn');
+  if (!att) { verdict.textContent = 'No finalized result loaded'; context.textContent = 'Refresh the contract read to inspect a stored attestation.'; return; }
+  var status = String(att.status || '').toLowerCase();
+  if (status === 'inconclusive') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'INCONCLUSIVE') + ' No definitive decision was made.'; context.textContent = 'Case ' + id + ': evidence was missing or invalid; no quality conclusion is inferred.'; return; }
+  if (status === 'no_consensus') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'NO CONSENSUS') + ' Validators did not agree.'; context.textContent = 'Case ' + id + ': the jury refused to force a result at the threshold.'; return; }
+  if (typeof att.breach !== 'boolean' || status !== 'resolved') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'UNREADABLE') + ' No definitive decision was made.'; context.textContent = 'Case ' + id + ': malformed chain data was withheld.'; return; }
+  signal.classList.add(att.breach ? 'is-breach' : 'is-ok');
+  verdict.innerHTML = att.breach ? badge('bad', 'BREACH') + ' Functional quality missed the agreement.' : badge('ok', 'NO_BREACH') + ' The service met the agreement.';
+  context.textContent = 'Case ' + id + ' · ' + (CASE_NAMES[id] || 'Stored attestation') + ' · confidence ' + clampConfidence(att.confidence) + '/1000.';
+}
+function isMissingAttestation(error) {
+  return /attestation\s+(not\s+found|unknown)|no\s+attestation|not found/i.test(errorText(error));
+}
+function validBundle(bundle) {
+  if (!bundle || typeof bundle !== 'object') return false;
+  return ['p50', 'p95', 'error', 'fill', 'match'].every(function (key) {
+    return bundle[key] === null || (typeof bundle[key] === 'number' && Number.isFinite(bundle[key]));
+  });
+}
+function validReputation(rep) {
+  if (!rep || typeof rep !== 'object') return false;
+  var score = Number(rep.score);
+  var total = Number(rep.total);
+  var breaches = Number(rep.breaches);
+  return Number.isFinite(score) && score >= 0 && score <= 100 && Number.isInteger(total) && total >= 0 && Number.isInteger(breaches) && breaches >= 0 && breaches <= total;
+}
+async function hashBundle(raw) {
+  var digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+  return Array.from(new Uint8Array(digest)).map(function (byte) { return byte.toString(16).padStart(2, '0'); }).join('');
+}
+function parseSlo() {
   try {
-    const rep = await client.readContract({ address: CONTRACT, functionName: 'get_reputation', args: ['https://example.com'] });
-    document.getElementById('reputation').innerHTML = `<p class="rep-score">${rep.score}<span class="meta"> / 100</span></p><p>${badge('real', 'VERIFIED')} ${rep.total} checks · ${rep.breaches} breaches — <a href="${EXPLORER}/address/${CONTRACT}" target="_blank" rel="noopener">contract</a>.</p><div class="block-mock">${badge('mock', 'MOCK')} Cross-chain settlement is a diagram for now, not a transaction. Attestations above are real.</div>`;
-  } catch (e) {
-    document.getElementById('reputation').innerHTML = `<div class="block-error">${badge('fail', 'NETWORK ISSUE')} Couldn't reach Studio Next (${esc(e.message.slice(0, 100))}). Your data is safe — <button class="secondary" onclick="liveRead()">Retry</button></div><details><summary>Technical details</summary><code class="hash">${esc(e.message.slice(0, 300))}</code></details>`;
-  }
-  const cases = [['1', KNOWN_TX.attHealthy, 'Healthy'], ['2', KNOWN_TX.attBreach, 'Degraded'], ['3', KNOWN_TX.attEmpty, 'Missing data']];
-  const blocks = [];
-  let anyOk = false;
-  for (const [id, tx, name] of cases) {
+    var value = JSON.parse(document.getElementById('sloJson').value);
+    var required = ['p95_threshold', 'error_threshold', 'fill_threshold', 'match_threshold'];
+    if (!value || typeof value !== 'object' || required.some(function (key) { return typeof value[key] !== 'number' || !Number.isFinite(value[key]); })) return null;
+    if (value.p95_threshold <= 0 || value.p95_threshold > 600000) return null;
+    if ([value.error_threshold, value.fill_threshold, value.match_threshold].some(function (number) { return number < 0 || number > 1; })) return null;
+    return value;
+  } catch (error) { return null; }
+}
+function validateSetup() {
+  var id = document.getElementById('slaId');
+  var api = document.getElementById('apiUrl');
+  var slo = document.getElementById('sloJson');
+  var idOk = id.value.trim().length > 0;
+  var apiOk = false;
+  try { apiOk = new URL(api.value.trim()).protocol === 'https:'; } catch (error) { apiOk = false; }
+  var sloOk = Boolean(parseSlo());
+  id.setAttribute('aria-invalid', String(!idOk));
+  api.setAttribute('aria-invalid', String(!apiOk));
+  slo.setAttribute('aria-invalid', String(!sloOk));
+  document.getElementById('slaIdError').hidden = idOk;
+  document.getElementById('apiUrlError').hidden = apiOk;
+  document.getElementById('sloError').hidden = sloOk;
+  document.getElementById('previewBtn').disabled = !(idOk && apiOk && sloOk);
+  return idOk && apiOk && sloOk;
+}
+function previewMetrics(bundle) {
+  return ['p50', 'p95', 'error', 'fill', 'match'].map(function (key) {
+    return key + ': ' + (bundle[key] === null || bundle[key] === undefined ? 'missing' : formatMetric(key, bundle[key]));
+  }).join(' · ');
+}
+async function previewEvidence() {
+  if (previewInFlight) return previewInFlight;
+  if (!validateSetup()) return;
+  var box = document.getElementById('registerStatus');
+  var previewButton = document.getElementById('previewBtn');
+  var preset = document.getElementById('bundlePreset').value;
+  var url = WORKER_BASE + '?preset=' + encodeURIComponent(preset) + '&sla=' + encodeURIComponent(document.getElementById('slaId').value.trim());
+  previewButton.disabled = true;
+  box.innerHTML = '<div class="status-line">' + badge('pending', 'CHECKING FIXTURE') + ' Fetching a read-only evidence preview…</div>';
+  previewInFlight = (async function () {
     try {
-      const att = await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [id] });
-      blocks.push(`<h3>Case ${id} — ${name}</h3>` + verdictHtml(att, tx));
-      anyOk = true;
-    } catch (e) {
-      blocks.push(`<h3>Case ${id} — ${name}</h3><div class="block-error">${badge('fail', 'NOT LOADED')} ${esc(e.message.slice(0, 100))} <button class="secondary" onclick="liveRead()">Retry</button></div>`);
+      var response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Worker answered HTTP ' + response.status);
+      var raw = await response.text();
+      var bundle = JSON.parse(raw);
+      if (!validBundle(bundle)) throw new Error('Worker JSON did not contain finite metric fields.');
+      var hash = await hashBundle(raw);
+      box.innerHTML = '<div class="proof-item"><p>' + badge('mock', 'SYNTHETIC FIXTURE') + ' Preview only; no contract or wallet action occurred.</p><p>' + esc(previewMetrics(bundle)) + '</p><code class="hash-value">sha256:' + esc(hash) + '</code><p class="meta">This raw-response fingerprint is displayed for inspection. The contract remains unchanged.</p></div>';
+    } catch (error) {
+      box.innerHTML = errorHtml('EVIDENCE UNAVAILABLE', 'The fixture endpoint did not return usable JSON.', 'No observed values can support a verdict or registration preview.', 'Retry the preview when the Worker is reachable.', errorText(error), 'preview');
+    } finally {
+      previewButton.disabled = false;
+      previewInFlight = null;
+    }
+  })();
+  return previewInFlight;
+}
+async function fillEvidenceRows() {
+  var client = createClient({ chain: studioDevnet });
+  var holders = Array.from(document.querySelectorAll('[data-bundle-url]'));
+  for (var i = 0; i < holders.length; i += 1) {
+    var holder = holders[i];
+    var url = holder.getAttribute('data-bundle-url');
+    var expected = holder.getAttribute('data-evidence-hash');
+    var slaId = holder.getAttribute('data-sla-id');
+    if (!url || !/^https:\/\//.test(url) || !expected || !slaId) {
+      holder.innerHTML = '<div class="evidence-warning">Observed rows unavailable. The attestation did not include a usable evidence URL or fingerprint.</div>';
+      continue;
+    }
+    try {
+      var stored = await client.readContract({ address: CONTRACT, functionName: 'get_sla', args: [slaId] });
+      var slo = JSON.parse(stored.slo_json);
+      var response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Worker answered HTTP ' + response.status);
+      var raw = await response.text();
+      var actual = await hashBundle(raw);
+      if (actual !== expected) {
+        holder.innerHTML = '<div class="evidence-warning"><strong>Fingerprint mismatch.</strong> The current raw response does not match the stored evidence hash, so observed rows stay withheld. This is not treated as a new verdict.</div>';
+        continue;
+      }
+      var bundle = JSON.parse(raw);
+      if (!validBundle(bundle)) throw new Error('Worker JSON did not contain finite metric fields.');
+      holder.innerHTML = metricRowsHtml(bundle, slo) + '<details class="evidence-json"><summary>Current fixture JSON</summary><pre>' + esc(JSON.stringify(bundle, null, 2)) + '</pre></details>';
+    } catch (error) {
+      holder.innerHTML = '<div class="evidence-warning">Observed rows unavailable. The page could not verify the current bundle against the stored fingerprint.</div><details><summary>Technical detail</summary><code class="hash-value">' + esc(errorText(error).slice(0, 320)) + '</code></details>';
     }
   }
-  verdictBox.innerHTML = blocks.join('');
-  await fillEvidenceRows();
-  document.getElementById('explorer').innerHTML = "";
-  setTracker(anyOk
-    ? `<div class="block-real">${badge('real', 'VERIFIED')} ${blocks.length} finalized verdicts from Studio Next 61997 — <a href="${EXPLORER}/address/${CONTRACT}" target="_blank" rel="noopener">contract</a> (FINALIZED + FINISHED_WITH_RETURN, checked via <code>isSuccessful</code>).</div>`
-    : `<div class="block-error">${badge('fail', 'NOTHING LOADED')} No verdict could be read. Check your connection, then <button class="secondary" onclick="liveRead()">Retry</button></div>`);
-  void KNOWN_TX;
 }
-window.liveRead = liveRead;
-liveRead();
-
-document.getElementById('refreshBtn').onclick = () => { liveRead(); };
-
-document.getElementById('attestBtn').onclick = async () => {
-  const slaId = document.getElementById('slaId').value.trim();
-  if (!slaId) {
-    document.getElementById('attestStatus').innerHTML = `<div class="block-error">${badge('fail', 'MISSING ID')} Enter an agreement ID first — the jury needs to know which agreement to verify.</div>`;
-    return;
-  }
-  // Fee-aware v2 write path (requires injected EIP-1193 wallet; else use scripts/ with GENLAYER_PRIVATE_KEY env).
-  if (!window.ethereum) {
-    document.getElementById('attestStatus').innerHTML = `<div class="block-pending">${badge('pending', 'NO WALLET')} This browser has no wallet, so new attestations run from <code>scripts/attest-studio-dev.mjs</code> (fee-aware: estimate → submit with fees → wait for FINALIZED → <code>isSuccessful</code> check).<br>Finalized results for the three demo cases are shown below — pending means waiting on consensus, never guessed.</div>`;
-    liveRead();
-    return;
-  }
-  document.getElementById('attestStatus').innerHTML = `<div class="block-pending pulsing">${badge('pending', 'PREPARING')} Estimating fees for <b>${esc(slaId)}</b> — submit with fees{distribution, feeValue}, track to FINALIZED, verify with <code>isSuccessful</code> (status + FINISHED_WITH_RETURN) ...</div>`;
+async function resolveReputationSubject(client) {
+  var id = document.getElementById('slaId').value.trim();
+  if (!id) return { kind: 'missing' };
   try {
-    const { createTransactionKit } = await import('https://esm.sh/@genlayer/transaction-kit@latest');
-    document.getElementById('attestStatus').innerHTML = `<div class="block-pending pulsing">${badge('pending', 'AWAITING SIGNATURE')} Transaction Kit loaded — connect the wallet and sign (low / standard / high appeal posture). Tracking until finalized ...</div>`;
-    void createTransactionKit;
-  } catch (e) {
-    document.getElementById('attestStatus').innerHTML = `<div class="block-error">${badge('fail', 'WALLET PATH UNAVAILABLE')} The signing library didn't load (${esc(e.message.slice(0, 100))}). Use <code>scripts/attest-studio-dev.mjs</code> instead — finalized results are shown below.</div><details><summary>Technical details</summary><code class="hash">${esc(e.message.slice(0, 300))}</code></details>`;
+    var stored = await client.readContract({ address: CONTRACT, functionName: 'get_sla', args: [id] });
+    if (stored && typeof stored.api_url === 'string' && stored.api_url.indexOf('https://') === 0) return { kind: 'subject', id: id, apiUrl: stored.api_url };
+  } catch (error) { return { kind: 'error', error: error }; }
+  return { kind: 'missing' };
+}
+function reputationHtml(rep, subject) {
+  var score = Math.max(0, Math.min(100, Number(rep.score) || 0));
+  var total = Number(rep.total);
+  var breaches = Number(rep.breaches);
+  return '<div class="reputation-layout"><div><span class="score-label">Reliability score</span><p class="rep-score">' + esc(score) + '<small> / 100</small></p><div class="rep-bar" role="img" aria-label="Reliability score ' + esc(score) + ' out of 100"><span style="width:' + score + '%"></span></div><p class="meta">' + badge('real', 'VERIFIED READ') + ' agreement ' + esc(subject.id) + ' · ' + esc(subject.apiUrl) + '</p></div><dl class="rep-facts"><div class="rep-fact"><dt>Checks</dt><dd>' + (Number.isFinite(total) ? esc(total) : 'Unavailable') + '</dd></div><div class="rep-fact"><dt>Breaches</dt><dd>' + (Number.isFinite(breaches) ? esc(breaches) : 'Unavailable') + '</dd></div><div class="rep-fact"><dt>Trend</dt><dd>Withheld</dd></div><div class="rep-fact"><dt>Source</dt><dd>Contract</dd></div></dl></div><p class="meta">Only resolved attestations affect this record. A trend is withheld while the sample is this small; inspect each evidence block for the reason. Timestamp unavailable on Studio Next for this read.</p>';
+}
+function setBusy(busy) {
+  var refresh = document.getElementById('refreshBtn');
+  refresh.disabled = busy;
+  refresh.setAttribute('aria-busy', String(busy));
+  document.getElementById('verdict').setAttribute('aria-busy', String(busy));
+}
+function trackerHtml(state, detail) {
+  var phases = ['READING CONTRACT', 'CHECKING EVIDENCE', 'READY'];
+  var terminal = state === 'READY' || state === 'FAILED';
+  var index = state === 'FAILED' ? phases.length - 1 : phases.indexOf(state);
+  return '<ol class="tracker" aria-label="Read status">' + phases.map(function (phase, i) {
+    var className = terminal ? (state === 'FAILED' && i === phases.length - 1 ? 'failed' : 'done') : (i < index ? 'done' : i === index ? 'current' : '');
+    return '<li class="' + className + '">' + phase + (i === phases.length - 1 && terminal && detail ? ' <span>' + esc(detail) + '</span>' : i === index && detail ? ' <span>' + esc(detail) + '</span>' : '') + '</li>';
+  }).join('') + '</ol>';
+}
+function setTracker(state, detail) {
+  document.getElementById('tracker').innerHTML = state ? trackerHtml(state, detail) : '';
+}
+async function liveRead() {
+  if (readInFlight) return readInFlight;
+  readInFlight = (async function () {
+    setBusy(true);
+    document.getElementById('verdict').innerHTML = '<div class="skeleton wide"></div><div class="skeleton medium"></div><div class="skeleton short"></div>';
+    document.getElementById('reputation').innerHTML = '<div class="skeleton medium"></div><div class="skeleton wide"></div>';
+    setTracker('READING CONTRACT', 'Studio Next ' + CHAIN_ID);
+    var results = [];
+    try {
+      var client = createClient({ chain: studioDevnet });
+      var subject = await resolveReputationSubject(client);
+      if (subject.kind === 'missing') {
+        document.getElementById('reputation').innerHTML = '<div class="error-box">' + badge('warn', 'NO AGREEMENT') + '<p><strong>What happened:</strong> The selected agreement was not found in the contract.</p><p><strong>Why it matters:</strong> Reputation cannot be guessed from editable form values.</p><p class="next-step"><strong>Next:</strong> choose a registered agreement ID and refresh.</p></div>';
+      } else if (subject.kind === 'error') {
+        document.getElementById('reputation').innerHTML = errorHtml('CHAIN READ FAILED', 'The selected agreement could not be read from Studio Next.', 'No reputation value is shown for this session.', 'Check the network and refresh.', errorText(subject.error));
+      } else {
+        try {
+          var rep = await client.readContract({ address: CONTRACT, functionName: 'get_reputation', args: [subject.apiUrl] });
+          if (!validReputation(rep)) throw new Error('Contract returned an invalid reputation shape.');
+          document.getElementById('reputation').innerHTML = reputationHtml(rep, subject);
+        } catch (error) {
+          document.getElementById('reputation').innerHTML = errorHtml('CHAIN READ FAILED', 'The reliability record could not be read from Studio Next.', 'No reputation value is shown for this session.', 'Check the network and refresh.', errorText(error));
+        }
+      }
+      setTracker('CHECKING EVIDENCE', visibleCaseIds.length + ' case' + (visibleCaseIds.length === 1 ? '' : 's'));
+      for (var i = 0; i < visibleCaseIds.length; i += 1) {
+        var id = visibleCaseIds[i];
+        try {
+          var att = await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [id] });
+          results.push({ id: id, att: att, tx: CASE_TX[id] || null });
+        } catch (error) {
+          results.push({ id: id, att: null, tx: CASE_TX[id] || null, error: error });
+        }
+      }
+      var loaded = results.filter(function (item) { return item.att; });
+      var featured = loaded.find(function (item) { return item.att && item.att.status === 'resolved' && item.att.breach === true; }) || loaded[0];
+      setHero(featured && featured.att, featured ? featured.id : visibleCaseIds[0]);
+      document.getElementById('verdict').innerHTML = '<div class="case-grid">' + results.map(function (item, index) {
+        return verdictHtml(item.att, item.tx, item.id, index === 0, item.error);
+      }).join('') + '</div>';
+      await fillEvidenceRows();
+      if (loaded.length) setTracker('READY', loaded.length + ' finalized record' + (loaded.length === 1 ? '' : 's') + ' read from contract');
+      else {
+        setTracker('READY', 'No records loaded');
+        document.getElementById('verdict').insertAdjacentHTML('beforeend', errorHtml('NOTHING LOADED', 'No selected attestation could be read.', 'The page cannot make a quality claim from missing records.', 'Choose a known case or refresh the contract read.', results.map(function (item) { return errorText(item.error); }).filter(Boolean).join(' | ')));
+      }
+    } catch (error) {
+      document.getElementById('verdict').innerHTML = errorHtml('CHAIN READ FAILED', 'Studio Next did not return the requested records.', 'No verdict is presented as current.', 'Check the network and retry the live read.', errorText(error));
+      document.getElementById('reputation').innerHTML = errorHtml('CHAIN READ FAILED', 'The contract could not be reached.', 'The reliability record is unavailable, not zero.', 'Check the network and retry.', errorText(error));
+      setTracker('FAILED', 'Read failed; no current verdict shown');
+      setHero(null, visibleCaseIds[0]);
+    } finally {
+      setBusy(false);
+      readInFlight = null;
+    }
+  })();
+  return readInFlight;
+}
+
+document.getElementById('setupForm').addEventListener('submit', function (event) { event.preventDefault(); });
+['slaId', 'apiUrl', 'sloJson'].forEach(function (id) { document.getElementById(id).addEventListener('input', validateSetup); });
+document.getElementById('bundlePreset').addEventListener('change', function (event) {
+  document.getElementById('registerStatus').innerHTML = '<p class="meta">Preview source: <code>' + esc(WORKER_BASE) + '?preset=' + esc(event.target.value) + '</code> · synthetic fixture; no write.</p>';
+});
+document.getElementById('previewBtn').addEventListener('click', function () { void previewEvidence(); });
+document.getElementById('refreshBtn').addEventListener('click', function () { void liveRead(); });
+document.getElementById('caseSet').addEventListener('change', function (event) {
+  visibleCaseIds = (CASE_SETS[event.target.value] || CASE_SETS['breach-focus']).slice();
+  void liveRead();
+});
+document.addEventListener('click', function (event) {
+  var copy = event.target.closest('[data-copy-hash]');
+  if (copy) {
+    var value = copy.getAttribute('data-copy-hash') || '';
+    if (!navigator.clipboard) { copy.textContent = 'Copy unavailable'; return; }
+    navigator.clipboard.writeText(value).then(function () {
+      var previous = copy.textContent;
+      copy.textContent = 'Copied';
+      copy.setAttribute('aria-label', 'Evidence hash copied');
+      setTimeout(function () { copy.textContent = previous; }, 1400);
+    }).catch(function () { copy.textContent = 'Copy unavailable'; });
   }
-};
+  var action = event.target.closest('[data-action]');
+  if (action && action.getAttribute('data-action') === 'refresh') void liveRead();
+  if (action && action.getAttribute('data-action') === 'preview') void previewEvidence();
+});
+var queryWarning = (QS.has('cases') && !parsedCases) || (QS.has('contract') && !validAddress(QS.get('contract')));
+document.getElementById('caseSet').value = Object.entries(CASE_SETS).find(function (entry) { return entry[1].join(',') === visibleCaseIds.join(','); }) ? Object.entries(CASE_SETS).find(function (entry) { return entry[1].join(',') === visibleCaseIds.join(','); })[0] : 'breach-focus';
+validateSetup();
+document.getElementById('attestStatus').innerHTML = '<p class="meta">Read-only review mode: finalized records below are inspectable; new writes are disabled.' + (queryWarning ? ' The URL parameters were invalid, so the safe default contract and case set are shown.' : '') + '</p>';
+void liveRead();
 </script>
 </body>
 </html>

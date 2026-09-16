@@ -1,5 +1,7 @@
 # 07 — Wedge Challenge: Is SLA Attestation Strong Enough? (Task 3)
 
+> **Historical wedge analysis.** Customer, pricing, automation, settlement, and expansion statements below are research hypotheses. Current technical evidence and boundaries are in `EVIDENCE.md` and `CLAIM-PACKET.md`.
+
 **Date:** 2026-09-02
 **Goal:** Don't weaken thesis to preserve wording. Test if wedge is strong enough on its own, or merely first wedge into broader verification infrastructure.
 

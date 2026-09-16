@@ -1,5 +1,7 @@
 # 04 — Economic Models
 
+> **Historical economic research.** Pricing, margins, bonds, appeal economics, and dollar costs below are scenarios, not current release claims. Current measured Studio fees are in `FEE-ECONOMICS.md` and remain GEN-denominated.
+
 **No token unless necessary (per §22).** Here: GEN is utility (fees, bonds, appeal) not product token.
 
 ## Procurement/AP (#3)

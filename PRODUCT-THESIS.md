@@ -3,6 +3,8 @@
 **Status:** Productization decision, not research. Supersedes discussion; does not supersede `07-final-thesis/final-product.md` evidence.
 **Evidence labels:** FACT = verified in repo or official source. INFERENCE = reasoned. OUR DESIGN = product choice.
 
+**Current release boundary:** the Worker is synthetic fixture evidence, the Base/Hyperlane relay is mocked, and ProveDown has no application-level appeal, bond, or slashing flow. Current deployment facts are authoritative in `EVIDENCE.md`.
+
 ---
 
 ## 1. What is ProveDown? (one sentence)
@@ -46,7 +48,7 @@ Result: disputes revert to screenshots, Slack threads, and manual audit — mont
 
 FACT (proven on Studio Next 61997, `EVIDENCE.md`): jury fetches bundle → `exec_prompt` judges `BREACH if p95>threshold+500 OR error>=threshold OR fill<threshold OR match<threshold` → consensus on breach bool only → stores `{breach, reason, confidence 0-1000, evidence_hash sha256, p50/p95, status}` + Bayesian reputation.
 
-The canonical demonstration (FACT, tx `0xe04d...`): HTTP 200 + p95 4800 + fill 0.72 vs SLO p95≤2000+500/fill≥0.80 → **BREACH, confidence 1000**. Uptime-style logic says UP. ProveDown says the agreement was not fulfilled. That gap IS the product.
+The canonical demonstration (FACT, current Studio tx `0xf566...`): HTTP 200 + p95 4800 + fill 0.72 vs SLO p95≤2000+500/fill≥0.80 → **BREACH, confidence 1000**. Uptime-style logic says UP. ProveDown says the agreement was not fulfilled. That gap IS the product.
 
 Three verdict states are first-class (FACT, `contracts/provedown.py:290-369`): `resolved` (BREACH/NO_BREACH), `inconclusive` (evidence missing — never a definitive judgment), `no_consensus` (honest validator split at threshold).
 
@@ -54,7 +56,7 @@ Three verdict states are first-class (FACT, `contracts/provedown.py:290-369`): `
 
 | Verdict | Machine meaning | Downstream action (V1 → later) |
 |---|---|---|
-| BREACH | Agreement not fulfilled, proof attached | V1: failover / switch provider, file credit claim with explorer link + hash, reputation decrements (60/2/1 FACT). Later: auto-claim, escrow release-hold, insurance trigger |
+| BREACH | Agreement not fulfilled, proof attached | V1: failover / switch provider, file credit claim with explorer link + hash, reputation updates (current live read 66/3/1 after attestation 4). Later: auto-claim, escrow release-hold, insurance trigger |
 | NO_BREACH | Agreement fulfilled | Continue routing, reputation increments, proof retained for audit window |
 | INCONCLUSIVE | Nothing was decided about quality | Retry with fixed bundle; explicitly NOT a pass/fail (design.md §25). No reputation change (FACT: inconclusive excluded) |
 | NO_CONSENSUS | Validators honestly disagreed | Retry or adjust SLO tolerance; framed as system working, not failure |
@@ -70,7 +72,7 @@ Locked framing: **verification of machine-to-machine service agreements.** It su
 - Problem: silent functional degradation with no neutral arbiter.
 - Who: pipeline operators buying API capacity consumed by agents.
 - Why now: FACT — hackathon track explicitly asks "SLA and uptime enforcement" (portal, Sep 2026); agents multiply call volume 10–100× while reliability falls 99.66→99.46%; x402/ERC-8004/A2A ship happy path with no adjudication (docs.genlayer.com FACT).
-- Why ProveDown: only economically-secured subjective adjudication with independently fetched evidence both sides can cite.
+- Why ProveDown: consensus-backed subjective adjudication with independently fetched evidence both sides can cite.
 - Why existing software fails: §5 table.
 - Does GenLayer matter: YES, load-bearing — remove it → biased dashboard; replace with single oracle/AI → single bribe target (`06-adversarial-analysis/02` PASS verdicts).
 - Unlocks: credit claims with proof, reputation-based routing, eventual conditional settlement.

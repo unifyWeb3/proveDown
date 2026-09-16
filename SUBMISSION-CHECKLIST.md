@@ -5,29 +5,31 @@
 
 ## Product description (for form)
 
-ProveDown is a neutral, economically-secured attestation sidecar for agent pipelines: a pipeline owner registers an API + functional SLO; an independent GenLayer validator jury fetches a stable evidence bundle, judges breach vs SLO with tolerance, and anchors the verdict (breach bool + reason + confidence + evidence SHA-256) plus a Bayesian reputation update on-chain with explorer proof. Demo: healthy API → NO_BREACH; functionally broken API (HTTP 200 but 72% fill vs 80% required) → BREACH; missing evidence → INCONCLUSIVE (never definitive). Differentiation vs live Uptime project: factual reachability (strict consensus, is_up) vs functional obligation fulfillment (LLM jury, tolerance, evidence hash, reputation).
+ProveDown is a consensus-backed attestation sidecar for agent pipelines: a pipeline owner registers an API + functional SLO; independent GenLayer validators fetch a stable evidence bundle, judge breach vs SLO with tolerance, and anchor the verdict (breach bool + reason + confidence + evidence SHA-256) plus a Bayesian reliability record on-chain with Explorer proof. Demo: healthy API → NO_BREACH; functionally broken API (HTTP 200 but 72% fill vs 80% required) → BREACH; missing evidence → INCONCLUSIVE (never definitive). The Worker is synthesized fixture evidence and the downstream relay is mocked. Differentiation vs live Uptime: factual reachability (`is_up`) vs functional obligation fulfillment (LLM jury, tolerance, evidence hash, reliability record).
 
 ## Links
 
 - Repo: `https://github.com/unifyWeb3/proveDown` (PRIVATE until submission/publication point — do NOT make public early)
 - Demo: `frontend/index.html` (static; live reads studio-dev 61997) + `DEMO.md` 60–90s script
-- Deployed contract (Studio Next 61997): `0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF`
-- Explorer: `https://explorer-studio-dev.genlayer.com/address/0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF`
+- Deployed hardened contract (Studio Next 61997): `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`
+- Explorer: `https://explorer-studio-dev.genlayer.com/address/0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`
 - Worker: `https://provedown-bundle.contentbounty.workers.dev/bundle`
 
 ## Explorer evidence (all FINALIZED + FINISHED_WITH_RETURN + isSuccessful=true)
 
-- Deploy: `https://explorer-studio-dev.genlayer.com/tx/0x5a34f359d575b4e74742ccc3ec7ea2e1d919911be90c47b9fdb125b53837a782`
-- Register healthy: `.../tx/0xfbad72095fa21c3b6438bcb78143121f65c73a36e1add67c1e081a7b543db817`
-- Register breach: `.../tx/0x91721ba5a9338ebb7281ebb32f2c049479afc2d1ac85714ca95d39ebaa60a047`
-- Register empty: `.../tx/0x15832858c70c49c96da9523e6be5a79eba4f1cf659335cdec5895a90d754e6e1`
-- Attest healthy (NO_BREACH 980): `.../tx/0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497`
-- Attest breach (BREACH 1000 LATENCY): `.../tx/0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383`
-- Attest empty (INCONCLUSIVE conf 0): `.../tx/0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43`
+- Deploy: `https://explorer-studio-dev.genlayer.com/tx/0x6cdb3d3d7f86a4a449f656ebd6b1e3e2e4ee7ec405afa3d494dc0828b3b36cbb`
+- Register healthy: `https://explorer-studio-dev.genlayer.com/tx/0x253881fbb07c87b15c6964013f3ee10d3035d62b7d93c9e3175c8a4fa7668f1f`
+- Register breach: `https://explorer-studio-dev.genlayer.com/tx/0xeb749cd4f4df5f987fde0af3b47a28b1236a27dead26b09dcc3b4e0aac2350ee`
+- Register empty: `https://explorer-studio-dev.genlayer.com/tx/0x9880f176a902c0cf94a1580ffd1bd635c29e1d856b058c5183f8cde3dbbfb7da`
+- Attest healthy (NO_BREACH 1000): `https://explorer-studio-dev.genlayer.com/tx/0xa5a1aae059d49895719afed202f58804a12b7bcab28d90b3eee63e0942cc0faf`
+- Attest breach (BREACH 1000 ERROR_QUALITY): `https://explorer-studio-dev.genlayer.com/tx/0xf566a8305212cc52e899ed2a1294eea5d9ed4b89fec3aba5d5e1eb24fb8ed505`
+- Attest empty (INCONCLUSIVE conf 0): `https://explorer-studio-dev.genlayer.com/tx/0x90b9e1b983b3ebe2490f812b6696317031ce6b4cb65c7c3a7bb75b51a5af6f8a`
+- Browser register: `https://explorer-studio-dev.genlayer.com/tx/0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a`
+- Browser attestation 4 (NO_BREACH 1000): `https://explorer-studio-dev.genlayer.com/tx/0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110`
 
 ## Screenshots / demo flow
 
-- `frontend/index.html` renders Cases 1/2/3 + reputation + explorer links (live reads, no build).
+- `frontend/index.html` renders Cases 1/2/3 + reputation + explorer links (live reads); `npm --prefix frontend run build` produces the validated static artifact.
 - Flow: `DEMO.md` (hook 15s → run 45s → why-GenLayer 15s → beyond 15s).
 - Differentiation line: "HTTP 200 does not mean the service fulfilled the agreement."
 
@@ -37,16 +39,16 @@ ProveDown is a neutral, economically-secured attestation sidecar for agent pipel
 - Bridge to Base mocked (arrow + hash diagram, not Hyperlane tx).
 - Studio-dev may reset (re-run `scripts/attest-studio-dev.mjs`); Bradbury `0x72a6...` kept as compatibility evidence only.
 - `timestamp` empty on studio-dev (`message_raw["datetime"]` absent; `gl.block.timestamp` fallback added, still empty in these txs — evidence hash + tx time suffice).
-- Same testnet key reused for Base (testnet only; rotate before mainnet).
+- Browser wallet write path is verified by the finalized registration and attestation 4 transactions above, with on-chain SLA, attestation, and reputation readback.
 - Validator LLM diversity assumed (studio-dev policy: gpt-5.4/gemini-3-flash/gpt-oss-120b via greybox policy).
 
 ## Setup instructions (judge/verify)
 
 ```bash
 git clone https://github.com/unifyWeb3/proveDown && cd proveDown  # repo is startup/ content at root? No — repo root IS startup/
-node scripts/check-env.mjs # 3 ✓ (PRIVATE_KEY present masked, WORKER 200, STUDIO_DEV contract 42-char)
-bash scripts/run-tests.sh # 9 passed
-/tmp/provedown-rc-venv/bin/genvm-lint lint contracts/provedown.py # 2 reachability advisories (false-positive, proven on-chain; Studio accepts on deploy)
+node scripts/check-env.mjs # masked credentials/connectivity check
+bash scripts/run-tests.sh # 13 analog tests passed
+PYTHONPATH=/tmp/provedown-linter /tmp/provedown-linter/bin/genvm-lint lint contracts/provedown.py # 2 reachability advisories (false-positive, proven on-chain; Studio accepts on deploy)
 # live reads (no wallet): open frontend/index.html
 # live writes: GENLAYER_PRIVATE_KEY=... node scripts/attest-studio-dev.mjs
 ```
@@ -55,4 +57,4 @@ bash scripts/run-tests.sh # 9 passed
 
 ## Final pitch (30s)
 
-APIs lie about quality the way status pages lie about uptime — a 200 with 72% fill still breaches your agent's 80% SLO and costs you $50K while the provider credits $125. Neither your dashboard (biased for you) nor theirs (biased for them) settles it. ProveDown turns GenLayer's jury — independent fetches + diverse LLMs + breach-bool consensus + evidence hash + appeal — into settlement-grade proof: $0.0001 GEN per verification unlocks the $5k dispute. Uptime tells you it responded; ProveDown tells you it fulfilled the agreement.
+APIs can return HTTP 200 while failing the functional obligation an agent depends on. ProveDown has independent GenLayer validators fetch a quality bundle, agree on breach vs no-breach, store the evidence fingerprint, and update a reliability record. Uptime tells you an endpoint responded; ProveDown tests whether it fulfilled the agreement. The current Worker is synthesized and the downstream relay is mocked, so this is an attestation MVP, not a production settlement rail.

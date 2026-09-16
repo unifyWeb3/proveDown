@@ -1,5 +1,7 @@
 # KEYCHAIN — WSL2 Handling for GenLayer CLI
 
+> **Compatibility note.** The WSL-safe `genlayer-js` signing pattern remains useful, but the Bradbury/testnet commands and `verify-post-deploy.sh` references below are historical. The current demonstrated deployment is Studio Next 61997; do not treat this file as the active release runbook.
+
 **Why keychain fails in WSL:** WSL2 is headless Linux without GNOME Keyring / macOS Keychain / Windows Credential Manager. `genlayer account unlock` requires OS keychain (see preflight `OS keychain is not available`). `genlayer account import` with `--password` works for import, but `genlayer deploy` then prompts `Enter password to decrypt keystore` and fails non-interactively if keychain unavailable. This is WSL environment limitation, not credential error.
 
 **Supported alternative per official pattern:** Use `genlayer-js` direct wallet (as `genlayer-jury/deploy_dispute_court_v2.ts:11,21` does), which reads `GENLAYER_PRIVATE_KEY` env directly via `createAccount(privateKey)` and never touches OS keystore. This is documented reusable path and avoids keychain entirely.
@@ -30,6 +32,6 @@ node startup/scripts/deploy-with-js.mjs  # creates contract, prints 0x... addres
 
 **Expected result when fixed:** `node scripts/deploy-with-js.mjs` → `Deploy transaction submitted: 0x...` → `WAITING for ACCEPTED (30-60s)` → `Contract address: 0x...` → set in `.env.local` → `bash scripts/verify-post-deploy.sh 0x...` shows ACCEPTED tx and `get_attestation` BREACH/NO_BREACH.
 
-**Security note:** Do not reuse same private key for Base Sepolia (currently both 0x398... identical in `.env.local` — rotate per `FINAL-PREFLIGHT-AUDIT.md: S1`).
+**Security note:** Do not reuse the same private key for Base Sepolia (the current testnet configuration uses one redacted key in both env slots — rotate per `FINAL-PREFLIGHT-AUDIT.md: S1`).
 
 **Do NOT search other repos for credentials:** No other local repository is inspected for private keys. Only documented reusable deploy pattern from `genlayer-jury/deploy_dispute_court_v2.ts` is reused, not credential stores.

@@ -1,4 +1,4 @@
-# v0.3.0
+# v0.3.1
 # { "Depends": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng" }
 """
 ProveDown — Functional SLO Attestation (MVP narrow slice, Consensus v0.6)
@@ -6,11 +6,11 @@ ProveDown — Functional SLO Attestation (MVP narrow slice, Consensus v0.6)
 Validates via independent jury whether a pre-computed quality bundle
 breaches a buyer-defined SLO. Bundle is fetched as stable JSON from a
 public Worker; jury judges breach vs criteria with tolerance. On-chain
-attestation is neutral, bonded, and bridged.
+attestation is neutral and stored on GenLayer. The MVP bridge remains explicitly mocked.
 
 Design per implementation-readiness.md:
 - register_sla (deterministic validation)
-- request_attestation (nondet: web.render bundle + exec_prompt judge → run_nondet_unsafe on breach bool only)
+- request_attestation (nondet: web.render bundle + exec_prompt judge → run_nondet_default on breach bool only)
 - views: get_attestation, get_reputation, get_sla
 
 v0.6 API (verified on studio-dev 61997):
@@ -34,6 +34,7 @@ from genlayer.storage.tree_map import TreeMap
 
 MAX_BUNDLE_CHARS = 3000
 MAX_SLA_JSON = 2000
+SLO_FIELDS = ("p95_threshold", "error_threshold", "fill_threshold", "match_threshold")
 
 FORBIDDEN_TOKENS = (
     "ignore previous",
@@ -70,7 +71,7 @@ Respond ONLY JSON: {{"breach": true|false, "reason":"LATENCY|ERROR_QUALITY|UNAVA
 <BUNDLE>{bundle_block}</BUNDLE>"""
 
 
-def parse_llm_json(raw) -> dict:
+def parse_llm_json(raw):
     # v0.6 exec_prompt returns str (no response_format); strip fences like prediction-market pattern.
     if isinstance(raw, dict):
         return raw
@@ -81,7 +82,26 @@ def parse_llm_json(raw) -> dict:
             return parsed
     except Exception:
         pass
-    return {}
+    return None
+
+
+def validate_slo(parsed: dict) -> None:
+    """Reject ambiguous thresholds before they reach the nondeterministic judge."""
+    if not isinstance(parsed, dict):
+        raise gl.vm.UserError("[EXPECTED] slo_json must be an object")
+    for field in SLO_FIELDS:
+        if field not in parsed:
+            raise gl.vm.UserError(f"[EXPECTED] slo_json missing {field}")
+        value = parsed[field]
+        if type(value) not in (int, float):
+            raise gl.vm.UserError(f"[EXPECTED] slo_json {field} must be numeric")
+        if value != value or value in (float("inf"), float("-inf")):
+            raise gl.vm.UserError(f"[EXPECTED] slo_json {field} must be finite")
+        if value < 0:
+            raise gl.vm.UserError(f"[EXPECTED] slo_json {field} must be non-negative")
+    for field in ("error_threshold", "fill_threshold", "match_threshold"):
+        if parsed[field] > 1:
+            raise gl.vm.UserError(f"[EXPECTED] slo_json {field} must be <= 1")
 
 
 class ProveDown(gl.contract.Contract):
@@ -105,8 +125,6 @@ class ProveDown(gl.contract.Contract):
     ) -> dict:
         if not isinstance(sla_id, str) or not sla_id.strip():
             raise gl.vm.UserError("[EXPECTED] sla_id must be non-empty string")
-        if sla_id in self.slas:
-            return json.loads(self.slas[sla_id])
         if not isinstance(api_url, str) or not api_url.strip().startswith("https://"):
             raise gl.vm.UserError("[EXPECTED] api_url must be https://")
         if not isinstance(bundle_url, str) or not bundle_url.strip().startswith("https://"):
@@ -117,14 +135,37 @@ class ProveDown(gl.contract.Contract):
             raise gl.vm.UserError("[EXPECTED] slo_json too large")
         try:
             parsed = json.loads(slo_json)
-            # required fields
-            for f in ("p95_threshold", "error_threshold", "fill_threshold", "match_threshold"):
-                if f not in parsed:
-                    raise gl.vm.UserError(f"[EXPECTED] slo_json missing {f}")
+            validate_slo(parsed)
         except Exception as e:
             if "[EXPECTED]" in str(e):
                 raise
             raise gl.vm.UserError("[EXPECTED] slo_json must be valid JSON")
+        api_url_clean = api_url.strip()
+        bundle_url_clean = bundle_url.strip()
+        slo_json_clean = json.dumps(
+            {field: parsed[field] for field in SLO_FIELDS},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        sla_id_clean = sla_id.strip()
+        if sla_id_clean in self.slas:
+            existing = json.loads(self.slas[sla_id_clean])
+            try:
+                existing_parsed = json.loads(existing.get("slo_json", "{}"))
+                existing_slo = json.dumps(
+                    {field: existing_parsed[field] for field in SLO_FIELDS},
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            except Exception:
+                existing_slo = ""
+            if (
+                existing.get("api_url") != api_url_clean
+                or existing.get("bundle_url") != bundle_url_clean
+                or existing_slo != slo_json_clean
+            ):
+                raise gl.vm.UserError("[EXPECTED] sla_id already registered with different terms")
+            return existing
 
         owner = str(gl.message.sender_address)
         try:
@@ -135,14 +176,14 @@ class ProveDown(gl.contract.Contract):
             except Exception:
                 created_at = str("")
         sla = {
-            "sla_id": sla_id.strip(),
-            "api_url": api_url.strip(),
-            "bundle_url": bundle_url.strip(),
-            "slo_json": slo_json.strip(),
+            "sla_id": sla_id_clean,
+            "api_url": api_url_clean,
+            "bundle_url": bundle_url_clean,
+            "slo_json": slo_json_clean,
             "owner": owner,
             "created_at": created_at,
         }
-        self.slas[sla_id] = json.dumps(sla)
+        self.slas[sla_id_clean] = json.dumps(sla)
         return sla
 
     # ------------------------------------------------------------------
@@ -207,7 +248,9 @@ class ProveDown(gl.contract.Contract):
                 maybe = json.loads(clean)
                 metrics = ("p50", "p95", "error", "fill", "match")
                 if not isinstance(maybe, dict) or any(
-                    maybe.get(m) is None or not isinstance(maybe.get(m), (int, float))
+                    type(maybe.get(m)) not in (int, float)
+                    or maybe.get(m) != maybe.get(m)
+                    or maybe.get(m) in (float("inf"), float("-inf"))
                     for m in metrics
                 ):
                     return {
@@ -217,6 +260,27 @@ class ProveDown(gl.contract.Contract):
                         "reasoning": "incomplete evidence: missing metrics",
                         "evidence_hash": "",
                         "evidence_summary": "incomplete evidence: missing metrics",
+                        "p50": "",
+                        "p95": "",
+                        "status": "inconclusive",
+                    }
+                if (
+                    maybe["p50"] < 0
+                    or maybe["p95"] < maybe["p50"]
+                    or maybe["error"] < 0
+                    or maybe["error"] > 1
+                    or maybe["fill"] < 0
+                    or maybe["fill"] > 1
+                    or maybe["match"] < 0
+                    or maybe["match"] > 1
+                ):
+                    return {
+                        "breach": False,
+                        "reason": "UNAVAILABLE",
+                        "confidence": 0,
+                        "reasoning": "invalid evidence: metric out of range",
+                        "evidence_hash": "",
+                        "evidence_summary": "invalid evidence: metric out of range",
                         "p50": "",
                         "p95": "",
                         "status": "inconclusive",
@@ -236,16 +300,64 @@ class ProveDown(gl.contract.Contract):
                     "status": "inconclusive",
                 }
             digest = hashlib.sha256(clean.encode("utf-8")).hexdigest()
-            prompt = build_slo_judge_prompt(clean, slo_json_local)
+            # Only the validated metric object reaches the judge. Extra bundle keys
+            # are retained in the evidence hash but cannot act as prompt instructions.
+            judge_bundle = json.dumps(
+                {metric: maybe[metric] for metric in ("p50", "p95", "error", "fill", "match")},
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            prompt = build_slo_judge_prompt(judge_bundle, slo_json_local)
             response = parse_llm_json(gl.nondet.exec_prompt(prompt))
-            breach = bool(response.get("breach", False))
-            reason = str(response.get("reason", "OK")).upper().strip()
-            if reason not in ("LATENCY", "ERROR_QUALITY", "UNAVAILABLE", "OK"):
-                reason = "OK" if not breach else "ERROR_QUALITY"
-            try:
-                conf = float(response.get("confidence", 0))
-            except Exception:
-                conf = 0.0
+            # A malformed or partial judge response is evidence of an unavailable
+            # verdict, never an implicit NO_BREACH with confidence zero.
+            # Do not coerce strings/numbers such as "false" or 1 into a verdict.
+            if not isinstance(response, dict) or type(response.get("breach")) is not bool:
+                return {
+                    "breach": False,
+                    "reason": "UNAVAILABLE",
+                    "confidence": 0,
+                    "reasoning": "malformed judge output",
+                    "evidence_hash": digest,
+                    "evidence_summary": f"{bundle_url_local}: malformed judge output",
+                    "p50": p50,
+                    "p95": p95,
+                    "status": "inconclusive",
+                }
+            reason = response.get("reason")
+            if not isinstance(reason, str) or reason.upper().strip() not in (
+                "LATENCY",
+                "ERROR_QUALITY",
+                "UNAVAILABLE",
+                "OK",
+            ):
+                return {
+                    "breach": False,
+                    "reason": "UNAVAILABLE",
+                    "confidence": 0,
+                    "reasoning": "malformed judge reason",
+                    "evidence_hash": digest,
+                    "evidence_summary": f"{bundle_url_local}: malformed judge reason",
+                    "p50": p50,
+                    "p95": p95,
+                    "status": "inconclusive",
+                }
+            raw_conf = response.get("confidence")
+            if type(raw_conf) not in (int, float) or raw_conf != raw_conf or raw_conf in (float("inf"), float("-inf")):
+                return {
+                    "breach": False,
+                    "reason": "UNAVAILABLE",
+                    "confidence": 0,
+                    "reasoning": "malformed judge confidence",
+                    "evidence_hash": digest,
+                    "evidence_summary": f"{bundle_url_local}: malformed judge confidence",
+                    "p50": p50,
+                    "p95": p95,
+                    "status": "inconclusive",
+                }
+            breach = response.get("breach") is True
+            reason = reason.upper().strip()
+            conf = float(raw_conf)
             if 0 < conf <= 1:
                 conf = conf * 1000
             conf_bps = max(0, min(1000, int(round(conf))))
@@ -269,7 +381,9 @@ class ProveDown(gl.contract.Contract):
                 return False
             # only breach bool is consensus — reason may be noisy (see technical validation)
             try:
-                leader_breach = bool(leader_data.get("breach"))
+                leader_breach = leader_data.get("breach")
+                if type(leader_breach) is not bool:
+                    return False
             except Exception:
                 return False
             mine = run_judgment()
@@ -282,7 +396,7 @@ class ProveDown(gl.contract.Contract):
                 return leader_data.get("status") == "inconclusive"
             if leader_data.get("status") == "inconclusive":
                 return False
-            return leader_breach == bool(mine.get("breach"))
+            return leader_breach == mine.get("breach")
 
         # v0.6: run_nondet_default (run_nondet_unsafe was removed; same leader/validator shape)
         result = gl.vm.run_nondet_default(run_judgment, validator_fn)

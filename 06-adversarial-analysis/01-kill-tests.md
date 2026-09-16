@@ -1,5 +1,7 @@
 # 01 — Kill Tests: Why NOT Build Each Finalist?
 
+> **Historical research record.** This compares pre-build concepts and hypothetical economics; it does not describe current ProveDown runtime or release capabilities.
+
 ## 1. Procurement/AP (#3) — Kill Evidence
 
 | Kill hypothesis | Evidence that kills | Severity | Survivable? |

@@ -1,5 +1,7 @@
 # 01 — Startup Test for ProveDown (API SLA Sidecar)
 
+> **Historical pre-build hypothesis.** Pricing, customer, bridge, poller, appeal, and bond/slash statements below are research assumptions, not shipped behavior. Use `EVIDENCE.md` and `CLAIM-PACKET.md` for current release claims.
+
 ## Customer
 AI agent pipeline owner / inference marketplace operator / B2B data API buyer who suffers when third-party APIs degrade. Not provider (disincentivized).
 

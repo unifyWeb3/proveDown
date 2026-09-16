@@ -40,9 +40,25 @@ function mask(v){ if(!v) return '(missing)'; if(v.length<10) return '***'; retur
 console.log('=== ProveDown check-env ===');
 console.log(`Node ${process.version}  npm ${execSync('npm --version').toString().trim()}`);
 try{ console.log(`Python ${execSync('python3 --version').toString().trim()}`);}catch{}
-try{ console.log(`genlayer ${execSync('genlayer --version').toString().trim()}`);}catch{ console.log('genlayer CLI: not found');}
+try{ console.log(`genlayer ${execSync('genlayer --version', { timeout: 5000 }).toString().trim()}`);}catch{ console.log('genlayer CLI: unavailable or version check timed out');}
 console.log(`genlayer-js ${(()=>{try{return JSON.parse(fs.readFileSync('node_modules/genlayer-js/package.json','utf8')).version}catch{return '(not found)';}})()}`);
-try{ console.log(`genvm-lint ${(()=>{try{return '0.11.1rc2 (venv /tmp/provedown-rc-venv)'}catch{return '(not found)'}})()}`);}catch{}
+const lintCandidates = [
+  '/tmp/provedown-rc-venv/bin/genvm-lint',
+  '/tmp/provedown-linter/bin/genvm-lint',
+  '.venv/bin/genvm-lint'
+];
+let lintPath = lintCandidates.find(candidate => fs.existsSync(candidate));
+if (!lintPath) {
+  try { lintPath = execSync('command -v genvm-lint', { shell: '/bin/bash' }).toString().trim(); }
+  catch { lintPath = ''; }
+}
+if (lintPath) {
+  const lintEnv = lintPath.startsWith('/tmp/provedown-linter/') ? { ...process.env, PYTHONPATH: '/tmp/provedown-linter' } : process.env;
+  try { console.log(`genvm-lint ${execSync(`${lintPath} --version`, { env: lintEnv }).toString().trim()} (${lintPath})`); }
+  catch { console.log(`genvm-lint present but version check failed (${lintPath})`); }
+} else {
+  console.log('genvm-lint: not found (full contract lint unavailable)');
+}
 console.log(`env file present: ${existsEnvFile() ? 'yes (.env.local or .env)' : 'NO — copy .env.example'}`);
 const env = loadEnv();
 let fail=false;

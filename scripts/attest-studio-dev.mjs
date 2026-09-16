@@ -9,7 +9,7 @@
 import { createClient, createAccount, isSuccessful } from 'genlayer-js';
 import { studioDevnet } from 'genlayer-js/chains';
 
-const C = process.argv[2] || process.env.NEXT_PUBLIC_PROVEDOWN_CONTRACT_STUDIO_DEV || '0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF';
+const C = process.argv[2] || process.env.NEXT_PUBLIC_PROVEDOWN_CONTRACT_STUDIO_DEV || '0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1';
 const B = process.env.NEXT_PUBLIC_BUNDLE_WORKER_URL || 'https://provedown-bundle.contentbounty.workers.dev/bundle';
 const SLO = JSON.stringify({ p95_threshold: 2000, error_threshold: 0.01, fill_threshold: 0.80, match_threshold: 0.85 });
 
@@ -53,7 +53,7 @@ catch (e) { console.log('FAILED', e.message.slice(0, 300)); }
 console.log('--- Case B: breach (expect BREACH, 200-but-empty-fill still breach) ---');
 try { await write('request_attestation', ['demo-breach']); console.log('ATT_B=' + JSON.stringify(await read('get_attestation', ['2']))); }
 catch (e) { console.log('FAILED', e.message.slice(0, 300)); }
-console.log('--- Case C: empty (expect INCONCLUSIVE or low-conf resolved) ---');
+console.log('--- Case C: empty (expect INCONCLUSIVE) ---');
 try { await write('request_attestation', ['demo-empty']); console.log('ATT_C=' + JSON.stringify(await read('get_attestation', ['3']))); }
 catch (e) { console.log('FAILED', e.message.slice(0, 300)); }
 console.log('--- reputation ---');

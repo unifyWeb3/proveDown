@@ -17,7 +17,7 @@ Rejected: providers, generic enterprise, DAOs, "all agents" as first.
 
 ## D-03 (2026-09-05): Buyer-initiated decentralized monitoring before provider-signed logs
 
-Why: one signature, works against uncooperative providers; provider enters at dispute (appeal bond) — correct incentive order. Track allows either (portal FACT).
+Why: one signature, works against uncooperative providers; provider may enter a future dispute flow (planned appeal bond) — correct incentive order. The current ProveDown application has no appeal or bond method. Track allows either (portal FACT).
 Rejected: provider-signature-first (slow, adversarial incentive).
 
 ## D-04 (2026-09-05): No own escrow in V1; attestation as release condition others consume

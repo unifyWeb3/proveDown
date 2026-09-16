@@ -88,6 +88,66 @@ def test_valid_bundles_reach_jury():
     ]:
         assert bundle_evidence_status(json.dumps(preset)) == "judge"
 
+def bundle_range_status(bundle):
+    if bundle["p50"] < 0 or bundle["p95"] < bundle["p50"]:
+        return "inconclusive"
+    if not 0 <= bundle["error"] <= 1 or not 0 <= bundle["fill"] <= 1 or not 0 <= bundle["match"] <= 1:
+        return "inconclusive"
+    return "judge"
+
+def test_invalid_bundle_ranges_are_non_definitive():
+    assert bundle_range_status({"p50": -1, "p95": 10, "error": 0, "fill": 1, "match": 1}) == "inconclusive"
+    assert bundle_range_status({"p50": 20, "p95": 10, "error": 0, "fill": 1, "match": 1}) == "inconclusive"
+    assert bundle_range_status({"p50": 1, "p95": 10, "error": 2, "fill": 1, "match": 1}) == "inconclusive"
+
+def validate_slo_analog(slo):
+    fields = ("p95_threshold", "error_threshold", "fill_threshold", "match_threshold")
+    assert isinstance(slo, dict)
+    for field in fields:
+        assert field in slo
+        assert type(slo[field]) in (int, float)
+        assert slo[field] >= 0
+    for field in ("error_threshold", "fill_threshold", "match_threshold"):
+        assert slo[field] <= 1
+
+def test_slo_thresholds_are_unambiguous():
+    validate_slo_analog({"p95_threshold": 2000, "error_threshold": 0.01, "fill_threshold": 0.8, "match_threshold": 0.85})
+    for bad in [
+        {"p95_threshold": "2000", "error_threshold": 0.01, "fill_threshold": 0.8, "match_threshold": 0.85},
+        {"p95_threshold": 2000, "error_threshold": 2, "fill_threshold": 0.8, "match_threshold": 0.85},
+    ]:
+        try:
+            validate_slo_analog(bad)
+        except AssertionError:
+            pass
+        else:
+            raise AssertionError("invalid SLO accepted")
+
+def test_verdict_parser_does_not_coerce_strings():
+    assert (json.loads('{"breach":"false"}').get("breach") is True) is False
+
+def judge_response_status(raw):
+    """Mirror the contract's fail-closed response-shape guard."""
+    try:
+        response = raw if isinstance(raw, dict) else json.loads(raw)
+    except Exception:
+        return "inconclusive"
+    if not isinstance(response, dict) or type(response.get("breach")) is not bool:
+        return "inconclusive"
+    if response.get("reason") not in ("LATENCY", "ERROR_QUALITY", "UNAVAILABLE", "OK"):
+        return "inconclusive"
+    confidence = response.get("confidence")
+    if type(confidence) not in (int, float) or confidence != confidence:
+        return "inconclusive"
+    return "resolved"
+
+def test_malformed_judge_output_is_non_definitive():
+    assert judge_response_status("not-json") == "inconclusive"
+    assert judge_response_status({}) == "inconclusive"
+    assert judge_response_status({"breach": False}) == "inconclusive"
+    assert judge_response_status({"breach": "false", "reason": "OK", "confidence": 1000}) == "inconclusive"
+    assert judge_response_status({"breach": False, "reason": "OK", "confidence": 0}) == "resolved"
+
 def validator_agrees(leader: dict, mine: dict) -> bool:
     # Mirrors contracts/provedown.py validator_fn agreement logic.
     try:

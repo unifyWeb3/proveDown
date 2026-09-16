@@ -6,6 +6,8 @@
 **Commit reference:** thesis `07-final-thesis/final-product.md` (444 lines, 56 sources), contract `contracts/provedown.py` (362 lines), tests `tests/test_provedown.py`, worker `hosting/bundle-worker/worker.js`
 **Env file present:** `.env.local` 1258 bytes (CRLF fixed 2026-09-02), `.env.example` 2365 bytes, `.gitignore` present
 
+> **Historical / superseded baseline.** This audit records the pre-deployment state from 2026-09-02 and is retained for traceability. Its frontend-missing, Worker-placeholder, contract-placeholder, no-live-transaction, and appeal findings are no longer the current repository state. Use [`research/CODEX_FULL_AUDIT.md`](research/CODEX_FULL_AUDIT.md), [`research/current-genlayer-environment.md`](research/current-genlayer-environment.md), and [`LAUNCH-READINESS.md`](LAUNCH-READINESS.md) for current Studio Next evidence and remaining release gates.
+
 ---
 
 ## PASS — Verified Working
@@ -18,7 +20,7 @@
 | **Bundle worker presets** | `worker.js` 3 presets hash-stable 116 chars each: breach `9566a8b5` vs no_breach `9cd4199` vs ambig `c951e43` via `sha256(sanitize(body)[:3000])` — stable not dynamic like httpbin/get 5/5 variance (see `05-provedown-technical-validation.md:2.1`) | High |
 | **Toolchain versions** | Node v22.22.3 npm 10.9.8 Python 3.12.3 genlayer 0.39.2 genlayer-js 1.1.8 | High |
 | **Network table** | `genlayer network list` shows localnet 61127 / studionet 61999 / asimov / bradbury 4221; `genlayer --version` 0.39.2 | High |
-| **Account imported** | `provedown-deployer` 0x3211d1419709682b81c53CC51cb63622E25488d3 active (imported via `genlayer account import --private-key 0x398... --password test12345` 2026-09-02) | High (presence not balance) |
+| **Account imported** | `provedown-deployer` 0x3211d1419709682b81c53CC51cb63622E25488d3 active (imported via a redacted private-key value 2026-09-02) | High (presence not balance) |
 | **Bradbury RPC reachable** | `curl https://rpc-bradbury.genlayer.com` POST alive (405 GET expected, 1.26s POST for `httpbin.org/json` earlier) | High |
 | **Env template + gitignore** | `.env.example` 15 vars placeholders, `.gitignore` covers `.env*` `*.key` `keystores/` `.genlayer/` — protects secrets if repo later `git init` | Medium (startup not yet git repo) |
 | **Nondet pattern reuse** | Contract uses `greybox_sanitize` FORBIDDEN→[filtered], `<SYSTEM><EVIDENCE>` framing, truncate 3000, sha256, `run_nondet_unsafe` on breach bool only — matches `dispute_court_v2.py:60,73,99` lessons | High |
@@ -43,7 +45,7 @@
 
 | # | Item | Risk | Severity | Mitigation |
 |---|---|---|---|---|
-| **W1** | **Same private key reused for GENLAYER and BASE_SEPOLIA** | `.env.local` 0x398... identical for both chains → if one chain leaked, both compromised. Testnet low value but bad hygiene; WSL leak `*:Zone.Identifier` already in gitignore. | Medium | Rotate: `cast wallet new` for Base, `genlayer account create provedown-deployer-2` for GenLayer distinct. Accept for hackathon testnet but rotate before mainnet. |
+| **W1** | **Same private key reused for GENLAYER and BASE_SEPOLIA** | `.env.local` contains the same redacted key for both chains → if one chain leaked, both compromised. Testnet low value but bad hygiene; WSL leak `*:Zone.Identifier` already in gitignore. | Medium | Rotate: `cast wallet new` for Base, `genlayer account create provedown-deployer-2` for GenLayer distinct. Accept for hackathon testnet but rotate before mainnet. |
 | **W2** | **genlayer-js account `locked` + 0 GEN** | `genlayer account show` → `balance 0 GEN`, `status locked`, `OS keychain not available` → deploy will fail `insufficient funds` until faucet. | Medium | Unlock not needed if using `genlayer-js` deploy script (`createAccount(privateKey)` directly, like `deploy_dispute_court_v2.ts:21`), not CLI. Faucet: https://testnet-faucet.genlayer.foundation paste 0x3211... |
 | **W3** | **genvm-lint missing** | `run-lint.sh` fallback to `py_compile` only (syntax) not 20+ GenLayer rules (`TreeMap` primitive, `self` capture, `int` vs `u256`). | Medium | Install `genvm-lint` via `pip` or `cargo` per docs 01-04, or deploy to Studio which lints server-side. |
 | **W4** | **Hash instability risk if bundle ever contains FORBIDDEN token** | `greybox_sanitize` replaces `disregard` etc. with `[filtered]` — bundle JSON `{"note":"synthesized breach..."}` safe, but future real poller bundle could contain those substrings in `note` → hash changes after sanitize vs before? Jury hashes sanitized clean, not raw, so stable across validators *if* all sanitize same, but raw→clean transform could mask injection yet change hash deterministically still same across validators (same sanitize). Risk low. | Low | Keep bundle `note` free of forbidden substrings, or exclude `note` from hash (hash only `p50/p95/error/fill/match`). |
@@ -72,11 +74,11 @@
 
 | ID | Severity | Finding | Location | Remediation | Residual |
 |---|---|---|---|---|---|
-| **S1** | High | Private key reuse across chains | `.env.local:6` `GENLAYER_PRIVATE_KEY` identical to `BASE_SEPOLIA_PRIVATE_KEY` 0x398... | Rotate one via `cast wallet new` / `genlayer account create` distinct | Medium until rotated (testnet ok, mainnet must) |
+| **S1** | High | Private key reuse across chains | `.env.local:6` `GENLAYER_PRIVATE_KEY` identical to `BASE_SEPOLIA_PRIVATE_KEY` (redacted) | Rotate one via `cast wallet new` / `genlayer account create` distinct | Medium until rotated (testnet ok, mainnet must) |
 | **S2** | Medium | No NEXT_PUBLIC private leak | Checked `grep NEXT_PUBLIC.*PRIVATE` → 0 in startup except docs; contract never exposes `owner` private, only `owner` address via `gl.message.sender_address` | None | Low |
 | **S3** | Medium | `.env.local` not tracked via `git ls-files` (good) but startup not git repo → `.gitignore` not enforced until `git init` | N/A | `git init` then `git add .gitignore .env.example` before any `.env.local` | Low if done |
 | **S4** | Medium | `OPENROUTER_API_KEY` in `.env.local` if real, must not be exposed via frontend | `.env.local:38` placeholder `sk-or-v1-...` vs real jury key? | Ensure frontend `grep -r OPENROUTER_API_KEY frontend/` = 0; only `NEXT_PUBLIC_*` public. Real key stays server-side for mocked `useJury` fallback only (jury uses `OPENROUTER_API_KEY` server-side `/api/jury` SSE, not client). | Low |
-| **S5** | Low | Hardcoded credentials | `grep -r 0x398 startup --exclude=.env.local` → 0 | None | Low |
+| **S5** | Low | Hardcoded credentials | redacted-prefix scan over tracked files → 0 | None | Low |
 | **S6** | Low | Secret logging | `check-env.mjs` masks `PRIVATE_KEY`/`API_KEY` as `(present, not shown)`; `deploy-bradbury.sh` extracts KEY via `grep...cut` but does not echo; safe | None | Low |
 | **S7** | Low | WSL `*:Zone.Identifier` leak | Already in `.gitignore` | None | Low |
 | **S8** | Medium | Bundle Worker no auth | Public GET stable, but DoS possible | Add Cloudflare `ratelimit` rule if needed, keep `Cache-Control: no-store` | Low |
@@ -243,8 +245,8 @@ User click "Register SLA demo-breach" (frontend)
 | Check | Result |
 |---|---|
 | `git status` | `fatal: not a git repository` — `/home/unify/startup` **not** a git repo (root `/` not, `/home/unify` not). `genlayer-jury` is git repo with `HEAD` main, `genlayer-hub` is git repo. Startup is untracked files (no `git ls-files`). |
-| `git ls-files` | Fatal not repo → cannot check tracked secrets via git, but manual `grep -r` shows only `.env.local` has real secret (0x398...), not tracked. |
-| `tracked-file secret scan` | `grep -r "0x398" startup --exclude=".env.local"` → 0 (only `.env.local` has) ; `grep -rn "PRIVATE_KEY\|sk-or" startup --exclude-dir=.git` → only `.env.local` and docs placeholders `0xYOUR` / `sk-or-v1-...` | PASS (no secret in tracked files if later `git init`) |
+| `git ls-files` | Fatal not repo → cannot check tracked secrets via git, but manual scan shows only `.env.local` has the real secret, not tracked. |
+| `tracked-file secret scan` | redacted-prefix scan → 0; `grep -rn "PRIVATE_KEY\|sk-or" startup --exclude-dir=.git` → only `.env.local` and docs placeholders `0xYOUR` / `sk-or-v1-...` | PASS (no secret in tracked files if later `git init`) |
 | `unexpected generated-file scan` | `__pycache__/` and `contracts/__pycache__/provedown.cpython-312.pyc` + `tests/__pycache__` present + `.pytest_cache/` present — all covered by `.gitignore` (`__pycache__`, `*.pyc`). But `frontend/` empty, so no `node_modules/.next` yet. |
 | `git check-ignore -v .env.local` | Fatal not repo → cannot verify, but `.gitignore` lists `.env` `.env.local` `.env.*.local` → would be ignored after `git init`. |
 | `unexpected` | `frontend/` empty — expected (not yet bootstrapped). `hosting/bundle-worker/wrangler.toml` present. No `dist/build/.next`. |

@@ -1,5 +1,7 @@
 # 03 — Roadmap
 
+> **Historical planning record.** Dates and proposed poller, relay, marketplace, insurance, and expansion work below are not current release capabilities or commitments. The current MVP boundary is in `CORE_NOW.md` and `EVIDENCE.md`.
+
 ## 30d (Oct 2026) — Prove buyer willingness + harden
 - 5 pipeline owner interviews (kill criteria §24), 2 design partners live
 - Harden sanitization, INCONCLUSIVE retry, fee profile via estimate-fees, off-chain poller v1 (5min 3 endpoints), fix web.render latency if WebDriver overhead too high (fallback to web.request timing)

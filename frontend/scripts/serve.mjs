@@ -6,10 +6,11 @@ import { extname, resolve } from 'node:path';
 const root = resolve(process.cwd(), 'dist');
 const port = Number(process.env.PROVEDOWN_FRONTEND_PORT || process.argv[2] || 4173);
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
+const appRoutes = new Set(['/', '/verify', '/proof']);
 
 const server = createServer(async (req, res) => {
   const pathname = new URL(req.url || '/', 'http://localhost').pathname;
-  const path = resolve(root, pathname === '/' ? 'index.html' : `.${pathname}`);
+  const path = resolve(root, appRoutes.has(pathname) ? 'index.html' : `.${pathname}`);
   if (!path.startsWith(root)) { res.writeHead(403).end('Forbidden'); return; }
   try {
     const info = await stat(path);
@@ -21,4 +22,8 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(port, '127.0.0.1', () => console.log(`ProveDown frontend: http://127.0.0.1:${port}`));
+server.listen(port, '127.0.0.1', () => {
+  const address = server.address();
+  const actualPort = address && typeof address === 'object' ? address.port : port;
+  console.log(`ProveDown frontend: http://127.0.0.1:${actualPort}`);
+});

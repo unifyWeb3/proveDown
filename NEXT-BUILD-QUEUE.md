@@ -1,5 +1,7 @@
 # NEXT-BUILD-QUEUE.md — Build Queues (2026-09-05)
 
+> **Historical planning snapshot.** This queue records the 2026-09-05 build plan and statuses. It is not the current release checklist; use `research/RELEASE-INVENTORY.md` and `EVIDENCE.md` for current verification and remaining gates.
+
 Derived from `CORE_NOW.md` + `ROADMAP.md` + `IMPLEMENTATION-ORDER.md` + `PRODUCT-SYSTEM.md`. Narrow by design.
 
 ## BUILD NOW (before Sep 17 — hackathon-blocking)

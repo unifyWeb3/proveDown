@@ -1,5 +1,7 @@
 # 02 — GenLayer Necessity Tests
 
+> **Conceptual pre-build design, not current implementation evidence.** Bond/slash, application appeals, procurement flows, and settlement consequences described below are hypotheses or future scope. The live MVP currently proves functional-SLO attestation with a synthetic Worker, breach-only consensus comparison, and a mocked relay.
+
 **Four questions per §14: Remove, Replace, Unique primitive, Economically important enough?**
 
 ## 1. Procurement/AP (#3)

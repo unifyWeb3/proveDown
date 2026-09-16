@@ -1,5 +1,7 @@
 # 02 — Architecture
 
+> **Historical pre-build architecture.** The Next.js, Bradbury, three-render, `run_nondet_unsafe`, BridgeSender, and live-poller design below is not the shipped release. Use `07-final-thesis/implementation-readiness.md`, `PRODUCT-SYSTEM.md`, and `EVIDENCE.md` for the current Studio Next architecture.
+
 ```
 Frontend (Next.js 16, React 19, TS strict, Tailwind)  [Jury-like]
    ↕ genlayer-js (simulator|studionet|testnetBradbury, readContract + writeContract → waitForTransactionReceipt)

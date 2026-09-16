@@ -4,6 +4,8 @@
 **Sources:** `https://github.com/genlayer-foundation/uptime` (README + `contracts/uptime_monitor.py`, `sla_verifier.py`, `sla_agreement.py` via raw.githubusercontent, fetched 2026-09-04), live `https://uptime.dev.genlayer.foundation`, `startup/01-genlayer-recon/05-benchmark-alignment.md`
 **Rule:** Design intelligence, not template. Do NOT copy code/branding/UX.
 
+> **Historical benchmark note.** This analysis predates the current hardened Studio deployment and is retained as competitive research. It describes proposed or older implementation details; current ProveDown capabilities and limits are recorded in `research/uptime-delta.md` and `CLAIM-PACKET.md`.
+
 ## 1. What Uptime Verifies
 
 Factual reachability/health of GenLayer infra services (7 hard-coded services: zksync_bridge, studionet_rpc, asimov_rpc, bradbury_rpc, explorer_studio/asimov/bradbury). Each check is `is_up: bool`:

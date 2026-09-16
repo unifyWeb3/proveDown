@@ -66,6 +66,18 @@
 
 **Next action:** Harden frontend `index.html` → Next build if time, re-attempt breach attestation with retry, update docs and checkpoint commit.
 
+## 2026-09-08 — Interrupted backend completed and hardened Studio checkpoint
+
+**What changed:** Completed the interrupted backend slice in `contracts/provedown.py` v0.3.1: strict numeric/finite/range SLO validation, conflicting agreement-ID rejection, canonical SLO storage, evidence metric range guards, prompt input reduced to five validated metrics, and strict boolean consensus parsing. Completed static frontend lifecycle in `frontend/index.html`: pinned `genlayer-js@2.0.0-rc.1`, wallet network/account path, fee estimation, register + attest writes, FINALIZED polling, `isSuccessful` verification, on-chain readback, exact evidence-hash verification, quote-safe escaping, and data-attribute copy controls. Added static frontend build/release tests and server scripts. Profile patterns are source-backed in `SOURCES.md` S57-S65 and `research/github-patterns-audit.md`.
+
+**Why:** The GitHub profile review identified four quality bars relevant to ProveDown: Clasp/Vestra invariant and idempotency discipline [S57,S58], SealRail/StateMirror proof-gated state and chain readback [S59,S60], ValidatorBriberyTrap honest simulation boundaries [S61], and Synapse Fleet explicit state transitions [S65]. These were applied without adding payment rails, continuous polling, appeals, or a general security suite.
+
+**Evidence:** Hardened contract deployed on Studio Devnet 61997 at `0xB5E2F043c9D5f971c347FaC1e6E853eDBE5d955C`; deploy tx `0x65793c043eebcb2e8254755caef7398f88291579f87be8bffcf97881020b1146` FINALIZED/FINISHED_WITH_RETURN/isSuccessful=true. Registration receipts: `0x1f5b8bfdf3b82b210ad566d53d5dbd2247905d3c48249fbd1d19b0f9a13d6778`, `0x5eca828a8680a19bd57c16f7c64b403f290a9db5f3bf426687bf5c9c1319a500`, `0x3b89e786f58ac35ea81358604b79dda20143b975054875466a3896a7d60c1056`, `0xfb2dfbfe029b2778edd7194a1306b2429b37cfaed7bd2a79fd863fcbcb02abde` all finalized successfully. Canonical hardened attestations: case 1 healthy tx `0xc2bb9792e9ab12a380b6557da4f10650c5b9040a530f6db58185d837ea0f70f9` → NO_BREACH, hash `64e6c84f01418b89...`; case 2 breach tx `0xbb7520c27269773fe94b21c8e2561b2035712b74b264f3dd9874285db56a8028` → BREACH/LATENCY, hash `b4fc2013862e316e...`; case 3 empty tx `0xac8aee5b2f80da675a2260ecb3df433a97bf5baf37889cd5041dd858c9f37909` → INCONCLUSIVE, confidence 0, no hash. Worker full SHA-256 checks stable for breach/no_breach/ambig/empty and match stored hashes for resolved cases. Tests: `bash scripts/run-tests.sh` 12 passed; `npm --prefix frontend run test` 1 passed; `npm --prefix frontend run build` 11 release checks passed; `python3 -m py_compile contracts/provedown.py` passed; `node scripts/check-env.mjs` reports masked credentials/connectivity. Full local linter command is `PYTHONPATH=/tmp/provedown-linter /tmp/provedown-linter/bin/genvm-lint lint contracts/provedown.py` and reports only two documented nested `run_nondet_default` reachability warnings; do not call it clean.
+
+**Unresolved risk:** Browser wallet smoke and clean-environment public build are still pending; Studio timestamps currently read empty; Worker content remains synthesized fixture evidence; no live `NO_CONSENSUS` case is proven; local linter false positive remains. The deployed hardened contract is Studio-only until a Bradbury deployment is separately verified.
+
+**Next action:** Run wallet-enabled browser smoke at 390/768/1280, verify dynamic registration/attestation from the browser, then update `CLAIM-PACKET.md`, `CHANGELOG.md`, and submission artifacts only after the browser lifecycle is proven. Keep the repo private until the public-submission gate.
+
 ---
 
 ## Checkpoint 5 — v0.6 Migration Audit + Uptime Gap + Worker Live Verify (2026-09-04)
@@ -161,3 +173,151 @@
 **Unresolved risk:** No screen-reader run; tablet 768px not screenshotted; wallet write path untested E2E (no wallet in sandbox); shared-contract attestation drift (demo pins ids 1–3, unaffected).
 
 **Next action:** P1 polish per gap analysis; submission packaging.
+
+## Checkpoint 11 — Fail-closed judge hardening + fresh Studio deployment (2026-09-09)
+
+**What changed:** Added the permanent `AGENTS.md` operating constitution and completed the requested public-profile quality audit (`SOURCES.md` S57-S71, `research/github-patterns-audit.md`). Hardened `parse_llm_json()` so malformed/partial LLM output becomes `INCONCLUSIVE` instead of a resolved low-confidence `NO_BREACH`; added analog regression coverage. Bound frontend reputation reads to the selected agreement's on-chain API URL. Deployed the updated contract to Studio Next `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1` and refreshed the pinned frontend/evidence docs.
+
+**Evidence:** Deploy `0x6cdb3d3d7f86a4a449f656ebd6b1e3e2e4ee7ec405afa3d494dc0828b3b36cbb`; healthy `0xa5a1aae059d49895719afed202f58804a12b7bcab28d90b3eee63e0942cc0faf` (NO_BREACH, hash `64e6c84f...`); breach `0xf566a8305212cc52e899ed2a1294eea5d9ed4b89fec3aba5d5e1eb24fb8ed505` (BREACH, hash `b4fc2013...`); empty `0x90b9e1b983b3ebe2490f812b6696317031ce6b4cb65c7c3a7bb75b51a5af6f8a` (INCONCLUSIVE, no hash). Each receipt is finalized, finished with return, and successful.
+
+**Test result:** `python3 -m pytest tests/test_provedown.py -q` = 13 passed; `python3 -m py_compile contracts/provedown.py` passed; frontend release test passed; frontend build passed with 11 checks; `node scripts/check-env.mjs` passed with masked output. Full lint remains two known nested reachability advisories.
+
+**Unresolved risk:** Injected-wallet browser E2E is not proven in this environment; Worker evidence is synthesized; Base settlement is mocked; timestamps are unavailable on Studio; no live `NO_CONSENSUS` case is pinned.
+
+**Next action:** Run one wallet-backed browser smoke, then perform the final public package/link/secret audit. Keep the repository private until explicit submission approval.
+
+## Checkpoint 12 — Readiness documentation reconciliation (2026-09-09)
+
+**What changed:** Marked `FINAL-PREFLIGHT-AUDIT.md` and `07-final-thesis/implementation-blockers.md` as historical/superseded baselines. Reconciled `07-final-thesis/implementation-readiness.md` and `LAUNCH-READINESS.md` with the shipped implementation: static frontend, Studio Next 61997, synthesized Worker, `run_nondet_default` breach-only consensus, leader-observed evidence fields, no application-level appeal method, and documentation/UI-only Relay → Base boundary.
+
+**Why:** The interrupted backend is now deployed and verified, but stale pre-build docs could cause a future agent to rebuild removed components or claim unsupported appeal/settlement behavior.
+
+**Evidence:** Current contract `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`; deploy tx `0x6cdb3d3d7f86a4a449f656ebd6b1e3e2e4ee7ec405afa3d494dc0828b3b36cbb`; canonical healthy, breach, and empty receipts recorded above and in `EVIDENCE.md`. `git diff --check` passed before verification rerun.
+
+**Test result:** Documentation-only reconciliation; rerun `py_compile`, analog pytest, frontend release test/build, masked environment check, and Worker hash check before checkpoint commit.
+
+**Unresolved risk:** Injected-wallet browser E2E, final public-package scan, real Worker provenance, Base settlement, timestamps, and live `no_consensus` receipt remain open. Full linter retains two nested reachability advisories.
+
+**Next action:** Complete one wallet-backed browser smoke and final public-package/link/secret audit. Keep the repository private until explicit submission approval.
+
+## Checkpoint 13 — Full reality audit refresh (2026-09-09)
+
+**What changed:** Refreshed the official Agent Tank and GenLayer environment evidence, verified the current Uptime source, and reconciled stale research matrices with the shipped backend/frontend. The current source already fixes the former malformed-judge-to-NO_BREACH defect and the hardcoded reputation subject; those findings are now marked historical/resolved. Added the requested `Ritapossible/Recourse` and `Ritapossible/Vouch` patterns to the permanent research record and corrected the dated Agent Tank overlap snapshot to 48 mission submissions / 47 entries.
+
+**Evidence:** Mission API `https://portal-admin.genlayer.foundation/api/v1/missions/83/` (48 submissions on 2026-09-09); entries endpoint returned 47 records; official GenLayer docs `https://docs.genlayer.com/full-documentation.txt`; Uptime source `uptime_monitor.py`, `sla_verifier.py`, and `sla_agreement.py`; `SOURCES.md:S57-S73`; `research/github-patterns-audit.md`. Current Studio receipt check returned `FINALIZED`, `FINISHED_WITH_RETURN`, `isSuccessful=true` for deploy `0x6cdb...`, healthy `0xa5a1...`, breach `0xf566...`, and empty `0x90b9...`, with readback statuses resolved/resolved/inconclusive.
+
+**Test result:** `python3 -m pytest tests/test_provedown.py -q` = 13 passed; `python3 -m py_compile contracts/provedown.py` passed; frontend test passed; frontend build passed with 11 checks; `bash scripts/run-lint.sh` reached `genvm-lint 0.11.1rc2` and reported only the two known nested reachability advisories; `node scripts/check-env.mjs` passed with masked values; Worker breach/no-breach hashes stable across repeated reads; Chromium shell renders captured at 390/768/1280.
+
+**Unresolved risk:** Injected-wallet browser E2E, immutable/authoritative Worker provenance, Base settlement, timestamps, a live no-consensus receipt, and final public-package/link/secret scan remain open. The repository remains intentionally dirty and private; no commit or push was made.
+
+**Next action:** Run one wallet-backed browser smoke if a funded injected wallet is available, then perform the publication package scan. Keep the MVP limited to functional SLO attestation -> finalized verdict -> evidence hash -> reputation.
+
+## Checkpoint 14 — Official refresh, RPC cross-check, and stale-claim cleanup (2026-09-09)
+
+**What changed:** Re-queried the live Mission 83 API and entries feed, corrected the current count to 48/47, added direct RPC lifecycle evidence, and reconciled active docs with the deployed contract. Active claims now qualify the evidence hash as sanitized/truncated bytes, identify the Worker as synthetic fixture data, keep the fee panel explicitly open, and do not imply an application appeal, bond/slash policy, or settlement rail. Older thesis, analog, migration, and hardening documents now carry historical/superseded banners. The interrupted backend remains preserved and is still the source of the pinned Studio receipts.
+
+**Why:** The official feed and current contract behavior changed relative to older planning snapshots. Without this cleanup, a future agent or judge could mistake protocol-level GenLayer appeals for an implemented ProveDown feature or treat raw-provider bytes and synthesized fixtures as stronger evidence than they are.
+
+**Evidence:** Mission API reported 48 submissions and `/entries/` returned 47 records. Studio RPC `eth_chainId` returned `0xf22d`; `gen_getTransactionLifecycle` for breach tx `0xf566...ed505` returned `storedStatus=Finalized`, `projectedStatus=Finalized`, `decisionActive=false`; `eth_getTransactionReceipt` returned `status=0x1`; `node scripts/check-env.mjs` passed with masked values. Updated files include `README.md`, `CORE_NOW.md`, `PRODUCT-SYSTEM.md`, `COMPETITIVE-POSITION.md`, `CLAIM-PACKET.md`, `DEMO.md`, `CUSTOMER-WORKFLOW.md`, current research matrices, and historical source banners.
+
+**Test result:** `git diff --check` clean after the documentation pass. Prior live evidence remains: 13 analog tests, Python compilation, frontend release test/build (11 checks), stable Worker hashes, and finalized Studio receipts/readbacks. No application code, contract state, commit, push, or publication was changed in this checkpoint.
+
+**Unresolved risk:** Injected-wallet browser E2E, immutable/authoritative Worker provenance, fee panel UI, Base settlement, timestamps, live `no_consensus` receipt, and final public-package/link/secret scan remain open. Full linter retains two nested reachability advisories.
+
+**Next action:** Run one wallet-backed browser smoke if a funded injected wallet is available; otherwise perform the final release scan and keep the repository private until explicit submission approval.
+
+## Checkpoint 15 — Wallet-backed Studio browser E2E (2026-09-11)
+
+**What changed:** Completed the injected-wallet browser lifecycle against the existing Studio Devnet contract without redeployment: finalized `register_sla` for `browser-smoke-20260909-01`, exact `get_sla` readback, finalized `request_attestation`, `get_attestation` readback, `get_reputation` readback, and exact synthetic Worker hash verification.
+
+**Why:** This closes the last implementation/runtime gap for the narrow frontend wedge. A receipt alone is insufficient; the browser result is only considered successful after finality, `isSuccessful`, and authoritative chain readbacks.
+
+**Evidence:** Registration tx `0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a` and attestation tx `0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110` are both `FINALIZED`, `FINISHED_WITH_RETURN`, and `isSuccessful=true`. Attestation `4`: `resolved`, `breach=false`, reason `OK`, confidence `1000`, p50/p95 `320/1600`, evidence hash `e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3`; reputation `score=66,total=3,breaches=1`. The exact Worker URL recomputed to the same SHA-256. Receipt fees were read from the returned receipts: registration deposit `613834800010352`, consumed `78632250000000`, refund `535202550009529`; attestation deposit `624289200010352`, consumed `80206250000000`, refund `544082950009529`.
+
+**Test result:** Direct Studio receipt/readback checks passed; Explorer HEAD returned 200; exact Worker hash matched. No contract redeployment or wallet approval was performed by the agent.
+
+**Unresolved risk:** Final public-package/link/secret audit, Studio timestamps, immutable Worker provenance, Base settlement, and live `no_consensus` evidence remain open. The repository remains private and intentionally uncommitted.
+
+**Next action:** Run the final release scan and package the demo evidence; do not add P2 features or redeploy the contract.
+
+## Checkpoint 16 — Release hardening reconciliation (2026-09-12)
+
+**What changed:** Reconciled the ignored local public contract value with the current Studio Next contract; completed the repository inventory and five-script legacy analysis; reproduced and classified the two nested linter advisories; audited deployment, Worker, transaction, settlement, evidence-provenance, appeal, economics, accuracy, and historical references; and added explicit historical/compatibility labels where Bradbury-first material could be mistaken for the current release. Current roadmap language now distinguishes GenLayer protocol appeal mechanics from the absent ProveDown application appeal, bond, or slashing flow. No runtime, contract, frontend layout, wallet, receipt, readback, or chain state changed.
+
+**Why:** Release packaging must have one current deployment source of truth and must not let dated runbooks or future-state economics blur the verified Studio slice.
+
+**Evidence:** `EVIDENCE.md` remains authoritative for Studio Next chain `61997`, contract `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`, finalized browser registration `0x63f386...`, finalized attestation `0xfe160a...`, attestation `4` `NO_BREACH` confidence `1000`, evidence hash `e33f6897...`, and reputation `66/3/1`. The contract and both transaction Explorer URLs returned HTTP 200. The Worker returned stable repeated hashes for all four presets. `.env.local` remains ignored and both public contract variables resolve to the current address without exposing secrets.
+
+**Test result:** Frontend test 1/1 passed; frontend build passed with 15 release checks; Python compilation passed; 13 analog tests passed; masked environment check returned OK; Worker checker passed; `git diff --check`, tracked-file secret scan, generated `frontend/dist` secret scan, and client-facing `NEXT_PUBLIC_*` secret-name scan passed. `genvm-lint` reproduced only the two documented nested reachability advisories at `contracts/provedown.py:214` and `:311`.
+
+**Unresolved risk:** A separate frontend visual-polish pass and final assembled-public-package scan remain. Five historical Bradbury scripts await explicit removal/archive approval. The Worker is synthetic fixture evidence, Base/Hyperlane relay is mocked, Studio timestamps remain unavailable, no live `NO_CONSENSUS` receipt exists, and the linter remains non-clean by the documented analyzer limitation. The repository remains private, dirty, and uncommitted.
+
+**Next action:** `READY FOR FRONTEND POLISH`. After that pass, assemble and scan the public submission package before any commit, push, or publication decision.
+
+## Checkpoint 17 — Final runtime smoke and release-helper hardening (2026-09-12)
+
+**What changed:** Ran a fresh read-only Studio smoke against contract `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`, verified attestations 1–4 and reputation readback, and checked all six pinned transaction receipts. Fixed frontend evidence URL parsing so punctuation before the evidence-summary character count cannot become part of the Worker URL (`frontend/index.html:421-425`); this had caused false fingerprint mismatches for the healthy and browser-smoke cases. Hardened `scripts/check-bundle.sh` with strict shell failure handling, HTTP failure propagation, a timeout, and non-empty-response checks.
+
+**Why:** The prior frontend report had not exercised the live evidence-row path against the current DOM. The dynamic smoke exposed a real parser regression even though stored hashes and Worker bytes were correct. The old Worker checker could hash an empty network-error response and still report a stable result.
+
+**Evidence:** Studio reads returned attestation 1 `resolved/NO_BREACH`, 2 `resolved/BREACH`, 3 `inconclusive`, 4 `resolved/NO_BREACH`; reputation `66/3/1`. Deploy, healthy, breach, empty, browser registration, and browser attestation receipts all returned `FINALIZED`, `FINISHED_WITH_RETURN`, `isSuccessful=true`. Chromium dynamic smoke rendered observed metric rows for all three selected cases. CDP accessibility tree exposed 457 nodes including required landmarks, headings, controls, links, and labels. Live Worker checker passed all four presets and stable breach/no-breach hashes; an unreachable endpoint exited 7.
+
+**Test result:** `npm --prefix frontend test` passed; `npm --prefix frontend run build` passed with 17 checks; `bash scripts/check-bundle.sh https://provedown-bundle.contentbounty.workers.dev/bundle` passed; `bash -n scripts/check-bundle.sh` passed; `python3 -m pytest tests/test_provedown.py -q` passed (13); `python3 -m py_compile contracts/provedown.py` passed; `git diff --check` passed. `genvm-lint` remains non-clean only for the two documented nested nondeterministic reachability advisories.
+
+**Unresolved risk:** The repository is still dirty and private; no commit or push was made. Submission still needs a curated public package/link/secret scan, explicit treatment of five legacy Bradbury helper scripts, and a decision on whether to improve pinned-case receipt lookup/finality wording. Worker provenance remains synthetic and mutable, Base/Hyperlane relay remains mocked, no live `NO_CONSENSUS` receipt is pinned, Studio timestamps are unavailable, and public write/rate/owner policy is deferred.
+
+**Next action:** Freeze runtime scope. Curate the release file set, remove or archive legacy write helpers only with explicit approval, run the final masked secret/link scan, and publish only after the package is reviewed. Do not add pollers, settlement, appeals, or other P2 features before submission.
+
+## Checkpoint 18 — Custom-route proof disclosure and submission audit refresh (2026-09-12)
+
+**What changed:** Tightened the frontend custom-contract route so it replaces the default contract and attestation context labels, hides pinned proof and fee references, and explicitly says attestation 4 is not reused. Reconciled current audit documents with the completed frontend pass and corrected stale release-check/write-count wording. No contract, wallet, receipt, readback, Worker, or chain state changed.
+
+**Why:** A valid custom `?contract=` route must not visually inherit the default deployment's proof language, even when its pinned proof cards are hidden. Submission records must agree on the current release state.
+
+**Evidence:** Custom-route source assertions cover `verifyContractContext`, `proofAgreementContext`, `proofAttestationContext`, and the no-reuse disclosure. Current Studio Explorer links returned HTTP 200; the masked environment check returned OK; Worker four-preset checks passed.
+
+**Test result:** Frontend release test passed; frontend build passed with 23 checks; 13 analog tests, Python compilation, Worker checks, `git diff --check`, and the masked secret/link scans passed. Full lint remains non-clean only for the two documented nested nondeterministic reachability advisories.
+
+**Unresolved risk:** The public package is still unassembled and the repository remains private, dirty, and uncommitted. Worker provenance is synthetic, the relay is mocked, no live `NO_CONSENSUS` receipt is pinned, Studio timestamps are unavailable, and public write/rate/owner policy remains deferred.
+
+**Next action:** Curate the exact release file set, decide the fate of the five legacy Bradbury helpers, run the final assembled-package scan, and obtain explicit publication approval.
+
+## Checkpoint 19 — Three-view frontend app shell and interaction audit (2026-09-13)
+
+**What changed:** Completed the bounded static frontend shell with route-aware Overview (`/`), Verify (`/verify`), and Proof (`/proof`) views in one HTML bundle. Preserved query parameters and history navigation, the current Studio read path, wallet-backed `register_sla` and `request_attestation` lifecycles, fee/readback gates, responsive/a11y scaffolding, and explicit REAL/DERIVED/SYNTHETIC/MOCK disclosures. Reconciled `research/FRONTEND-SECTION-AUDIT.md` so it accurately describes enabled wallet controls rather than the superseded read-only surface. No contract, ABI, deployment, Worker, or chain state changed.
+
+**Why:** The submission surface needed a clear homepage-like overview before the operational verification and proof views, while remaining within the narrow MVP and existing static deployment model.
+
+**Evidence:** Isolated static-server smoke returned HTTP 200 for `/`, `/verify`, and `/proof` (including the current contract and `cases=4,1,2` query) and HTTP 404 for an unknown path. Fresh Chromium/CDP verification covered all three routes at 390/768/1280, query preservation, active navigation, browser back behavior, custom-proof isolation, and no console/request failures. The current source/build checks include finalized receipt success, registration readback, attestation/reputation readback, bounded fee display, route/history preservation, hash-bound evidence, and the required wallet/error states; no wallet approval or transaction was attempted in this checkpoint.
+
+**Test result:** `npm --prefix frontend test` = 13 passed, including direct deep-link HTTP smoke and custom-proof isolation assertions; `npm --prefix frontend run build` = 23 release checks passed; inline module parse passed; `python3 -m py_compile contracts/provedown.py` passed; `bash scripts/run-tests.sh` = 13 passed; Worker four-preset/stable hash checks passed; masked environment check passed; `git diff --check` passed. `genvm-lint` retains only the two documented nested reachability advisories.
+
+**Unresolved risk:** Human screen-reader testing remains outstanding; the current CDP accessibility tree passed. The repository remains private, dirty, and uncommitted. Worker content remains synthetic, Base/Hyperlane remains mocked, Studio timestamps are unavailable, and no live `NO_CONSENSUS` receipt is pinned.
+
+**Next action:** Curate and scan the exact submission package. Do not redeploy, create transactions, or expand product scope.
+
+## Checkpoint 20 — Milestone 1 frontend release gate restored (2026-09-15)
+
+**What changed:** Updated only `frontend/tests/release.test.mjs` and `frontend/scripts/build.mjs` so the proof-scope release assertions match the current `proofScopeFor(contract, caseIds)` implementation (`ids.indexOf('4')` and the explicit `scope === 'browser-smoke'` branch). The implementation was correct; the failing `visibleCaseIds.indexOf('4')` and `hasBrowserCase` checks were stale refactor-specific assertions. No runtime behavior, contract, wallet, receipt, deployment, or product scope changed.
+
+**Evidence:** The current frontend checks the default contract before exposing pinned proof, exposes pinned browser-smoke proof only when selected case IDs include `4`, returns no pinned references for custom contracts, and hides browser-smoke proof/fee values for other case selections. Existing finalized/readback and fail-closed success gates remain intact.
+
+**Test result:** `npm --prefix frontend run test` = 15 passed; `npm --prefix frontend run build` = 25 release checks passed; `python3 -m pytest tests/test_provedown.py -q` = 13 passed; `python3 -m py_compile contracts/provedown.py` passed. `bash scripts/run-lint.sh` exited 1 and remains non-clean only for the two documented nested nondeterministic reachability advisories at `contracts/provedown.py:214` and `:311`.
+
+**Unresolved risk:** The repository remains private, dirty, and uncommitted; no deployment, transaction, or new browser wallet test was performed in this session. Worker evidence remains synthetic, the Base/Hyperlane relay remains mocked, Studio timestamps remain unavailable, no live `NO_CONSENSUS` receipt is pinned, and the final public-package/link/secret scan is still open.
+
+**Next action:** Run the public-package/link/secret scan and prepare the demo video. Keep the MVP limited to functional SLO attestation -> finalized verdict -> evidence hash -> reputation.
+
+## Checkpoint 21 — Milestone 2 submission-package audit (2026-09-16)
+
+**What changed:** Audited (not built): no prior Codex Milestone 2 work was found — no `Milestone 2`, `demo-video`, or package-manifest strings existed anywhere, and no artifact postdates Milestone 1 (2026-09-15). Created `DEMO-VIDEO-PLAN.md` (75s script + shot list + verbatim disclosures, nothing recorded) and `research/PUBLIC-PACKAGE-MANIFEST.md` (INCLUDE/EXCLUDE/ARCHIVE/GENERATED/SENSITIVE/HISTORICAL/UNRESOLVED over the current worktree). Fixed two stale `read-only` wordings in `LAUNCH-READINESS.md` (frontend is static with live reads + wallet-backed writes since Checkpoint 15). No runtime, contract, wallet, receipt, deployment, or product-scope change; no deletion, archive, commit, push, deploy, or transaction.
+
+**Why:** Release packaging must prove the public file set, secret hygiene, deployment consistency, evidence honesty, and link health from the current repo state without touching product behavior.
+
+**Evidence:** All six pinned Explorer links + Worker URL returned HTTP 200. Mission 83 API re-checked live: `Agent Tank: Hackathon`, window 2026-09-03–2026-09-17 15:30 UTC, track `Agentic Commerce Infrastructure`, 1 project per builder, public repo required, submission_count now 113 (was 48/47 on 2026-09-09). Secret scans: no private-key/API/token material in tracked files, untracked candidates, docs, frontend source, or `frontend/dist` (dist 64-hex hits are public tx hashes; 42-char hit is the current contract). `.env.local` and `frontend/dist` verified ignored. Legacy Bradbury scripts re-verified: `attest_test`/`simple_test`/`verify-live` write to historical `0x72a6…` (RECOMMEND REMOVE), `check_all`/`check_att` read-only (RECOMMEND ARCHIVE) — recommendation only, untouched. Current docs agree on Studio Next 61997 / `0x278C…` / `genlayer-js@2.0.0-rc.1`; stale addresses/chain IDs/URLs/SDK claims appear only in labeled historical sections or legacy helpers.
+
+**Test result:** `npm --prefix frontend run test` = 15 passed; `npm --prefix frontend run build` = 25 release checks passed; `python3 -m pytest tests/test_provedown.py -q` = 13 passed; `python3 -m py_compile contracts/provedown.py` passed; `bash scripts/run-tests.sh` = 13 passed; `bash scripts/check-bundle.sh` stable (`b4fc2013…`/`64e6c84f…`); `node scripts/check-env.mjs` OK (masked); `git diff --check` passed. `bash scripts/run-lint.sh` exit 1 with only the two documented advisories at `contracts/provedown.py:214` and `:311`.
+
+**Unresolved risk:** Five legacy Bradbury scripts await explicit REMOVE/ARCHIVE approval. No live `NO_CONSENSUS` receipt, Studio timestamps unavailable, Worker synthetic, relay mocked — all disclosed. Demo video not recorded. Repo private, dirty, uncommitted by design.
+
+**Next action:** Obtain explicit approval for legacy-script disposition, then a separately authorized release-checkpoint commit. Submission deadline 2026-09-17 15:30 UTC.

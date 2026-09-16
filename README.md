@@ -13,33 +13,35 @@ Provider dashboards define "available" to limit liability (threshold tricks: 70/
 
 ## 3. What ProveDown does
 
-A neutral, economically-secured attestation sidecar: register an API + SLO (P50/P95 latency, error, fill, match thresholds) → independent GenLayer validator jury fetches a stable evidence bundle, judges breach vs SLO with tolerance, anchors the attestation (verdict + evidence SHA-256 + confidence + reputation update) on-chain with explorer proof. Three deterministic demo cases: healthy → NO_BREACH, functionally broken (HTTP 200 + fill 72% < 80%) → BREACH, missing/invalid evidence → INCONCLUSIVE (never a definitive judgment). See `07-final-thesis/final-product.md`, `DEMO.md`.
+A consensus-backed attestation sidecar: register an API + SLO (P50/P95 latency, error, fill, match thresholds) → independent GenLayer validators fetch a stable evidence bundle, judge breach vs SLO with tolerance, and anchor the attestation (verdict + evidence SHA-256 + confidence + reputation update) on-chain with Explorer proof. Three deterministic demo cases: healthy → NO_BREACH, functionally broken (HTTP 200 + fill 72% < 80%) → BREACH, missing/invalid evidence → INCONCLUSIVE (never a definitive judgment). The Worker is synthesized fixture evidence for this MVP; the downstream relay is mocked. See `07-final-thesis/final-product.md`, `DEMO.md`.
 
 ## 4. Why GenLayer matters
 
-Only a decentralized jury with independent fetches + diverse LLMs + bond/slash + appeal doubling is neutral to *both* buyer and provider. Remove GenLayer → biased dashboard; replace with Chainlink/single AI API → single bribe target with no independent recomputation. The unique primitive is economically-secured subjective adjudication with external data (`web.render` + `exec_prompt` + `run_nondet_default` consensus on breach bool + evidence hash + bridge proof). See `06-adversarial-analysis/02-genlayer-necessity-tests.md`.
+GenLayer is load-bearing here because independent validators fetch external evidence, run the nondeterministic judgment, reach consensus on the breach boolean, and store a shared final record. Remove GenLayer and the result becomes a centralized dashboard; replace it with a single oracle or AI API and independent recomputation disappears. Application-level appeals, bond/slash, and cross-chain settlement are deferred and are not part of this live MVP. See `06-adversarial-analysis/02-genlayer-necessity-tests.md`.
 
 ## 5. How to run it
 
 ```bash
 # toolchain (exact RC set)
 node --version # 22.x
-genlayer --version # 0.40.0-rc.3 (deploys via scripts/deploy-with-js.mjs, WSL-safe per KEYCHAIN-WLS2.md)
-/tmp/provedown-rc-venv/bin/genvm-lint lint contracts/provedown.py # reachability advisory is false-positive (proven on-chain)
-python3 -m pytest tests/test_provedown.py -q # 9 passed
+genlayer --version # CLI 0.39.2 is retained for compatibility; live writes use pinned genlayer-js@2.0.0-rc.1 per KEYCHAIN-WLS2.md
+PYTHONPATH=/tmp/provedown-linter /tmp/provedown-linter/bin/genvm-lint lint contracts/provedown.py # two nested nondet reachability advisories; runtime/deploy verified
+python3 -m pytest tests/test_provedown.py -q # 13 passed (analog/local logic)
 
 # live E2E on Studio Next 61997 (needs funded studio-dev account — built-in faucet 💧 in studio-dev.genlayer.com)
-export GENLAYER_PRIVATE_KEY=$(grep GENLAYER_PRIVATE_KEY .env.local | cut -d= -f2 | tr -d '\r\n ')
+# Load the ignored local env file without printing it; never paste a key into a command or commit it.
+set -a; source .env.local; set +a
 node scripts/deploy-with-js.mjs # GENLAYER_NETWORK=studio-dev (default) → contract 0x... FINALIZED FINISHED_WITH_RETURN
 node scripts/attest-studio-dev.mjs # registers demo-healthy/breach/empty → attestations + reputation
 
-# frontend (static, reads live studio-dev, no build)
+# frontend (static source; validated production artifact via `npm --prefix frontend run build`)
 open frontend/index.html # or any static server; live reads via esm.sh genlayer-js@2.0.0-rc.1
 ```
 
 ## 6. Real vs mocked
 
-**REAL:** Studio Next contract, GenLayer jury consensus, attestations, evidence hashes, reputation, explorer-studio-dev transactions, Bundle Worker HTTPS bundles.
+**REAL:** Studio Next contract, GenLayer jury consensus, attestations, evidence hashes, reputation, explorer-studio-dev transactions, and the Bundle Worker transport.
+**SYNTHETIC FIXTURE:** Worker payloads are deterministic demo bundles, not measurements collected from a live customer API.
 **MOCK:** Base relay / cross-chain settlement (arrow + `bridgeProof` hash diagram, AgentEscrow pattern — not a real Hyperlane tx), future poller (bundles synthesized, hash-stable), `NEXT_PUBLIC_LIVE_JURY=false` prewired SSE fallback (labeled mock, links to prior real txs).
 Never blur the boundary — see `DEMO.md`, `FINAL-PREFLIGHT-AUDIT.md`.
 

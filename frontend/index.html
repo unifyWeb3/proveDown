@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ProveDown - functional service verification">
-<meta name="twitter:description" content="Agreement, observed evidence, GenLayer decision, proof, and reputation in one read-only workspace.">
+<meta name="twitter:description" content="Agreement, observed evidence, GenLayer decision, proof, and reputation in one focused application.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%235a5ee6'/%3E%3Cpath d='M8 8h16v4H12v4h9v4h-9v4H8z' fill='white'/%3E%3C/svg%3E">
 <title>ProveDown - did the service keep its agreement?</title>
 <style>
@@ -35,8 +35,9 @@
   --radius-input: 4px;
 }
 * { box-sizing: border-box; }
-body { max-width: 1120px; margin: 0 auto; padding: 0 24px 48px; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 16px; line-height: 1.5; }
-main { display: grid; gap: 24px; min-width: 0; }
+html { min-width: 320px; background: var(--bg); }
+body { min-width: 320px; margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 16px; line-height: 1.5; }
+main { display: grid; width: min(1180px, calc(100% - 48px)); min-width: 0; margin: 0 auto; padding: 0 0 48px; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: 12px; font-size: 42px; line-height: 1.12; }
 h2 { margin-bottom: 8px; font-size: 22px; line-height: 1.25; }
@@ -46,7 +47,20 @@ a { color: var(--accent); }
 a:hover { color: #aeb7ff; }
 code, pre, .hash, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 code { color: #d7d9ff; }
-.masthead { padding: 32px 0 24px; border-bottom: 1px solid var(--border); }
+.skip-link { position: fixed; z-index: 100; top: 8px; left: 8px; padding: 10px 14px; transform: translateY(-160%); border-radius: var(--radius-btn); background: #fff; color: #000; }
+.skip-link:focus { transform: translateY(0); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.app-header { position: sticky; z-index: 20; top: 0; border-bottom: 1px solid var(--border); background: rgba(10, 10, 10, .96); }
+.app-header-inner { display: grid; grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr); align-items: center; width: min(1180px, calc(100% - 48px)); min-height: 64px; margin: 0 auto; }
+.brand-home { display: inline-flex; gap: 10px; align-items: center; width: fit-content; color: var(--text); font-size: 15px; font-weight: 750; text-decoration: none; }
+.primary-nav { display: flex; gap: 4px; align-items: center; padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); }
+.primary-nav a { display: inline-flex; align-items: center; min-height: 38px; padding: 7px 13px; border-radius: var(--radius-btn); color: var(--text-2); font-size: 14px; font-weight: 650; text-decoration: none; }
+.primary-nav a:hover { background: var(--surface-2); color: var(--text); }
+.primary-nav a[aria-current="page"] { background: var(--surface-3); color: #fff; }
+.app-status { display: flex; gap: 8px; justify-content: flex-end; align-items: center; color: var(--text-2); font-size: 12px; }
+.route-view { display: grid; gap: 24px; min-width: 0; }
+.route-view[hidden] { display: none; }
+.masthead { padding: 52px 0 28px; border-bottom: 1px solid var(--border); }
 .brand-line, .section-kicker, .signal-label, .truth-label { color: var(--text-2); font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
 .brand-line { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
 .brand-mark { display: inline-grid; width: 28px; height: 28px; place-items: center; border-radius: 6px; background: var(--accent-strong); color: #fff; font-size: 11px; letter-spacing: 0; }
@@ -56,9 +70,15 @@ code { color: #d7d9ff; }
 .thesis-line { max-width: 78ch; margin: 0; padding: 12px 16px; border-left: 3px solid var(--bad); background: var(--surface); }
 .thesis-line strong { color: #fff; }
 .mast-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; color: var(--text-2); font-size: 13px; }
-.section-nav { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 14px 0 4px; color: var(--text-2); font-size: 13px; }
-.section-nav a { text-decoration: none; }
-.section-nav a:hover { text-decoration: underline; }
+.route-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; padding: 42px 0 24px; border-bottom: 1px solid var(--border); }
+.route-header h1 { margin-bottom: 8px; font-size: 34px; }
+.route-header p { max-width: 70ch; margin-bottom: 0; color: var(--text-2); }
+.route-context { display: grid; gap: 6px; justify-items: end; color: var(--text-2); font-size: 12px; text-align: right; }
+.route-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.button-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border: 1px solid var(--accent-strong); border-radius: var(--radius-btn); background: var(--accent-strong); color: #fff; font-weight: 700; text-decoration: none; }
+.button-link:hover { color: #fff; background: #676bed; }
+.button-link.secondary { border-color: var(--border-strong); background: transparent; color: var(--text); }
+.button-link.secondary:hover { background: var(--surface-2); }
 .overview-band { min-width: 0; padding: 24px 0 0; }
 .section-kicker { margin-bottom: 6px; }
 .overview-title { max-width: 54ch; }
@@ -81,6 +101,13 @@ code { color: #d7d9ff; }
 .flow-step { min-width: 0; padding: 10px 12px; border-top: 2px solid var(--border-strong); background: var(--surface); }
 .flow-step strong { display: block; font-size: 13px; }
 .flow-step span { display: block; color: var(--text-2); font-size: 12px; }
+.comparison-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.comparison { min-width: 0; padding: 18px 20px; border: 1px solid var(--border); border-left: 4px solid var(--ok); background: var(--surface); }
+.comparison.is-breach { border-left-color: var(--bad); }
+.comparison-label { display: block; margin-bottom: 10px; color: var(--text-2); font-size: 12px; font-weight: 750; text-transform: uppercase; }
+.comparison-path { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; font-size: 14px; }
+.comparison-path strong { color: #fff; }
+.comparison-arrow { color: var(--text-3); }
 .card { min-width: 0; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface); }
 .card-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; align-items: start; margin-bottom: 18px; }
 .card-header p { max-width: 72ch; margin-bottom: 0; color: var(--text-2); }
@@ -102,6 +129,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .action-row button { margin: 0; }
 .write-notice, .status-line { margin: 12px 0 0; color: var(--text-2); font-size: 13px; }
 .write-notice { padding: 10px 12px; border-left: 3px solid var(--warn); background: var(--surface-2); }
+.write-notice.is-live { border-left-color: var(--accent-strong); }
 .workspace-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .workspace-actions button { margin: 0; }
 .network-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 18px; color: var(--text-2); font-size: 14px; }
@@ -205,110 +233,141 @@ summary { min-height: 44px; display: flex; align-items: center; cursor: pointer;
 ul { margin: 8px 0 0; padding-left: 20px; }
 li { margin: 7px 0; }
 .footer { padding-top: 26px; color: var(--text-3); font-size: 12px; }
-@media (max-width: 840px) { body { padding-right: 18px; padding-left: 18px; } h1 { font-size: 36px; } .overview-grid { grid-template-columns: 1fr; } .flow-strip { grid-template-columns: repeat(5, minmax(120px, 1fr)); overflow-x: auto; padding-bottom: 4px; } .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { body { padding: 0 12px 34px; } .masthead { padding-top: 22px; } h1 { font-size: 30px; } .lede { font-size: 16px; } .card { padding: 17px; } .signal-card { padding: 18px; } .signal-result { font-size: 25px; } .case-card.featured { padding: 18px; } .case-card.featured .verdict-result { font-size: 25px; } .metric-grid, .proof-grid, .reputation-layout { grid-template-columns: 1fr; } .rep-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .action-row, .workspace-actions { display: grid; grid-template-columns: 1fr; } .action-row button, .workspace-actions button { width: 100%; } .truth-row { grid-template-columns: 84px minmax(0, 1fr); } .fee-row { grid-template-columns: 1fr; gap: 2px; } .hash-value.short { max-width: calc(100vw - 96px); } }
+@media (max-width: 900px) { .app-header-inner { grid-template-columns: 1fr auto; } .primary-nav { grid-row: 2; grid-column: 1 / -1; justify-content: stretch; margin-bottom: 10px; } .primary-nav a { flex: 1; justify-content: center; } .app-status { grid-column: 2; } .route-header { grid-template-columns: 1fr; } .route-context { justify-items: start; text-align: left; } }
+@media (max-width: 840px) { main, .app-header-inner { width: min(100% - 36px, 1180px); } h1 { font-size: 36px; } .overview-grid, .comparison-grid { grid-template-columns: 1fr; } .flow-strip { grid-template-columns: repeat(5, minmax(120px, 1fr)); overflow-x: auto; padding-bottom: 4px; } .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { main, .app-header-inner { width: calc(100% - 24px); } main { padding-bottom: 34px; } .app-header { position: static; } .app-header-inner { grid-template-columns: 1fr; padding: 12px 0 8px; } .app-status { grid-row: 1; grid-column: 1; justify-content: flex-end; } .brand-home { grid-row: 1; grid-column: 1; } .primary-nav { grid-row: 2; grid-column: 1; width: 100%; margin: 10px 0 0; } .primary-nav a { padding-right: 8px; padding-left: 8px; font-size: 13px; } .masthead { padding-top: 34px; } h1 { font-size: 30px; } .route-header { padding-top: 30px; } .route-header h1 { font-size: 28px; } .lede { font-size: 16px; } .card { padding: 17px; } .signal-card { padding: 18px; } .signal-result { font-size: 25px; } .comparison-path { grid-template-columns: 1fr; gap: 4px; } .comparison-arrow { transform: rotate(90deg); width: fit-content; } .case-card.featured { padding: 18px; } .case-card.featured .verdict-result { font-size: 25px; } .metric-grid, .proof-grid, .reputation-layout { grid-template-columns: 1fr; } .rep-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .action-row, .workspace-actions { display: grid; grid-template-columns: 1fr; } .action-row button, .workspace-actions button, .route-actions .button-link { width: 100%; } .truth-row { grid-template-columns: 84px minmax(0, 1fr); } .fee-row { grid-template-columns: 1fr; gap: 2px; } .hash-value.short { max-width: calc(100vw - 96px); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; } }
 </style>
 </head>
 <body>
-<header class="masthead">
-  <div class="brand-line"><span class="brand-mark" aria-hidden="true">PD</span><span>ProveDown</span><span class="mode-chip">READ-ONLY REVIEW</span></div>
-  <h1>Did the service keep its agreement?</h1>
-  <p class="lede">A neutral functional-attestation layer for machine-to-machine service agreements. ProveDown compares what an API delivered with what the buyer agreed to, then attaches evidence to a GenLayer decision.</p>
-  <p class="thesis-line"><strong>HTTP 200 is reachability, not fulfillment.</strong> A response can be reachable and still miss the agreed fill, match, error, or latency limits.</p>
-  <div class="mast-meta"><span>Agreement → evidence → decision → proof → reputation</span><span>Studio Next · chain 61997</span><span>No wallet or transaction is requested in this review</span></div>
+<a class="skip-link" href="#routeContent">Skip to content</a>
+<header class="app-header">
+  <div class="app-header-inner">
+    <a class="brand-home" data-route-link href="/"><span class="brand-mark" aria-hidden="true">PD</span><span>ProveDown</span></a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <a data-route-link data-route="/" href="/">Overview</a>
+      <a data-route-link data-route="/verify" href="/verify">Verify</a>
+      <a data-route-link data-route="/proof" href="/proof">Proof</a>
+    </nav>
+    <div class="app-status"><span class="network-chip">STUDIO NEXT · 61997</span></div>
+  </div>
 </header>
+<div class="sr-only" id="routeAnnouncer" aria-live="polite"></div>
 
-<nav class="section-nav" aria-label="Page sections">
-  <a href="#overview">Overview</a><a href="#setup">Define</a><a href="#workspace">Verify</a><a href="#verdictCard">Verdict</a><a href="#reputationCard">Reputation</a><a href="#proofCard">Proof</a>
-</nav>
+<main id="routeContent" tabindex="-1">
+  <section class="route-view" data-view="overview" aria-labelledby="overviewHeading">
+    <header class="masthead">
+      <p class="section-kicker">FUNCTIONAL SERVICE ATTESTATION</p>
+      <h1 id="overviewHeading" tabindex="-1">ProveDown</h1>
+      <p class="lede">Verify whether a machine-to-machine service fulfilled its functional agreement, then inspect the evidence and finalized GenLayer proof.</p>
+      <p class="thesis-line"><strong>HTTP 200 is reachability, not fulfillment.</strong> A reachable response can still miss the agreed fill, match, error, or latency limits.</p>
+      <div class="comparison-grid" aria-label="Reachability versus fulfillment examples">
+        <article class="comparison"><span class="comparison-label">REACHABLE AND FULFILLED</span><div class="comparison-path"><span>HTTP 200</span><span class="comparison-arrow">→</span><span>Functional limits met</span><span class="comparison-arrow">→</span><strong>NO_BREACH</strong></div></article>
+        <article class="comparison is-breach"><span class="comparison-label">REACHABLE BUT NOT FULFILLED</span><div class="comparison-path"><span>HTTP 200</span><span class="comparison-arrow">→</span><span>Fill or latency violated</span><span class="comparison-arrow">→</span><strong>BREACH</strong></div></article>
+      </div>
+      <div class="route-actions"><a class="button-link" data-route-link href="/verify">Verify agreement</a><a class="button-link secondary" data-route-link href="/proof">View proof</a></div>
+      <div class="mast-meta"><span>Agreement → evidence → decision → proof → reputation</span><span>Current contract reads are live</span><span>Worker evidence is synthetic</span></div>
+    </header>
 
-<main>
-  <section class="overview-band" id="overview" aria-labelledby="overviewTitle">
-    <p class="section-kicker">THE DECISION PATH</p>
-    <h2 class="overview-title" id="overviewTitle">Read the obligation, inspect the observed bundle, and follow the proof.</h2>
-    <div class="overview-grid">
-      <article class="signal-card" id="heroSignal" aria-labelledby="heroSignalLabel">
-        <p class="signal-label" id="heroSignalLabel">LIVE CONTRACT READ</p>
-        <div id="heroVerdict" class="signal-result" aria-live="polite">Loading a finalized result…</div>
-        <p id="heroContext" class="signal-context">The current attestation and its evidence will appear below after the Studio read completes.</p>
-      </article>
-      <aside class="truth-card" aria-labelledby="truthTitle">
-        <p class="truth-label" id="truthTitle">WHAT THE LABELS MEAN</p>
-        <dl class="truth-list">
-          <div class="truth-row"><dt>REAL</dt><dd><strong>Studio reads and finalized proof</strong></dd></div>
-          <div class="truth-row"><dt>DERIVED</dt><dd>Bars, comparisons, and plain-language summaries</dd></div>
-          <div class="truth-row"><dt>SYNTHETIC</dt><dd>Deterministic Worker fixture bundles</dd></div>
-          <div class="truth-row"><dt>MOCK</dt><dd>Downstream relay and future automation paths</dd></div>
-        </dl>
-      </aside>
-    </div>
-    <ol class="flow-strip" aria-label="Verification sequence">
-      <li class="flow-step"><strong>1 · Define</strong><span>Agree on limits</span></li>
-      <li class="flow-step"><strong>2 · Observe</strong><span>Read the bundle</span></li>
-      <li class="flow-step"><strong>3 · Decide</strong><span>GenLayer jury result</span></li>
-      <li class="flow-step"><strong>4 · Prove</strong><span>Hash and receipt</span></li>
-      <li class="flow-step"><strong>5 · Act</strong><span>Use reputation</span></li>
-    </ol>
+    <section class="overview-band" aria-labelledby="overviewTitle">
+      <p class="section-kicker">CURRENT SIGNAL</p>
+      <h2 class="overview-title" id="overviewTitle">The decision is readable first; protocol detail stays attached.</h2>
+      <div class="overview-grid">
+        <article class="signal-card" id="heroSignal" aria-labelledby="heroSignalLabel">
+          <p class="signal-label" id="heroSignalLabel">LIVE CONTRACT READ</p>
+          <div id="heroVerdict" class="signal-result" aria-live="polite">Loading a finalized result…</div>
+          <p id="heroContext" class="signal-context">The current attestation and its evidence will appear after the Studio read completes.</p>
+        </article>
+        <aside class="truth-card" aria-labelledby="truthTitle">
+          <p class="truth-label" id="truthTitle">WHAT THE LABELS MEAN</p>
+          <dl class="truth-list">
+            <div class="truth-row"><dt>REAL</dt><dd><strong>Studio reads and finalized proof</strong></dd></div>
+            <div class="truth-row"><dt>DERIVED</dt><dd>Bars, comparisons, and human-readable summaries</dd></div>
+            <div class="truth-row"><dt>SYNTHETIC</dt><dd>Deterministic Worker fixture bundles</dd></div>
+            <div class="truth-row"><dt>MOCK</dt><dd>Downstream relay and future automation paths</dd></div>
+          </dl>
+        </aside>
+      </div>
+      <ol class="flow-strip" aria-label="Verification sequence">
+        <li class="flow-step"><strong>1 · Define</strong><span>Agree on limits</span></li>
+        <li class="flow-step"><strong>2 · Observe</strong><span>Read the bundle</span></li>
+        <li class="flow-step"><strong>3 · Decide</strong><span>GenLayer jury result</span></li>
+        <li class="flow-step"><strong>4 · Prove</strong><span>Hash and receipt</span></li>
+        <li class="flow-step"><strong>5 · Act</strong><span>Use reputation</span></li>
+      </ol>
+    </section>
   </section>
 
-  <section class="card" id="setup" aria-labelledby="setupTitle">
-    <div class="card-header"><div><span class="step-number">01 / DEFINE</span><h2 id="setupTitle">Set the service agreement</h2><p>Use the form to inspect a fixture bundle and compare it with a proposed agreement. Editing this form never changes the contract in read-only review.</p></div></div>
-    <form id="setupForm" novalidate>
-      <div class="field"><label for="slaId">Agreement ID</label><p class="field-hint" id="slaIdHint">The live browser-smoke agreement is preselected for the reputation read.</p><input id="slaId" value="browser-smoke-20260909-01" autocomplete="off" aria-describedby="slaIdHint slaIdError"><p class="field-error" id="slaIdError" hidden>Enter an agreement ID before previewing evidence.</p></div>
-      <div class="field"><label for="apiUrl">API being measured</label><p class="field-hint" id="apiUrlHint">Use an HTTPS endpoint. The stored contract value, not this editable field, is used for a live reputation read.</p><input id="apiUrl" value="https://example.com" inputmode="url" autocomplete="off" aria-describedby="apiUrlHint apiUrlError"><p class="field-error" id="apiUrlError" hidden>Use a valid HTTPS URL.</p></div>
-      <div class="field"><label for="bundlePreset">Fixture evidence to preview</label><p class="field-hint" id="presetHint">These bundles are synthetic, deterministic fixtures. A breach can exist even when the endpoint returns HTTP 200.</p><select id="bundlePreset" aria-describedby="presetHint"><option value="breach">Degraded · p95 4800 ms, fill 72% · expect BREACH</option><option value="no_breach">Healthy · p95 1600 ms, fill 95% · expect NO_BREACH</option><option value="ambig">Borderline · near the limit · expect an uncertain outcome</option><option value="empty">Missing data · metrics unavailable · expect INCONCLUSIVE</option></select></div>
-      <div class="field"><label for="sloJson">Service-quality limits</label><p class="field-hint" id="sloHint">p95 is milliseconds; the other limits are fractions from 0 to 1. The jury applies a 500 ms p95 tolerance.</p><textarea id="sloJson" rows="3" aria-describedby="sloHint sloError">{"p95_threshold":2000,"error_threshold":0.01,"fill_threshold":0.80,"match_threshold":0.85}</textarea><p class="field-error" id="sloError" hidden>Provide JSON with finite p95, error, fill, and match limits in safe ranges.</p></div>
-      <div class="action-row"><button id="previewBtn" type="button">Preview evidence</button><button id="registerBtn" class="secondary" type="button" disabled aria-describedby="writeNotice">Register agreement</button></div>
-      <p class="write-notice" id="writeNotice"><span class="badge mock">○ MOCKED OUT</span> Contract writes are disabled for this frontend review. Preview is local/read-only; no wallet access, signature, or transaction is requested.</p>
-      <div id="registerStatus" class="status-line" aria-live="polite"></div>
-    </form>
+  <section class="route-view" data-view="verify" aria-labelledby="verifyHeading" hidden>
+    <header class="route-header"><div><p class="section-kicker">OPERATIONS</p><h1 id="verifyHeading" tabindex="-1">Verify a service agreement</h1><p>Inspect deterministic evidence, register an agreement with an injected wallet, or request a GenLayer attestation. A write is not called successful until finality, receipt success, and chain readback all pass.</p></div><div class="route-context"><span id="verifyContractContext">Contract <code>0x278CbC20…7d407aC1</code></span><span id="walletStatus">Wallet status: checking browser</span></div></header>
+
+    <section class="card" id="setup" aria-labelledby="setupTitle">
+      <div class="card-header"><div><span class="step-number">01 / DEFINE</span><h2 id="setupTitle">Set the service agreement</h2><p>Preview the deterministic bundle before asking your wallet to register these exact terms.</p></div></div>
+      <form id="setupForm" novalidate aria-labelledby="setupTitle">
+        <div class="field"><label for="slaId">Agreement ID</label><p class="field-hint" id="slaIdHint">The browser-smoke ID is a read-only reference. Registration checks the ID before opening your wallet; choose a new unique ID to write.</p><input id="slaId" value="browser-smoke-20260909-01" autocomplete="off" aria-describedby="slaIdHint slaIdError"><p class="field-error" id="slaIdError" hidden>Enter an agreement ID before continuing.</p></div>
+        <div class="field"><label for="apiUrl">API being measured</label><p class="field-hint" id="apiUrlHint">Use an HTTPS endpoint. Live reputation is resolved from the stored agreement, not this editable field.</p><input id="apiUrl" value="https://example.com" inputmode="url" autocomplete="off" aria-describedby="apiUrlHint apiUrlError"><p class="field-error" id="apiUrlError" hidden>Use a valid HTTPS URL.</p></div>
+        <div class="field"><label for="bundlePreset">Fixture evidence</label><p class="field-hint" id="presetHint">These bundles are synthetic deterministic fixtures. A breach can exist even when the endpoint returns HTTP 200.</p><select id="bundlePreset" aria-describedby="presetHint"><option value="breach">Degraded · p95 4800 ms, fill 72% · expect BREACH</option><option value="no_breach">Healthy · p95 1600 ms, fill 95% · expect NO_BREACH</option><option value="ambig">Borderline · near the limit · expect an uncertain outcome</option><option value="empty">Missing data · metrics unavailable · expect INCONCLUSIVE</option></select></div>
+        <div class="field"><label for="sloJson">Service-quality limits</label><p class="field-hint" id="sloHint">p95 is milliseconds; the other limits are fractions from 0 to 1. The jury applies a 500 ms p95 tolerance.</p><textarea id="sloJson" rows="3" aria-describedby="sloHint sloError">{"p95_threshold":2000,"error_threshold":0.01,"fill_threshold":0.80,"match_threshold":0.85}</textarea><p class="field-error" id="sloError" hidden>Provide JSON with finite p95, error, fill, and match limits in safe ranges.</p></div>
+        <div class="action-row"><button id="previewBtn" class="secondary" type="button">Preview evidence</button><button id="registerBtn" type="button" aria-describedby="writeNotice">Register agreement</button></div>
+        <p class="write-notice is-live" id="writeNotice"><span class="badge warn">◐ WALLET WRITE</span> Registration estimates fees first and opens a wallet signature only after you click. Closing or rejecting the wallet creates no transaction.</p>
+        <div id="registerStatus" class="status-line" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section class="card" id="workspace" aria-labelledby="workspaceTitle">
+      <div class="card-header"><div><span class="step-number">02 / VERIFY</span><h2 id="workspaceTitle">Inspect or request an attestation</h2><p>Live reads never require a wallet. A new request uses the selected registered agreement and remains pending until GenLayer finalizes it.</p></div></div>
+      <p class="network-line"><span class="network-chip">STUDIO NEXT · 61997</span><span>Five validators evaluate the same functional obligation.</span></p>
+      <div class="field case-selector"><label for="caseSet">Case set</label><select id="caseSet" aria-describedby="caseSetHint"><option value="breach-focus">Breach-first · cases 2, 4, 3</option><option value="browser-smoke">Browser proof · cases 4, 1, 2</option><option value="three-case">Three-case demo · cases 1, 2, 3</option><option value="custom" hidden>URL selection</option></select><p class="field-hint" id="caseSetHint">Case 2 is the functional-breach centerpiece; case 4 is the verified wallet-backed read.</p></div>
+      <div class="workspace-actions"><button id="refreshBtn" class="secondary" type="button">Refresh live results</button><button id="attestBtn" type="button" aria-describedby="attestNotice">Request new attestation</button></div>
+      <p class="write-notice is-live" id="attestNotice"><span class="badge warn">◐ WALLET WRITE</span> The request estimates fees, asks for one signature, waits for finality, then reads the stored attestation and reputation. No result is inferred from submission alone.</p>
+      <details class="write-lifecycle"><summary>Transaction lifecycle</summary><ol class="tracker" aria-label="Attestation write lifecycle"><li>ESTIMATING FEES</li><li>AWAITING SIGNATURE</li><li>WAITING FOR FINALITY</li><li>FINALIZED + READ BACK</li></ol></details>
+      <div id="attestStatus" class="status-line" aria-live="polite"></div><div id="tracker" class="tracker-wrap" aria-live="polite"></div>
+    </section>
+
+    <section class="card verdict-card" aria-labelledby="verifyResultTitle"><div class="card-header"><div><span class="step-number">03 / RESULT</span><h2 id="verifyResultTitle">Current decision</h2><p>The selected finalized result is summarized here. Open Proof for its full observed-versus-required evidence, receipts, and Explorer references.</p></div></div><div id="verifySummary" aria-live="polite"><div class="skeleton medium"></div><div class="skeleton short"></div></div><div class="route-actions"><a class="button-link secondary" data-route-link href="/proof">Inspect full proof</a></div></section>
   </section>
 
-  <section class="card" id="workspace" aria-labelledby="workspaceTitle">
-    <div class="card-header"><div><span class="step-number">02 / VERIFY</span><h2 id="workspaceTitle">Inspect finalized attestations</h2><p>These reads come from the Studio Next contract. Select a case set, then refresh the read; the page never treats a pending or missing result as a verdict.</p></div></div>
-    <p class="network-line"><span class="network-chip">STUDIO NEXT · 61997</span><span>Contract <code>0x278CbC20…7d407aC1</code></span><span>Five independent validators must agree on the breach decision.</span></p>
-    <div class="field case-selector"><label for="caseSet">Case set</label><select id="caseSet" aria-describedby="caseSetHint"><option value="breach-focus">Breach-first · cases 2, 4, 3</option><option value="browser-smoke">Supplied browser route · cases 4, 1, 2</option><option value="three-case">Three-case demo · cases 1, 2, 3</option></select><p class="field-hint" id="caseSetHint">Case 2 is the functional-breach centerpiece; case 4 is the current browser-smoke read.</p></div>
-    <div class="workspace-actions"><button id="refreshBtn" class="secondary" type="button">Refresh live results</button><button id="attestBtn" type="button" disabled aria-describedby="attestNotice">Request new attestation</button></div>
-    <p class="write-notice" id="attestNotice"><span class="badge mock">○ MOCKED OUT</span> New attestations are intentionally unavailable in this pass. The existing finalized records remain inspectable and no wallet prompt can open.</p>
-    <details class="write-lifecycle"><summary>Attestation lifecycle (write path not exercised here)</summary><ol class="tracker" aria-label="Attestation write lifecycle"><li>REQUESTED</li><li>SUBMITTED</li><li>FINALIZING</li><li>FINALIZED</li></ol><p class="meta">A finalized result requires a successful receipt and contract readback. This review creates neither.</p></details>
-    <div id="attestStatus" class="status-line" aria-live="polite"></div><div id="tracker" class="tracker-wrap" aria-live="polite"></div>
+  <section class="route-view" data-view="proof" aria-labelledby="proofHeading" hidden>
+    <header class="route-header"><div><p class="section-kicker">DECISION RECEIPT</p><h1 id="proofHeading" tabindex="-1">Inspect the decision and proof</h1><p>Start with what the jury decided, then inspect observed values, evidence fingerprints, reputation, finalized transactions, and measured Studio Devnet fees.</p></div><div class="route-context"><span id="proofAgreementContext">Agreement <code>browser-smoke-20260909-01</code></span><span id="proofAttestationContext">Attestation <code>4</code> is the current wallet-backed proof</span></div></header>
+
+    <section class="card verdict-card" id="verdictCard" aria-labelledby="verdictTitle">
+      <div class="card-header"><div><span class="step-number">01 / VERDICT</span><h2 id="verdictTitle">What the jury decided</h2><p>Every comparison is tied to the stored agreement and evidence fingerprint.</p></div><p class="verdict-legend">● fulfilled · ● breached · ■ no definitive decision · ■ validators did not agree</p></div>
+      <div id="verdict" aria-live="polite" aria-busy="true"><div class="skeleton wide"></div><div class="skeleton medium"></div><div class="skeleton short"></div></div>
+    </section>
+
+    <section class="card" id="reputationCard" aria-labelledby="reputationTitle">
+      <div class="card-header"><div><span class="step-number">02 / REPUTATION</span><h2 id="reputationTitle">Reliability record</h2><p>Reputation is read from the stored agreement's API URL. It summarizes history but never replaces attached evidence.</p></div></div>
+      <div id="reputation" aria-live="polite"><div class="skeleton medium"></div><div class="skeleton wide"></div></div>
+    </section>
+
+    <section class="card" id="proofCard" aria-labelledby="proofTitle">
+      <div class="card-header"><div><span class="step-number">03 / PROOF</span><h2 id="proofTitle">Finalized references and boundaries</h2><p>These are the exact verified browser transactions and readbacks. Pinned fee values are displayed only because the receipt fields were present.</p></div></div>
+      <div id="proofReference" class="proof-grid" hidden>
+        <article class="proof-item"><h3>Browser registration</h3><p><span class="badge real">✓ VERIFIED REFERENCE</span> browser-smoke-20260909-01</p><p><a class="tx-link" href="https://explorer-studio-dev.genlayer.com/tx/0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a" target="_blank" rel="noopener">Open finalized registration</a></p><code class="hash-value">0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a</code></article>
+        <article class="proof-item"><h3>Browser attestation</h3><p><span class="badge real">✓ VERIFIED REFERENCE</span> attestation 4 · NO_BREACH</p><p><a class="tx-link" href="https://explorer-studio-dev.genlayer.com/tx/0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110" target="_blank" rel="noopener">Open finalized attestation</a></p><code class="hash-value">0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110</code></article>
+        <article class="proof-item"><h3>Stored evidence fingerprint</h3><p><span class="badge real">✓ VERIFIED READBACK</span> current browser-smoke bundle</p><code class="hash-value">sha256:e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3</code><button class="copybtn" type="button" data-copy-hash="e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3">Copy hash</button></article>
+        <article class="proof-item"><h3>Current reputation snapshot</h3><p><span class="badge real">✓ VERIFIED READBACK</span> Studio Next</p><p><strong>66 / 100</strong> · 3 checks · 1 breach</p><p class="meta">Pinned from the verified browser proof; the live card reads the contract again.</p></article>
+      </div>
+      <div class="fee-panel" id="pinnedFeePanel" aria-labelledby="feeTitle" hidden><h3 id="feeTitle">Measured receipt fees</h3><p class="meta">Measured on Studio Devnet under these transactions/configuration. These are not permanent network prices.</p><div class="proof-grid"><div><h3>Registration receipt</h3><div class="fee-row"><span class="label">Deposit</span><span>0.000613834800010352 GEN</span></div><div class="fee-row"><span class="label">Consumed</span><span>0.00007863225 GEN</span></div><div class="fee-row"><span class="label">Refund</span><span>0.000535202550009529 GEN</span></div></div><div><h3>Attestation receipt</h3><div class="fee-row"><span class="label">Deposit</span><span>0.000624289200010352 GEN</span></div><div class="fee-row"><span class="label">Consumed</span><span>0.00008020625 GEN</span></div><div class="fee-row"><span class="label">Refund</span><span>0.000544082950009529 GEN</span></div></div></div></div>
+      <details><summary>Three fixture cases and what they demonstrate</summary><ul><li><strong>Healthy</strong> → NO_BREACH when observed metrics stay within the stored limits.</li><li><strong>Degraded</strong> → BREACH: p95 4800 ms and fill 72% violate p95 ≤ 2500 ms and fill ≥ 80% even though HTTP returns 200.</li><li><strong>Missing data</strong> → INCONCLUSIVE: no definitive decision is made when required metrics are absent.</li></ul><p class="meta">Worker: <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code>. Its deterministic content is synthetic fixture evidence, not a live customer probe.</p></details>
+      <details><summary>What is real, derived, synthetic, or mocked?</summary><p><span class="badge real">✓ REAL</span> Studio contract reads, finalized attestation records, evidence hashes, reputation readback, and the full Explorer references above.</p><p><span class="badge warn">◆ DERIVED</span> Confidence bars, observed-versus-required comparisons, case labels, and plain-language summaries are views of returned data.</p><p><span class="badge mock">○ SYNTHETIC / MOCK</span> Worker bundles are deterministic fixtures. Base/Hyperlane relay, future polling, and any SSE fallback are mocked and never represented as finalized.</p></details>
+      <details><summary>Protocol detail</summary><p class="meta">The contract stores resolved, inconclusive, or no_consensus status. A write is presented as successful only after a finalized successful receipt and authoritative readback.</p></details>
+    </section>
   </section>
 
-  <section class="card verdict-card" id="verdictCard" aria-labelledby="verdictTitle">
-    <div class="card-header"><div><span class="step-number">03 / DECIDE</span><h2 id="verdictTitle">What the jury decided</h2><p>The result is shown before protocol detail. Every comparison is tied to the agreement and the evidence fingerprint that the contract stored.</p></div><p class="verdict-legend">● fulfilled · ● breached · ■ no definitive decision · ■ validators did not agree</p></div>
-    <div id="verdict" aria-live="polite" aria-busy="true"><div class="skeleton wide"></div><div class="skeleton medium"></div><div class="skeleton short"></div></div>
-  </section>
-
-  <section class="card" id="reputationCard" aria-labelledby="reputationTitle">
-    <div class="card-header"><div><span class="step-number">04 / ACT</span><h2 id="reputationTitle">Reliability record</h2><p>Reputation is read from the stored agreement's API URL. It is a compact history signal, not a replacement for the evidence attached to each verdict.</p></div></div>
-    <div id="reputation" aria-live="polite"><div class="skeleton medium"></div><div class="skeleton wide"></div></div>
-  </section>
-
-  <section class="card" id="proofCard" aria-labelledby="proofTitle">
-    <div class="card-header"><div><span class="step-number">05 / PROOF</span><h2 id="proofTitle">Proof and boundaries</h2><p>Use the full transaction links and evidence hash when you need to verify what was finalized. Details stay secondary so the decision remains readable.</p></div></div>
-    <div id="proofReference" class="proof-grid">
-      <article class="proof-item"><h3>Browser registration</h3><p><span class="badge real">✓ VERIFIED REFERENCE</span> browser-smoke-20260909-01</p><p><a class="tx-link" href="https://explorer-studio-dev.genlayer.com/tx/0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a" target="_blank" rel="noopener">Open finalized registration</a></p><code class="hash-value">0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a</code></article>
-      <article class="proof-item"><h3>Browser attestation</h3><p><span class="badge real">✓ VERIFIED REFERENCE</span> attestation 4 · NO_BREACH</p><p><a class="tx-link" href="https://explorer-studio-dev.genlayer.com/tx/0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110" target="_blank" rel="noopener">Open finalized attestation</a></p><code class="hash-value">0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110</code></article>
-      <article class="proof-item"><h3>Stored evidence fingerprint</h3><p><span class="badge real">✓ VERIFIED READBACK</span> current browser-smoke bundle</p><code class="hash-value">sha256:e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3</code><button class="copybtn" type="button" data-copy-hash="e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3">Copy hash</button></article>
-      <article class="proof-item"><h3>Current reputation snapshot</h3><p><span class="badge real">✓ VERIFIED READBACK</span> Studio Next</p><p><strong>66 / 100</strong> · 3 checks · 1 breach</p><p class="meta">A snapshot from the supplied finalized browser proof; the live card above reads the contract again.</p></article>
-    </div>
-    <div class="fee-panel" aria-labelledby="feeTitle"><h3 id="feeTitle">Receipt fee accounting</h3><div class="fee-row"><span class="label">Deposit</span><span>Unavailable in this read-only view; no receipt was created here.</span></div><div class="fee-row"><span class="label">Consumed</span><span>Unavailable in this read-only view; no value is inferred.</span></div><div class="fee-row"><span class="label">Refund</span><span>Unavailable in this read-only view; no value is inferred.</span></div><p class="meta">When a finalized receipt exposes these fields, show the returned GEN values only. Measured on Studio-dev under that transaction/configuration.</p></div>
-    <details><summary>Three fixture cases and what they demonstrate</summary><ul><li><strong>Healthy</strong> → NO_BREACH when observed metrics stay within the stored limits.</li><li><strong>Degraded</strong> → BREACH: p95 4800 ms and fill 72% can violate p95 ≤ 2500 ms and fill ≥ 80% even when HTTP returns 200.</li><li><strong>Missing data</strong> → INCONCLUSIVE: no definitive decision is made when required metrics are absent.</li></ul><p class="meta">Worker: <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code>. Its deterministic content is synthetic fixture evidence, not a live customer probe.</p></details>
-    <details><summary>What is real, derived, synthetic, or mocked?</summary><p><span class="badge real">✓ REAL</span> Studio contract reads, finalized attestation records, evidence hashes, reputation readback, and the full Explorer references above.</p><p><span class="badge warn">◆ DERIVED</span> Confidence bars, observed-versus-required comparisons, case labels, and the plain-language summaries are views of returned data.</p><p><span class="badge mock">○ SYNTHETIC / MOCK</span> Worker bundles are deterministic fixtures. Base/Hyperlane relay, future polling, and any SSE fallback are mocked and never represented as a finalized verdict.</p></details>
-    <details><summary>Protocol detail</summary><p class="meta">The contract stores a resolved, inconclusive, or no_consensus status. A result is presented as definitive only when the stored record is readable; this page does not create or approve a new transaction.</p></details>
-  </section>
+  <footer class="footer">ProveDown verifies functional quality, not uptime alone. Current Worker evidence is synthetic and downstream settlement remains mocked.</footer>
 </main>
-<footer class="footer">ProveDown is a functional-quality attestation surface, not uptime monitoring. Current Worker evidence is synthetic and downstream settlement remains mocked.</footer>
 
 <script type="module">
-import { createClient } from "https://esm.sh/genlayer-js@2.0.0-rc.1";
+import { createClient, isSuccessful } from "https://esm.sh/genlayer-js@2.0.0-rc.1";
 import { studioDevnet } from "https://esm.sh/genlayer-js@2.0.0-rc.1/chains";
 
 const QS = new URLSearchParams(location.search);
 const EXPLORER = "https://explorer-studio-dev.genlayer.com";
 const WORKER_BASE = "https://provedown-bundle.contentbounty.workers.dev/bundle";
 const CHAIN_ID = 61997;
+const DEFAULT_CONTRACT = "0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1";
+const CONTRACT = validAddress(QS.get('contract')) || DEFAULT_CONTRACT;
 const CURRENT_AGREEMENT = "browser-smoke-20260909-01";
 const CURRENT_EVIDENCE_HASH = "e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3";
 const KNOWN_TX = {
@@ -318,18 +377,63 @@ const KNOWN_TX = {
   attBreach: "0xf566a8305212cc52e899ed2a1294eea5d9ed4b89fec3aba5d5e1eb24fb8ed505",
   attEmpty: "0x90b9e1b983b3ebe2490f812b6696317031ce6b4cb65c7c3a7bb75b51a5af6f8a"
 };
-const CASE_TX = { '1': KNOWN_TX.attHealthy, '2': KNOWN_TX.attBreach, '3': KNOWN_TX.attEmpty, '4': KNOWN_TX.attestation4 };
+const IS_DEFAULT_CONTRACT = CONTRACT.toLowerCase() === DEFAULT_CONTRACT.toLowerCase();
+const STATIC_CASE_TX = { '1': KNOWN_TX.attHealthy, '2': KNOWN_TX.attBreach, '3': KNOWN_TX.attEmpty, '4': KNOWN_TX.attestation4 };
+const CASE_TX = Object.assign({}, STATIC_CASE_TX);
 const CASE_NAMES = { '1': 'Healthy fixture', '2': 'Functional breach fixture', '3': 'Missing-data fixture', '4': 'Browser-smoke read' };
 const CASE_SETS = {
   'breach-focus': ['2', '4', '3'],
   'browser-smoke': ['4', '1', '2'],
   'three-case': ['1', '2', '3']
 };
-const CONTRACT = validAddress(QS.get('contract')) || "0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1";
 const parsedCases = parseCases(QS.get('cases'));
 let visibleCaseIds = parsedCases || CASE_SETS['breach-focus'].slice();
 let readInFlight = null;
 let previewInFlight = null;
+var defaultProofReferenceHtml = '';
+var defaultPinnedFeeHtml = '';
+const ROUTES = {
+  '/': { view: 'overview', title: 'ProveDown - functional service verification', heading: 'overviewHeading', announcement: 'Overview' },
+  '/verify': { view: 'verify', title: 'Verify an agreement - ProveDown', heading: 'verifyHeading', announcement: 'Verify agreement' },
+  '/proof': { view: 'proof', title: 'Decision proof - ProveDown', heading: 'proofHeading', announcement: 'Decision proof' }
+};
+
+function normalizedPath(pathname) {
+  var path = String(pathname || '/').replace(/\/+$/, '') || '/';
+  return ROUTES[path] ? path : '/';
+}
+function updateRouteLinks() {
+  var suffix = location.search;
+  document.querySelectorAll('[data-route-link]').forEach(function (link) {
+    var target = link.getAttribute('data-route') || new URL(link.getAttribute('href'), location.origin).pathname;
+    link.setAttribute('href', target + suffix);
+  });
+}
+function renderRoute(pathname, focusHeading) {
+  var path = normalizedPath(pathname);
+  var route = ROUTES[path];
+  document.querySelectorAll('[data-view]').forEach(function (view) {
+    view.hidden = view.getAttribute('data-view') !== route.view;
+  });
+  document.querySelectorAll('[data-route]').forEach(function (link) {
+    if (link.getAttribute('data-route') === path) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+  document.title = route.title;
+  updateRouteLinks();
+  document.getElementById('routeAnnouncer').textContent = route.announcement + ' view loaded';
+  if (focusHeading) {
+    var heading = document.getElementById(route.heading);
+    if (heading) heading.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+  return path;
+}
+function navigateTo(pathname) {
+  var path = normalizedPath(pathname);
+  history.pushState({ route: path }, '', path + location.search);
+  renderRoute(path, true);
+}
 
 function validAddress(value) {
   return /^0x[0-9a-fA-F]{40}$/.test(String(value || '')) ? String(value) : null;
@@ -338,6 +442,21 @@ function parseCases(value) {
   if (!value) return null;
   const ids = String(value).split(',').map(function (item) { return item.trim(); }).filter(function (item) { return /^[0-9]{1,6}$/.test(item); });
   return ids.length >= 1 && ids.length <= 4 ? ids : null;
+}
+function proofScopeFor(contract, caseIds) {
+  var ids = Array.isArray(caseIds) ? caseIds.map(String) : [];
+  if (String(contract || '').toLowerCase() !== DEFAULT_CONTRACT.toLowerCase()) return 'custom-contract';
+  if (ids.indexOf('4') >= 0) return 'browser-smoke';
+  if (ids.some(function (id) { return ['1', '2', '3', '4'].indexOf(id) < 0; })) return 'unmapped-cases';
+  return 'known-cases';
+}
+function pinnedProofAvailable() {
+  return proofScopeFor(CONTRACT, visibleCaseIds) === 'browser-smoke';
+}
+function caseTx(id) {
+  if (String(id) === '4') return pinnedProofAvailable() ? (CASE_TX[id] || null) : null;
+  if (Object.prototype.hasOwnProperty.call(STATIC_CASE_TX, String(id))) return IS_DEFAULT_CONTRACT ? (CASE_TX[id] || null) : null;
+  return CASE_TX[id] || null;
 }
 function esc(value) {
   return String(value == null ? '' : value)
@@ -355,7 +474,7 @@ function shortHash(value, size) {
 }
 function txHtml(tx, label) {
   var safe = /^0x[0-9a-fA-F]{64}$/.test(String(tx || '')) ? String(tx) : '';
-  if (!safe) return '<span class="meta">Explorer proof is not mapped for this custom ID.</span>';
+  if (!safe) return '<span class="meta">No pinned Explorer receipt is available for this contract and ID.</span>';
   return '<a class="tx-link" href="' + EXPLORER + '/tx/' + safe + '" target="_blank" rel="noopener" aria-label="' + esc(label || 'Explorer proof') + ' ' + esc(safe) + '">' + esc(label || 'Explorer proof') + ' ↗</a><code class="tx-full">' + esc(safe) + '</code>';
 }
 function retryHtml(label, action) {
@@ -364,6 +483,145 @@ function retryHtml(label, action) {
 function errorText(error) {
   var values = [error && error.message, error && error.shortMessage, error && error.details, error && error.cause && error.cause.message].filter(function (value) { return typeof value === 'string' && value.trim(); });
   return Array.from(new Set(values)).join(' | ') || String(error || 'Unknown error');
+}
+function taggedError(message, kind) {
+  var error = new Error(message);
+  error.proveDownKind = kind;
+  return error;
+}
+function isRejected(error) {
+  return Boolean(error && error.code === 4001) || /reject|denied|user canceled|user cancelled/i.test(errorText(error));
+}
+function isMissingAttestationError(error) {
+  var values = [
+    error && error.message,
+    error && error.shortMessage,
+    error && error.details,
+    error && error.cause && error.cause.message,
+    error && error.cause && error.cause.details,
+    error && error.cause && error.cause.data && error.cause.data.message,
+    error && error.cause && error.cause.data && error.cause.data.receipt && error.cause.data.receipt.error,
+    error && error.cause && error.cause.data && error.cause.data.receipt && error.cause.data.receipt.result
+  ].filter(function (value) { return typeof value === 'string'; });
+  var decoded = values.map(function (value) {
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value) || value.length % 4 !== 0 || typeof atob !== 'function') return '';
+    try { return atob(value); } catch (decodeError) { return ''; }
+  });
+  return /attestation\s+(not\s+found|unknown)|unknown\s+attestation|no\s+attestation/i.test(values.concat(decoded).join(' '));
+}
+function isMissingAgreementError(error) {
+  return /sla\s+not\s+found|unknown\s+sla_id|agreement\s+(not\s+found|unknown)|unknown\s+agreement/i.test(errorText(error));
+}
+function canonicalSloJson(value) {
+  return JSON.stringify({
+    error_threshold: value.error_threshold,
+    fill_threshold: value.fill_threshold,
+    match_threshold: value.match_threshold,
+    p95_threshold: value.p95_threshold
+  });
+}
+function formatGen(value) {
+  if (value === null || value === undefined || value === '') return null;
+  var raw;
+  try { raw = BigInt(String(value)); } catch (error) { return null; }
+  var negative = raw < 0n;
+  if (negative) raw = -raw;
+  var whole = raw / 1000000000000000000n;
+  var fraction = (raw % 1000000000000000000n).toString().padStart(18, '0').replace(/0+$/, '');
+  return (negative ? '-' : '') + whole.toString() + (fraction ? '.' + fraction : '') + ' GEN';
+}
+function feeEstimateHtml(estimate) {
+  var value = estimate && formatGen(estimate.feeValue);
+  return '<div class="fee-panel"><h3>Fee estimate used</h3><div class="fee-row"><span class="label">Transaction deposit estimate</span><span>' + (value ? esc(value) : 'Fee estimate detail unavailable') + '</span></div><p class="meta">This is the estimate supplied to the wallet transaction, not a permanent network price.</p></div>';
+}
+function receiptFeeValues(receipt) {
+  var root = receipt && (receipt.data || receipt);
+  var consensus = root && (root.consensus_data || root.consensusData || (root.receipt && root.receipt.consensus_data));
+  var fees = (consensus && consensus.fees) || (root && root.fees) || (receipt && receipt.fees);
+  var accounting = (consensus && consensus.accounting) || (root && root.accounting) || (receipt && receipt.accounting);
+  return {
+    deposit: fees && fees.deposit,
+    consumed: fees && fees.consumed && fees.consumed.executionConsumed,
+    refund: accounting && accounting.total_refunded
+  };
+}
+function receiptFeeHtml(receipt) {
+  var values = receiptFeeValues(receipt);
+  function row(label, value) {
+    var formatted = formatGen(value);
+    return '<div class="fee-row"><span class="label">' + label + '</span><span>' + (formatted ? esc(formatted) : 'Receipt fee detail unavailable') + '</span></div>';
+  }
+  return '<div class="fee-panel"><h3>Finalized receipt fees</h3>' + row('Deposit', values.deposit) + row('Consumed', values.consumed) + row('Refund', values.refund) + '<p class="meta">Only fields present in the finalized Studio receipt are shown. No missing value is inferred.</p></div>';
+}
+async function ensureStudioNetwork() {
+  var expected = '0x' + CHAIN_ID.toString(16);
+  var current;
+  try { current = await window.ethereum.request({ method: 'eth_chainId' }); }
+  catch (error) { throw taggedError('The wallet network could not be read. ' + errorText(error), 'wrong_network'); }
+  if (String(current).toLowerCase() === expected) return;
+  try {
+    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: expected }] });
+  } catch (switchError) {
+    if (isRejected(switchError)) throw taggedError('The Studio Devnet network switch was rejected.', 'wallet_rejection');
+    try {
+      await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
+        chainId: expected,
+        chainName: studioDevnet.name,
+        rpcUrls: studioDevnet.rpcUrls.default.http,
+        nativeCurrency: studioDevnet.nativeCurrency
+      }] });
+    } catch (addError) {
+      if (isRejected(addError)) throw taggedError('The Studio Devnet network request was rejected.', 'wallet_rejection');
+      throw taggedError('Switch the wallet to Studio Devnet, chain ' + CHAIN_ID + '. ' + errorText(addError), 'wrong_network');
+    }
+  }
+  var switched = await window.ethereum.request({ method: 'eth_chainId' });
+  if (String(switched).toLowerCase() !== expected) throw taggedError('The wallet is not on Studio Devnet, chain ' + CHAIN_ID + '.', 'wrong_network');
+}
+async function walletClient() {
+  if (!window.ethereum) throw taggedError('No compatible browser wallet was detected. No transaction was created.', 'no_wallet');
+  await ensureStudioNetwork();
+  var accounts;
+  try { accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }); }
+  catch (error) {
+    if (isRejected(error)) throw taggedError('Wallet access was rejected. No transaction was created.', 'wallet_rejection');
+    throw taggedError('The wallet account request failed. ' + errorText(error), 'failed_transaction');
+  }
+  var account = Array.isArray(accounts) ? accounts[0] : '';
+  if (!validAddress(account)) throw taggedError('The wallet did not return a usable account. No transaction was created.', 'failed_transaction');
+  return { client: createClient({ chain: studioDevnet, account: account, provider: window.ethereum }), account: account };
+}
+async function writeFinalized(client, functionName, args, onPhase) {
+  onPhase('ESTIMATING FEES');
+  var estimate = await client.estimateTransactionFeesForWrite({ address: CONTRACT, functionName: functionName, args: args });
+  onPhase('AWAITING SIGNATURE', null, { estimate: estimate });
+  var tx;
+  try {
+    tx = await client.writeContract({
+      address: CONTRACT,
+      functionName: functionName,
+      args: args,
+      fees: { distribution: estimate.distribution, messageAllocations: estimate.messageAllocations, feeValue: estimate.feeValue }
+    });
+  } catch (error) {
+    if (isRejected(error)) throw taggedError('The wallet signature was rejected. No transaction was submitted.', 'wallet_rejection');
+    throw taggedError('The transaction could not be submitted. ' + errorText(error), 'failed_transaction');
+  }
+  onPhase('WAITING FOR FINALITY', tx, { estimate: estimate });
+  var receipt;
+  try { receipt = await client.waitForTransactionReceipt({ hash: tx, waitUntil: 'finalized', retries: 60, fullTransaction: true }); }
+  catch (error) { var finalityError = taggedError('The transaction did not reach proven finality in this session. ' + errorText(error), 'failed_transaction'); finalityError.tx = tx; throw finalityError; }
+  if (!isSuccessful(receipt)) { var receiptError = taggedError('The finalized receipt did not prove successful execution.', 'failed_transaction'); receiptError.tx = tx; throw receiptError; }
+  return { tx: tx, receipt: receipt, estimate: estimate };
+}
+function writeErrorHtml(error) {
+  var kind = error && error.proveDownKind;
+  var proof = error && error.tx ? '<div class="tx-line"><span>Submitted transaction:</span>' + txHtml(error.tx, 'Open transaction') + '</div>' : '';
+  if (kind === 'no_wallet') return errorHtml('NO WALLET', 'No compatible browser wallet is available.', 'No signature was requested and no transaction was created.', 'Install or enable a GenLayer-compatible wallet, then retry.', errorText(error), false) + proof;
+  if (kind === 'wallet_rejection') return errorHtml('WALLET REJECTION', 'The wallet request was rejected.', 'No approval is treated as success.', 'Retry only when you are ready to approve the request.', errorText(error), false) + proof;
+  if (kind === 'wrong_network') return errorHtml('WRONG NETWORK', 'The wallet is not connected to Studio Devnet chain ' + CHAIN_ID + '.', 'The write cannot target the verified deployment.', 'Switch the wallet network and retry.', errorText(error), false) + proof;
+  if (kind === 'read_failure') return errorHtml('CHAIN READ FAILED', 'The finalized write could not be verified by contract readback.', 'The UI will not display a successful result without matching chain state.', 'Check Studio availability and refresh the read.', errorText(error), false) + proof;
+  return errorHtml('FAILED TRANSACTION', 'The write could not be proven successful.', 'No finalized success or new verdict is claimed.', 'Inspect the technical detail and Explorer link, then retry only if appropriate.', errorText(error), false) + proof;
 }
 function errorHtml(title, cause, impact, next, technical, action) {
   return '<div class="error-box">' + badge('fail', title) +
@@ -430,7 +688,7 @@ function evidenceHolderHtml(att) {
 function verdictHtml(att, tx, id, featured, readError) {
   var name = CASE_NAMES[id] || 'Stored attestation ' + id;
   var head = '<div class="case-head"><h3 class="case-name">Case ' + esc(id) + ' · ' + esc(name) + '</h3><span class="meta">attestation ' + esc(att && att.attestation_id != null ? att.attestation_id : id) + '</span></div>';
-  var proof = '<div class="tx-line"><span>Finalized proof:</span>' + txHtml(tx) + '</div>';
+  var proof = '<div class="tx-line"><span>' + (tx ? 'Pinned finalized proof:' : 'Explorer proof:') + '</span>' + txHtml(tx) + '</div>';
   var className = 'case-card ' + (featured ? 'featured ' : '');
   if (!att) return '<article class="' + className + 'is-error">' + head + errorHtml(isMissingAttestation(readError) ? 'NOT FOUND' : 'CHAIN READ FAILED', isMissingAttestation(readError) ? 'No attestation is stored under this ID.' : 'The contract read did not return this attestation.', 'The page cannot support a quality claim without a stored record.', 'Choose a known case or refresh the contract read.', errorText(readError || 'No record returned.')) + proof + '</article>';
   var status = String(att.status || '').toLowerCase();
@@ -454,15 +712,17 @@ function setHero(att, id) {
   var signal = document.getElementById('heroSignal');
   var verdict = document.getElementById('heroVerdict');
   var context = document.getElementById('heroContext');
+  var summary = document.getElementById('verifySummary');
   signal.classList.remove('is-breach', 'is-ok', 'is-warn');
-  if (!att) { verdict.textContent = 'No finalized result loaded'; context.textContent = 'Refresh the contract read to inspect a stored attestation.'; return; }
+  if (!att) { verdict.textContent = 'No finalized result loaded'; context.textContent = 'Refresh the contract read to inspect a stored attestation.'; summary.innerHTML = '<div class="evidence-warning">No finalized result is available for the selected case set.</div>'; return; }
   var status = String(att.status || '').toLowerCase();
-  if (status === 'inconclusive') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'INCONCLUSIVE') + ' No definitive decision was made.'; context.textContent = 'Case ' + id + ': evidence was missing or invalid; no quality conclusion is inferred.'; return; }
-  if (status === 'no_consensus') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'NO CONSENSUS') + ' Validators did not agree.'; context.textContent = 'Case ' + id + ': the jury refused to force a result at the threshold.'; return; }
-  if (typeof att.breach !== 'boolean' || status !== 'resolved') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'UNREADABLE') + ' No definitive decision was made.'; context.textContent = 'Case ' + id + ': malformed chain data was withheld.'; return; }
+  if (status === 'inconclusive') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'INCONCLUSIVE') + ' No definitive decision was made.'; context.textContent = 'Case ' + id + ': evidence was missing or invalid; no quality conclusion is inferred.'; summary.innerHTML = '<div class="case-card is-warn"><div class="verdict-result">' + badge('warn', 'INCONCLUSIVE') + '</div><p>No definitive decision was made for case ' + esc(id) + '.</p></div>'; return; }
+  if (status === 'no_consensus') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'NO CONSENSUS') + ' Validators did not agree.'; context.textContent = 'Case ' + id + ': the jury refused to force a result at the threshold.'; summary.innerHTML = '<div class="case-card is-warn"><div class="verdict-result">' + badge('warn', 'NO CONSENSUS') + '</div><p>Validators did not agree for case ' + esc(id) + '.</p></div>'; return; }
+  if (typeof att.breach !== 'boolean' || status !== 'resolved') { signal.classList.add('is-warn'); verdict.innerHTML = badge('warn', 'UNREADABLE') + ' No definitive decision was made.'; context.textContent = 'Case ' + id + ': malformed chain data was withheld.'; summary.innerHTML = '<div class="case-card is-error"><div class="verdict-result">' + badge('fail', 'UNREADABLE') + '</div><p>The stored result was withheld because its shape was not recognized.</p></div>'; return; }
   signal.classList.add(att.breach ? 'is-breach' : 'is-ok');
   verdict.innerHTML = att.breach ? badge('bad', 'BREACH') + ' Functional quality missed the agreement.' : badge('ok', 'NO_BREACH') + ' The service met the agreement.';
   context.textContent = 'Case ' + id + ' · ' + (CASE_NAMES[id] || 'Stored attestation') + ' · confidence ' + clampConfidence(att.confidence) + '/1000.';
+  summary.innerHTML = '<div class="case-card ' + (att.breach ? 'is-breach' : 'is-ok') + '"><div class="case-head"><h3 class="case-name">Case ' + esc(id) + ' · ' + esc(CASE_NAMES[id] || 'Stored attestation') + '</h3>' + badge('real', 'CONTRACT READ') + '</div><div class="verdict-result">' + badge(att.breach ? 'bad' : 'ok', att.breach ? 'BREACH' : 'NO_BREACH') + '</div><p class="result-sentence"><strong>' + (att.breach ? 'The service breached the agreement.' : 'The service met the agreement.') + '</strong></p><p class="meta">Confidence ' + esc(clampConfidence(att.confidence)) + '/1000 · reason ' + esc(att.reason || 'Unavailable') + '</p></div>';
 }
 function isMissingAttestation(error) {
   return /attestation\s+(not\s+found|unknown)|no\s+attestation|not found/i.test(errorText(error));
@@ -494,6 +754,59 @@ function parseSlo() {
     return value;
   } catch (error) { return null; }
 }
+function bundleUrlForPreset(preset, slaId) {
+  return WORKER_BASE + '?preset=' + encodeURIComponent(preset) + '&sla=' + encodeURIComponent(slaId);
+}
+function registrationReadback(stored, submitted) {
+  return {
+    owner: Boolean(stored && stored.owner && String(stored.owner).toLowerCase() === String(submitted.owner).toLowerCase()),
+    api_url: Boolean(stored && stored.api_url === submitted.apiUrl),
+    bundle_url: Boolean(stored && stored.bundle_url === submitted.bundleUrl),
+    slo_json: Boolean(stored && stored.slo_json === submitted.sloJson)
+  };
+}
+function registrationReadbackHtml(stored) {
+  return '<div class="fee-panel"><h3>Finalized agreement readback</h3><div class="fee-row"><span class="label">Owner</span><code class="hash-value">' + esc(stored.owner) + '</code></div><div class="fee-row"><span class="label">API URL</span><span>' + esc(stored.api_url) + '</span></div><div class="fee-row"><span class="label">Bundle URL</span><span>' + esc(stored.bundle_url) + '</span></div><div class="fee-row"><span class="label">Canonical SLO JSON</span><code class="hash-value">' + esc(stored.slo_json) + '</code></div></div>';
+}
+function existingAgreementHtml(stored) {
+  return '<div class="error-box"><div class="verdict-result">' + badge('warn', 'AGREEMENT EXISTS') + '</div><p><strong>This agreement ID is already registered to an existing owner.</strong> It may belong to another wallet, so no wallet approval was requested and no transaction was created.</p><p>Owner: <code class="hash-value">' + esc(stored && stored.owner ? stored.owner : 'Unavailable') + '</code></p><p class="next-step"><strong>Next:</strong> choose a new unique agreement ID before registering, or use Request new attestation for this existing agreement.</p></div>';
+}
+async function preflightAgreementId(client, slaId) {
+  try {
+    var stored = await client.readContract({ address: CONTRACT, functionName: 'get_sla', args: [slaId] });
+    return { kind: 'exists', stored: stored };
+  } catch (error) {
+    if (isMissingAgreementError(error)) return { kind: 'missing' };
+    return { kind: 'error', error: error };
+  }
+}
+function attestationChainReadbackHtml(attestation, reputation) {
+  return '<div class="fee-panel"><h3>Finalized chain readback</h3><div class="fee-row"><span class="label">Attestation</span><span>' + esc(attestation.attestation_id) + ' · ' + esc(attestation.status) + '</span></div><div class="fee-row"><span class="label">Decision</span><span>' + (attestation.status === 'resolved' ? (attestation.breach ? 'BREACH' : 'NO_BREACH') : esc(attestation.status)) + ' · ' + esc(attestation.reason) + '</span></div><div class="fee-row"><span class="label">Confidence</span><span>' + esc(attestation.confidence) + ' / 1000</span></div><div class="fee-row"><span class="label">p50 / p95</span><span>' + esc(formatMetric('p50', attestation.p50)) + ' / ' + esc(formatMetric('p95', attestation.p95)) + '</span></div><div class="fee-row"><span class="label">Evidence hash</span><code class="hash-value">' + esc(attestation.evidence_hash || 'Unavailable') + '</code></div><div class="fee-row"><span class="label">Reputation</span><span>' + esc(reputation.score) + ' / 100 · ' + esc(reputation.total) + ' checks · ' + esc(reputation.breaches) + ' breaches</span></div></div>';
+}
+async function findNextAttestationId(client, max) {
+  var limit = max || 500;
+  for (var id = 1; id <= limit; id += 1) {
+    try { await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [String(id)] }); }
+    catch (error) {
+      if (isMissingAttestationError(error)) return String(id);
+      throw taggedError('Could not inspect attestation ' + id + ' before submission. ' + errorText(error), 'read_failure');
+    }
+  }
+  throw taggedError('No available attestation ID was found below ' + limit + '.', 'read_failure');
+}
+async function findCreatedAttestation(client, slaId, requester, startId) {
+  var start = Number(startId);
+  for (var id = start; id < start + 25; id += 1) {
+    try {
+      var attestation = await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [String(id)] });
+      if (attestation && attestation.sla_id === slaId && String(attestation.requester || '').toLowerCase() === String(requester).toLowerCase()) return String(id);
+    } catch (error) {
+      if (isMissingAttestationError(error)) break;
+      throw taggedError('Could not verify the newly created attestation. ' + errorText(error), 'read_failure');
+    }
+  }
+  return null;
+}
 function validateSetup() {
   var id = document.getElementById('slaId');
   var api = document.getElementById('apiUrl');
@@ -509,6 +822,7 @@ function validateSetup() {
   document.getElementById('apiUrlError').hidden = apiOk;
   document.getElementById('sloError').hidden = sloOk;
   document.getElementById('previewBtn').disabled = !(idOk && apiOk && sloOk);
+  document.getElementById('registerBtn').disabled = !(idOk && apiOk && sloOk);
   return idOk && apiOk && sloOk;
 }
 function previewMetrics(bundle) {
@@ -522,7 +836,7 @@ async function previewEvidence() {
   var box = document.getElementById('registerStatus');
   var previewButton = document.getElementById('previewBtn');
   var preset = document.getElementById('bundlePreset').value;
-  var url = WORKER_BASE + '?preset=' + encodeURIComponent(preset) + '&sla=' + encodeURIComponent(document.getElementById('slaId').value.trim());
+  var url = bundleUrlForPreset(preset, document.getElementById('slaId').value.trim());
   previewButton.disabled = true;
   box.innerHTML = '<div class="status-line">' + badge('pending', 'CHECKING FIXTURE') + ' Fetching a read-only evidence preview…</div>';
   previewInFlight = (async function () {
@@ -607,6 +921,33 @@ function trackerHtml(state, detail) {
 function setTracker(state, detail) {
   document.getElementById('tracker').innerHTML = state ? trackerHtml(state, detail) : '';
 }
+function applyProofScope() {
+  var proof = document.getElementById('proofReference');
+  var fee = document.getElementById('pinnedFeePanel');
+  var scope = proofScopeFor(CONTRACT, visibleCaseIds);
+  proof.hidden = false;
+  fee.hidden = false;
+  if (scope === 'custom-contract') {
+    document.getElementById('verifyContractContext').innerHTML = 'Custom contract <code>' + esc(shortHash(CONTRACT, 12)) + '</code>';
+    document.getElementById('proofAgreementContext').innerHTML = 'Custom contract route';
+    document.getElementById('proofAttestationContext').textContent = 'Pinned attestation 4 is not reused';
+    document.querySelector('#proofCard .card-header p').textContent = 'A custom contract was selected. Pinned Studio references are hidden because they belong to the default contract.';
+    proof.innerHTML = '<div class="error-box"><p><strong>No pinned proof reused.</strong> This route reads the custom contract, but its receipt and evidence references have not been mapped here.</p><p class="next-step"><strong>Next:</strong> dynamic receipt/finality has not been mapped for this custom contract selection. Verify the custom transaction directly in its Explorer.</p></div>';
+    fee.innerHTML = '<h3>Receipt fee accounting</h3><p>Receipt fee detail unavailable for this custom contract selection. No pinned value from the default deployment is reused or guessed.</p>';
+    return;
+  }
+  document.getElementById('verifyContractContext').innerHTML = 'Contract <code>' + esc(shortHash(CONTRACT, 12)) + '</code>';
+  document.getElementById('proofAgreementContext').innerHTML = 'Agreement <code>' + esc(CURRENT_AGREEMENT) + '</code>';
+  document.getElementById('proofAttestationContext').textContent = scope === 'browser-smoke' ? 'Attestation 4 is the current wallet-backed proof' : 'Browser attestation 4 is not selected';
+  document.querySelector('#proofCard .card-header p').textContent = scope === 'browser-smoke' ? 'These are the exact verified browser transactions and readbacks. Pinned fee values are displayed only because the receipt fields were present.' : 'Pinned browser registration, attestation, evidence, and fee references stay hidden unless case 4 is selected.';
+  if (scope === 'browser-smoke') {
+    proof.innerHTML = defaultProofReferenceHtml;
+    fee.innerHTML = defaultPinnedFeeHtml;
+    return;
+  }
+  proof.innerHTML = '<div class="error-box"><p><strong>No browser-smoke proof shown.</strong> Attestation 4 and its registration/evidence references are hidden because case 4 is not selected.</p><p class="next-step"><strong>Next:</strong> dynamic receipt/finality has not been mapped for ' + (scope === 'unmapped-cases' ? 'one or more selected case IDs.' : 'this case selection.') + '</p></div>';
+  fee.innerHTML = '<h3>Receipt fee accounting</h3><p>Receipt fee detail unavailable because the browser-smoke case is not selected. No pinned value is reused or guessed.</p>';
+}
 async function liveRead() {
   if (readInFlight) return readInFlight;
   readInFlight = (async function () {
@@ -636,13 +977,13 @@ async function liveRead() {
         var id = visibleCaseIds[i];
         try {
           var att = await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [id] });
-          results.push({ id: id, att: att, tx: CASE_TX[id] || null });
+          results.push({ id: id, att: att, tx: caseTx(id) });
         } catch (error) {
-          results.push({ id: id, att: null, tx: CASE_TX[id] || null, error: error });
+          results.push({ id: id, att: null, tx: caseTx(id), error: error });
         }
       }
       var loaded = results.filter(function (item) { return item.att; });
-      var featured = loaded.find(function (item) { return item.att && item.att.status === 'resolved' && item.att.breach === true; }) || loaded[0];
+      var featured = loaded[0];
       setHero(featured && featured.att, featured ? featured.id : visibleCaseIds[0]);
       document.getElementById('verdict').innerHTML = '<div class="case-grid">' + results.map(function (item, index) {
         return verdictHtml(item.att, item.tx, item.id, index === 0, item.error);
@@ -666,18 +1007,132 @@ async function liveRead() {
   return readInFlight;
 }
 
+function phaseStatusHtml(phase, tx, meta, subject) {
+  var detail = phase === 'ESTIMATING FEES' ? 'Reading the Studio fee policy for ' + subject + '.' : phase === 'AWAITING SIGNATURE' ? 'Review the estimated deposit in your wallet. No transaction exists until you approve.' : 'The transaction was submitted and is not yet presented as successful.';
+  return '<div class="status-line">' + badge('pending', phase) + ' ' + esc(detail) + (meta && meta.estimate ? feeEstimateHtml(meta.estimate) : '') + (tx ? '<div class="tx-line">' + txHtml(tx, 'Track transaction') + '</div>' : '') + '</div>';
+}
+async function registerAgreement() {
+  if (!validateSetup()) return;
+  var button = document.getElementById('registerBtn');
+  var status = document.getElementById('registerStatus');
+  var slaId = document.getElementById('slaId').value.trim();
+  var apiUrl = document.getElementById('apiUrl').value.trim();
+  var bundleUrl = bundleUrlForPreset(document.getElementById('bundlePreset').value, slaId);
+  var sloJson = canonicalSloJson(parseSlo());
+  button.disabled = true;
+  try {
+    var preflightClient = createClient({ chain: studioDevnet });
+    var preflight = await preflightAgreementId(preflightClient, slaId);
+    if (preflight.kind === 'exists') {
+      status.innerHTML = existingAgreementHtml(preflight.stored);
+      return;
+    }
+    if (preflight.kind === 'error') throw taggedError('The agreement ID could not be checked before submission. ' + errorText(preflight.error), 'read_failure');
+    var response = await fetch(bundleUrl, { cache: 'no-store' });
+    if (!response.ok) throw taggedError('The synthetic fixture endpoint answered HTTP ' + response.status + '.', 'read_failure');
+    var bundle = JSON.parse(await response.text());
+    if (!validBundle(bundle)) throw taggedError('The synthetic fixture did not contain valid metrics.', 'read_failure');
+    var wallet = await walletClient();
+    var result = await writeFinalized(wallet.client, 'register_sla', [slaId, apiUrl, bundleUrl, sloJson], function (phase, tx, meta) {
+      status.innerHTML = phaseStatusHtml(phase, tx, meta, 'agreement ' + slaId);
+    });
+    var stored;
+    try { stored = await wallet.client.readContract({ address: CONTRACT, functionName: 'get_sla', args: [slaId] }); }
+    catch (error) { throw taggedError('The finalized agreement could not be read back. ' + errorText(error), 'read_failure'); }
+    var checks = registrationReadback(stored, { owner: wallet.account, apiUrl: apiUrl, bundleUrl: bundleUrl, sloJson: sloJson });
+    if (!Object.keys(checks).every(function (key) { return checks[key]; })) throw taggedError('Contract readback mismatch: submitted agreement values did not match stored values.', 'read_failure');
+    status.innerHTML = '<div class="case-card is-ok"><div class="verdict-result">' + badge('real', 'FINALIZED') + '</div><p><strong>The agreement is stored and matches the submitted values.</strong></p><div class="tx-line">' + txHtml(result.tx, 'Open registration') + '</div>' + feeEstimateHtml(result.estimate) + receiptFeeHtml(result.receipt) + registrationReadbackHtml(stored) + '</div>';
+    void liveRead();
+  } catch (error) {
+    status.innerHTML = writeErrorHtml(error);
+  } finally {
+    validateSetup();
+  }
+}
+async function requestAttestation() {
+  var status = document.getElementById('attestStatus');
+  var button = document.getElementById('attestBtn');
+  var slaId = document.getElementById('slaId').value.trim();
+  if (!slaId) { status.innerHTML = errorHtml('MISSING AGREEMENT', 'No agreement ID is selected.', 'The jury cannot determine which obligation to evaluate.', 'Enter a registered agreement ID.', '', false); return; }
+  button.disabled = true;
+  try {
+    var readClient = createClient({ chain: studioDevnet });
+    try { await readClient.readContract({ address: CONTRACT, functionName: 'get_sla', args: [slaId] }); }
+    catch (error) { throw taggedError('The agreement could not be read before submission. ' + errorText(error), 'read_failure'); }
+    var wallet = await walletClient();
+    var nextId = await findNextAttestationId(wallet.client);
+    var result = await writeFinalized(wallet.client, 'request_attestation', [slaId], function (phase, tx, meta) {
+      status.innerHTML = phaseStatusHtml(phase, tx, meta, 'agreement ' + slaId);
+    });
+    var createdId = await findCreatedAttestation(wallet.client, slaId, wallet.account, nextId);
+    if (!createdId) throw taggedError('The finalized transaction succeeded, but its stored attestation could not be located.', 'read_failure');
+    var attestation;
+    var storedSla;
+    var reputation;
+    try {
+      attestation = await wallet.client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [createdId] });
+      storedSla = await wallet.client.readContract({ address: CONTRACT, functionName: 'get_sla', args: [slaId] });
+      reputation = await wallet.client.readContract({ address: CONTRACT, functionName: 'get_reputation', args: [storedSla.api_url] });
+    } catch (error) { throw taggedError('The finalized attestation or reputation could not be read back. ' + errorText(error), 'read_failure'); }
+    CASE_TX[createdId] = result.tx;
+    CASE_NAMES[createdId] = 'New wallet attestation';
+    visibleCaseIds = [createdId].concat(visibleCaseIds.filter(function (id) { return id !== createdId; })).slice(0, 4);
+    updateCaseQuery();
+    status.innerHTML = '<div class="case-card is-ok"><div class="verdict-result">' + badge('real', 'FINALIZED') + '</div><p><strong>Attestation ' + esc(createdId) + ' is finalized, successful, and read back from the contract.</strong></p><div class="tx-line">' + txHtml(result.tx, 'Open attestation') + '</div>' + feeEstimateHtml(result.estimate) + receiptFeeHtml(result.receipt) + attestationChainReadbackHtml(attestation, reputation) + '</div>';
+    await liveRead();
+  } catch (error) {
+    status.innerHTML = writeErrorHtml(error);
+  } finally {
+    button.disabled = false;
+  }
+}
+function updateCaseQuery() {
+  var url = new URL(location.href);
+  url.searchParams.set('cases', visibleCaseIds.join(','));
+  history.replaceState(history.state, '', url.pathname + '?' + url.searchParams.toString());
+  updateRouteLinks();
+}
+function syncCaseSetControl() {
+  var select = document.getElementById('caseSet');
+  var match = Object.entries(CASE_SETS).find(function (entry) { return entry[1].join(',') === visibleCaseIds.join(','); });
+  var custom = select.querySelector('option[value="custom"]');
+  if (match) {
+    custom.hidden = true;
+    select.value = match[0];
+    return;
+  }
+  custom.hidden = false;
+  custom.textContent = 'URL selection · cases ' + visibleCaseIds.join(', ');
+  select.value = 'custom';
+}
+
 document.getElementById('setupForm').addEventListener('submit', function (event) { event.preventDefault(); });
-['slaId', 'apiUrl', 'sloJson'].forEach(function (id) { document.getElementById(id).addEventListener('input', validateSetup); });
+['slaId', 'apiUrl', 'sloJson'].forEach(function (id) { document.getElementById(id).addEventListener('input', function () {
+  validateSetup();
+  if (id === 'slaId') { try { sessionStorage.setItem('provedownAgreementId', document.getElementById(id).value); } catch (error) { /* storage is optional */ } }
+}); });
 document.getElementById('bundlePreset').addEventListener('change', function (event) {
-  document.getElementById('registerStatus').innerHTML = '<p class="meta">Preview source: <code>' + esc(WORKER_BASE) + '?preset=' + esc(event.target.value) + '</code> · synthetic fixture; no write.</p>';
+  document.getElementById('registerStatus').innerHTML = '<p class="meta">Preview source: <code>' + esc(WORKER_BASE) + '?preset=' + esc(event.target.value) + '</code> · synthetic fixture; no transaction has been created.</p>';
 });
 document.getElementById('previewBtn').addEventListener('click', function () { void previewEvidence(); });
+document.getElementById('registerBtn').addEventListener('click', function () { void registerAgreement(); });
 document.getElementById('refreshBtn').addEventListener('click', function () { void liveRead(); });
+document.getElementById('attestBtn').addEventListener('click', function () { void requestAttestation(); });
 document.getElementById('caseSet').addEventListener('change', function (event) {
+  if (event.target.value === 'custom') return;
   visibleCaseIds = (CASE_SETS[event.target.value] || CASE_SETS['breach-focus']).slice();
+  updateCaseQuery();
+  syncCaseSetControl();
+  applyProofScope();
   void liveRead();
 });
 document.addEventListener('click', function (event) {
+  var routeLink = event.target.closest('a[data-route-link]');
+  if (routeLink && routeLink.origin === location.origin && ROUTES[routeLink.pathname]) {
+    event.preventDefault();
+    navigateTo(routeLink.pathname);
+    return;
+  }
   var copy = event.target.closest('[data-copy-hash]');
   if (copy) {
     var value = copy.getAttribute('data-copy-hash') || '';
@@ -693,10 +1148,20 @@ document.addEventListener('click', function (event) {
   if (action && action.getAttribute('data-action') === 'refresh') void liveRead();
   if (action && action.getAttribute('data-action') === 'preview') void previewEvidence();
 });
+window.addEventListener('popstate', function () { renderRoute(location.pathname, true); });
 var queryWarning = (QS.has('cases') && !parsedCases) || (QS.has('contract') && !validAddress(QS.get('contract')));
-document.getElementById('caseSet').value = Object.entries(CASE_SETS).find(function (entry) { return entry[1].join(',') === visibleCaseIds.join(','); }) ? Object.entries(CASE_SETS).find(function (entry) { return entry[1].join(',') === visibleCaseIds.join(','); })[0] : 'breach-focus';
+syncCaseSetControl();
+try {
+  var savedAgreement = sessionStorage.getItem('provedownAgreementId');
+  if (savedAgreement) document.getElementById('slaId').value = savedAgreement;
+} catch (error) { /* storage is optional */ }
+defaultProofReferenceHtml = document.getElementById('proofReference').innerHTML;
+defaultPinnedFeeHtml = document.getElementById('pinnedFeePanel').innerHTML;
 validateSetup();
-document.getElementById('attestStatus').innerHTML = '<p class="meta">Read-only review mode: finalized records below are inspectable; new writes are disabled.' + (queryWarning ? ' The URL parameters were invalid, so the safe default contract and case set are shown.' : '') + '</p>';
+applyProofScope();
+document.getElementById('walletStatus').textContent = window.ethereum ? 'Wallet available · approval only on write' : 'No wallet detected · reads remain available';
+document.getElementById('attestStatus').innerHTML = '<p class="meta">Finalized records are available without a wallet.' + (queryWarning ? ' Invalid URL parameters were ignored; the safe default contract and case set are shown.' : '') + '</p>';
+renderRoute(location.pathname, false);
 void liveRead();
 </script>
 </body>

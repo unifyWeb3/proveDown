@@ -1,4 +1,6 @@
-# CUSTOMER-WORKFLOW.md — Real Commercial Workflow (2026-09-05)
+# CUSTOMER-WORKFLOW.md — Commercial Workflow Design (2026-09-05)
+
+> **Design / future-state document.** This describes the intended commercial workflow, not a claim that every step is implemented today. The current MVP has a synthetic Worker fixture, no application-level appeal method, no bond/slash policy, and a mocked downstream relay. See `research/CODEX_FULL_AUDIT.md` for current evidence.
 
 Actor: **pipeline operator (buyer)**. Counterparty: **API provider** (does not need to sign up for V1 — attestation is buyer-initiated, provider participates only in dispute).
 
@@ -22,12 +24,12 @@ Why this sequence and not provider-signed-first: FACT — track allows "signed l
 ## Who initiates / pays / signs
 
 - Initiates: buyer (human V1, agent V1.5+).
-- Pays: buyer pays attestation fee (subscription covers it; per-attestation overage possible). Provider pays appeal bond only if disputing.
+- Pays: buyer pays the attestation fee (subscription covers it; per-attestation overage possible). Any future appeal bond is a protocol/application design decision, not a current ProveDown payment.
 - Signs: buyer signs `register_sla` + `request_attestation`. Validators' consensus IS the counterparty-neutral signature. No provider signature required for attestation validity.
 
 ## Evidence collected (per attestation)
 
-Bundle `{p50, p95, error, fill, match, probes, window}` + `evidence_hash = sha256(exact bytes jury saw)` + `evidence_summary` + tx timestamp. Retention: attestation + hash on-chain permanently; full bundle bytes via Worker/cache 90d minimum (matches SLA credit windows), 12-mo later.
+Bundle `{p50, p95, error, fill, match, probes, window}` + `evidence_hash = sha256(sanitized-and-truncated bundle bytes)` + `evidence_summary` + tx timestamp. Retention: attestation + hash on-chain permanently; full bundle bytes via Worker/cache 90d minimum (matches SLA credit windows), 12-mo later.
 
 ## When verification happens (not per request)
 
@@ -35,7 +37,7 @@ Per-request attestation is uneconomic and unnecessary. Verification happens (a) 
 
 ## Dispute path
 
-Provider (or anyone) disputing a BREACH posts appeal bond → new validator set, doubled (GenLayer `appealTransaction`/`getAppealCharge` surface, FACT per migration doc) → upheld (challenger loses bond) or overturned (attestation superseded, reputation corrected). V1: appeal documented + mocked (FACT); V1.5: wire real appeal surface once `appeal_attestation` is implemented.
+Provider (or anyone) may eventually dispute a BREACH through GenLayer's protocol appeal surface. The current ProveDown contract exposes no application-level appeal method or bond policy, so V1 treats this as documented future work; it does not claim an appeal transaction occurred.
 
 ## After-state table
 

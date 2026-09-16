@@ -4,7 +4,7 @@
 
 **Uptime** (live, `genlayer-foundation/uptime`, `uptime-gap-analysis.md`): verifies factual reachability of 7 hard-coded infra services via `strict_eq` on `is_up` bool from `GET 200` / JSON-RPC `result` presence. Stores every check + `uptime_pct` + linear/tiered/full penalty math + 10% fee. No latency percentile, no fill/match, no tolerance, no confidence, no hash, no reputation, no amber states.
 
-**ProveDown**: verifies functional obligation fulfillment for arbitrary buyer-registered APIs via LLM jury with tolerance, evidence SHA-256, breach reason, confidence 0–1000, Bayesian reputation, INCONCLUSIVE/NO_CONSENSUS first-class. One decisive demo: HTTP 200 + fill 72% → Uptime says UP, ProveDown says BREACH (tx `0xe04d...` FACT).
+**ProveDown**: verifies functional obligation fulfillment for arbitrary buyer-registered APIs via LLM jury with tolerance, evidence SHA-256, breach reason, confidence 0–1000, Bayesian reputation, INCONCLUSIVE/NO_CONSENSUS first-class. One decisive demo: HTTP 200 + fill 72% → Uptime says UP, ProveDown says BREACH (current tx `0xf566...` FACT).
 
 **Observability (Datadog/Uptrends/Pingdom/Statuspage)**: best probes, charts, alerts, error budgets. Biased-by-construction in disputes (buyer-hired or provider-owned), no bonded neutrality, no settlement-grade proof, deterministic thresholds only.
 
@@ -16,7 +16,7 @@
 
 ## Why use ProveDown instead of monitoring + database + workflow automation?
 
-Economic + functional (not ideological): monitoring tells you a number moved; database stores your version of events; automation acts on your version. None produces a version the *counterparty* accepts. ProveDown's output is the only artifact in this map that (a) neither party authored, (b) is staked and appealable, (c) content-binds the exact evidence judged (hash), (d) carries calibrated confidence and honest abstention states. That is what converts a $125 write-off into a $5k claim and what lets an agent failover without waking a human — the automation you already own becomes trustworthy to act on.
+Economic + functional (not ideological): monitoring tells you a number moved; database stores your version of events; automation acts on your version. None produces a version the *counterparty* accepts. ProveDown's current output is a validator-consensus artifact that neither party authors, carries a hash over sanitized/truncated evidence bytes, and preserves honest abstention states. Protocol-level appeals exist in GenLayer, but this application has no application-level appeal or stake policy yet. Do not present the current MVP as settlement-grade or as a guaranteed recovery mechanism.
 
 ## Defensibility — real vs fake moats
 

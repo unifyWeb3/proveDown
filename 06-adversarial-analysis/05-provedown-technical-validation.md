@@ -3,6 +3,8 @@
 **Date:** 2026-09-02
 **Method:** Controlled analog experiment for `gl.nondet.web.render` + `gl.nondet.exec_prompt` mechanics that ProveDown depends on. **Honest scope note in §6.**
 
+> **Historical / analog evidence.** These measurements are not a current on-chain backtest, do not establish per-SLO accuracy, and predate the current Studio deployment. Do not use the old cost, three-render, or `run_nondet_unsafe` wording as a description of shipped behavior.
+
 ---
 
 ## 1. Experiment Design

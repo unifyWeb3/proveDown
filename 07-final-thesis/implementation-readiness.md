@@ -1,8 +1,10 @@
-# Implementation Readiness — ProveDown MVP (Task 7)
+# Implementation Readiness — ProveDown MVP (Task 7, reconciled)
 
-**Date:** 2026-09-02
+**Date:** 2026-09-09 (reconciled with the live Studio Next deployment)
 **Validation gate:** PASSED with reframing (preserve thesis). See `06-adversarial-analysis/05,06,07,08` + `04-competitive-intelligence/03`.
-**Objective per Task 8:** Smallest end-to-end flow proving User/API agreement → evidence collection → GenLayer adjudication → verifiable verdict → settlement/attestation → user-visible result. No speculative infra.
+**Objective per Task 8:** Smallest end-to-end flow proving User/API agreement → evidence collection → GenLayer adjudication → verifiable attestation → user-visible result. Downstream settlement remains a labeled mock boundary, not an MVP responsibility.
+
+> **Scope reconciliation.** This began as a pre-build design spec. The shipped implementation is the source of truth for the current slice: static [`frontend/index.html`](../frontend/index.html), Studio Next chain `61997`, contract `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`, synthesized Worker evidence, breach-only consensus, and no application-level appeal method. Historical references below are retained only where they explain design intent or deferred work.
 
 ---
 
@@ -11,23 +13,23 @@
 **Included (must have for hackathon demo Sep 3-17):**
 
 - **One SLO type:** Functional quality SLO for enrichment API: `P50 ≤500ms, P95 ≤2000ms (tolerance +500ms via jury), error<1%, fill≥80%, match≥85%`. Judged from **bundle** not single probe.
-- **One jury run:** `request_attestation(sla_id)` → 1× `web.render(mode='text')` to **bundle endpoint** (pre-computed JSON histogram) + 1× `exec_prompt(json judge)` → consensus on `breach` bool + `reason` (LATENCY|ERROR_QUALITY|UNAVAILABLE|OK) + confidence. Not 3 parallel renders to live APIs (too variable per 05 §2.1).
-- **One attestation anchored:** Store `Attestation {sla_id, timestamp, breach, reason, confidence, evidence_hash(sha256 bundle), p50/p95, histogram bucket}` on GenLayer, with explorer link.
-- **One bridge proof (mocked):** Emit `BridgeSender` event / `BridgeProof` hash; diagram real Hyperlane to Base Sepolia VerdictRegistry (AgentEscrow pattern [S24]) but mock relay for demo. Explain real path in README.
+- **One jury run:** `request_attestation(sla_id)` → 1× `web.render(mode='text')` to a deterministic bundle + 1× `exec_prompt(json judge)` → consensus on the strict `breach` bool. Reason, confidence, metrics, and reasoning are leader-observed fields, not consensus fields.
+- **One attestation anchored:** Store the verdict status, observed `p50/p95`, reason/confidence, and evidence hash of the sanitized/truncated bundle on GenLayer, with Explorer readback.
+- **One downstream boundary (mocked):** Show the documented Relay → Base path as a UI/architecture boundary only. The current contract emits no `BridgeSender` event or `BridgeProof`, and no Base/Hyperlane transaction is claimed.
 - **One reputation update:** `TreeMap[api]` confidence-weighted score, readable via `get_reputation(api)`.
-- **One frontend flow:** Register SLA form + "Attest now" button + jury deliberation (5 validators) + verdict BREACH/NO_BREACH/UNDETERMINED + evidence hash + explorer link + reputation panel. Toggle mocked vs live.
+- **One frontend flow:** The static `frontend/index.html` provides register + attest writes, finalized receipt tracking, readback, verdict `BREACH`/`NO_BREACH`/`INCONCLUSIVE`/`NO_CONSENSUS`, evidence hash, Explorer link, and reputation panel. No-wallet and mocked-boundary states are explicit.
 - **One live sandbox:** Any API URL + SLO → real attestation (proves generic contract like Jury sandbox).
 
 **Explicitly included for validation but minimal:**
 
 - Evidence sanitization: `FORBIDDEN_TOKENS` → `[filtered]` [S15], `<SYSTEM><EVIDENCE>` framing, truncate 3000, sha256, HTTPS only, dedup, max 3 URLs (but MVP uses 1 bundle URL, stays under limit).
-- Error handling: `INCONCLUSIVE` retryable (fetch fail → retry not reject, `MAX_EVALUATION_ATTEMPTS=3` pattern [S18]), `UNDETERMINED` first-class (shown as honest split at threshold, not error).
+- Error handling: `INCONCLUSIVE` and `NO_CONSENSUS` are first-class retryable outcomes; a caller may submit a new attestation request, but the contract does not silently retry or force a verdict.
 
 ---
 
 ## 2. Out-of-Scope (Do NOT Build for Hackathon)
 
-- **No continuous off-chain poller** (roadmap 30d) — bundle is synthesized/mock for MVP (or simple Worker that serves bundle JSON on demand). Continuous 5-min poller is post-hackathon.
+- **No continuous off-chain poller** (roadmap 30d) — the live Worker serves deterministic synthesized fixture bundles on demand. A real probe poller is post-hackathon.
 - **No hourly Merkle batch bundles** (100 probes → one rootHash) — post-hackathon.
 - **No automated billing claim on Base** — billing contract verifies bridge proof, but MVP only shows VerdictRegistry mock; no USDC transfer via `emit_transfer`.
 - **No residential IP diversity, no VRF front-running mitigation beyond docs** — validators are default GenLayer set, diversity assumed.
@@ -46,52 +48,51 @@ Adding these would be "impressive but no startup value" (saturation map §03).
 
 **File:** `contracts/provedown.py`  (version pragma `py-genlayer:...`)
 
-**Storage (typed, no `dict`/`list`/`int`):**
+**Storage (JSON strings in typed `TreeMap`s):**
 
 ```python
-TreeMap[str, Sla]  # sla_id → {api_url, status_url, slo_json, owner, created_at}
-TreeMap[str, Attestation]  # attestation_id → {sla_id, timestamp, breach, reason, confidence, evidence_hash, p50, p95, histogram, requester}
-TreeMap[str, Reputation]  # api_url → {score, total, breaches, last_updated}
+TreeMap[str, str]  # sla_id → JSON {api_url, bundle_url, slo_json, owner, created_at}
+TreeMap[str, str]  # attestation_id → JSON {sla_id, timestamp, breach, reason, confidence, evidence_hash, p50, p95, status}
+TreeMap[str, str]  # api_url → JSON {score, total, breaches}
 u256 next_attestation_id
 ```
 
 **Methods:**
 
-- `@gl.public.write def register_sla(self, sla_id:str, api_url:str, status_url:str, slo_json:str)` — deterministic validation: HTTPS only, dedup URLs, max 3, slo_json parse + required fields (p50,p95,error,fill,match), emit `SlaRegistered`. No nondet.
-- `@gl.public.write def request_attestation(self, sla_id:str)` — **nondet jury**: `leader_fn` fetches bundle URL via `gl.nondet.web.render(bundle_url, mode='text')` (bundle from our Worker), sanitizes, `gl.nondet.exec_prompt(judge_prompt(bundle, slo), response_format='json')` → dict, `validator_fn` independent same → `gl.vm.run_nondet_unsafe` agree on `breach` bool only (reason for UI, not consensus). Outside: store attestation, update reputation (confidence-weighted), emit `BridgeProof` or `AttestationCreated` with `gl.message_raw['datetime']`. Handle `UNDETERMINED` (store with breach=None).
-- `@gl.public.write def appeal_attestation(self, attestation_id:str)` — check bond (for MVP simple fixed bond, e.g., 0.1 GEN), new jury doubling? For MVP, single re-jury with same logic (full doubling is post-hackathon).
+- `@gl.public.write def register_sla(self, sla_id:str, api_url:str, bundle_url:str, slo_json:str)` — deterministic HTTPS and numeric-range validation, canonical SLO storage, and conflicting-ID rejection. No nondeterministic work.
+- `@gl.public.write def request_attestation(self, sla_id:str)` — **nondet jury**: fetch the Worker bundle with `web.render`, sanitize and validate all five metrics, hash the sanitized/truncated bundle, then run `exec_prompt`. `run_nondet_default` compares the strict `breach` boolean only; reason, confidence, metrics, and reasoning are leader-observed fields. Invalid evidence becomes `inconclusive`; an honest validator split becomes `no_consensus`.
 - `@gl.public.view def get_attestation(self, attestation_id:str) -> str` (json)
 - `@gl.public.view def get_reputation(self, api_url:str) -> str`
 - `@gl.public.view def get_sla(self, sla_id:str) -> str`
 
-**Deterministic post-consensus per 01-primitives:** no storage writes inside nondet, `self` not captured inside `leader_fn` (use plain locals), linter clean.
+**Deterministic post-consensus per 01-primitives:** no storage writes inside nondet, `self` not captured inside the judgment closure, and the two current nested-reachability linter advisories are documented in the live audit with deployment evidence.
 
-**Lessons reused:** V2 evidence-first [S15] (plain locals, sanitize, truncate, hash), ContentBounty two-stage pattern [S18] (observations not needed for MVP — single judge prompt suffices), FlightDelay strict not used (need tolerant, so `run_nondet_unsafe` not `strict_eq`).
+**Lessons reused:** V2 evidence-first [S15] (plain locals, sanitize, truncate, hash), ContentBounty two-stage pattern [S18] (observations not needed for MVP — single judge prompt suffices), and tolerant breach-only consensus for near-threshold functional quality.
 
 ---
 
 ## 4. Backend Responsibilities (Node, Not Truth)
 
-**Not a custodial judge** — only helper for poller + cache + relay mock.
+**Not a custodial judge** — the backend only serves the deterministic fixture bundle and supports the frontend demo.
 
 - **Bundle Worker** (`hosting/bundle-worker/` — Cloudflare Worker or simple Fastify): endpoint `GET /bundle?sla_id=...` returns synthesized bundle JSON `{"p50":1561,"p95":2100,"error":0.02,"fill":0.82,"probes":[...]}` for MVP (later real poller). This is what `web.render` fetches — stable JSON, hash-stable like `httpbin.org/json` (1/8) not dynamic `/get` (5/5 variance) per 05 §2.1. Bundle includes `X-ProveDown-Timestamp`.
-- **Relay Mock** (`scripts/relay/`): listens for `AttestationCreated` event via `genlayer-js` `watchContractEvent`, computes `bridgeProof = keccak(attestation_id + evidence_hash)`, stores in `BaseVeridctRegistry` mock (in-memory or simple Base Sepolia contract if time). For hackathon, just show `bridgeProof` hash + "would be Relay→Base" diagram.
+- **Relay boundary (documentation/UI only):** the frontend labels the future Relay → Base path as mocked. There is no event listener, Base registry write, bridge proof, or settlement receipt in the current MVP.
 - **No probe poller for MVP** — bundle is mocked on demand, not continuous. Post-hackathon add poller every 5min to 3 endpoints.
 
 **GenLayer is source of truth** — backend never decides breach.
 
 ---
 
-## 5. Frontend Responsibilities (Next.js 16, React 19, TS strict, Tailwind — like Jury)
+## 5. Frontend Responsibilities (static HTML + pinned `genlayer-js`)
 
 **Reuses Jury patterns [S15-16]:**
 
-- **Register form:** `sla_id` (auto `sla-` + 6 hex), `api_url`, `status_url`, `slo_json` (default P50 500 P95 2000 error 1 fill 80 match 85), `genlayer-js` `writeContract` → explorer link.
-- **Attest panel:** `request_attestation(sla_id)` button → `writeContract` → `waitForTransactionReceipt` polling (show `pending → proposing → committing → revealing → accepted` per 01-consensus), then 5-validator deliberation UI (stream reasoning via polling `get_attestation` or SSE mock like Jury `/api/jury`).
-- **Verdict card:** BREACH (red, reason LATENCY/ERROR_QUALITY) / NO_BREACH (green) / UNDETERMINED (amber, "honest split at threshold") + confidence 0-1000 + evidence hash + p50/p95 + histogram + explorer `https://explorer-bradbury.genlayer.com/tx/0x...` link + contract address link (like Jury submission writeup).
+- **Register form:** `sla_id`, `api_url`, `bundle_url`, and canonical `slo_json`; wallet-backed `genlayer-js` `writeContract` with fee estimation.
+- **Attest panel:** `request_attestation(sla_id)` → `writeContract` → `waitForTransactionReceipt({waitUntil: 'finalized'})` → `isSuccessful` → on-chain readback. Pending, no-wallet, and failed-receipt states are distinct.
+- **Verdict card:** BREACH / NO_BREACH / INCONCLUSIVE / NO_CONSENSUS with confidence, evidence hash, observed metrics, and Studio Explorer link. Reason is secondary because it is not consensus-critical.
 - **Reputation panel:** `get_reputation(api_url)` polling, score 0-100, history chart.
 - **Sandbox:** any API URL + SLO → real attestation via same contract (proves generic, not preset demo only).
-- **Toggle:** `NEXT_PUBLIC_LIVE_JURY` pattern — mocked (prewritten SSE) for snappy first impression vs live on-chain (real `writeContract`).
+- **Boundary disclosure:** live Studio reads/writes are real; the Base relay and future probe poller remain visibly mocked. There is no verdict-mocking fallback presented as a live write.
 - **Verifiability layer:** Every attestation links to explorer, like Jury's "every claim checkable via tx hash" that fixed v1 rejection [S19].
 
 ---
@@ -104,25 +105,24 @@ u256 next_attestation_id
 
 ## 7. GenLayer Responsibilities
 
-- Consensus on `breach` bool via `run_nondet_unsafe` with diverse LLMs (Heurist/Comput3/Chutes etc.) — not single backend LLM.
+- Consensus on `breach` bool via `run_nondet_default` with the configured validator jury — not a backend verdict.
 - `web.render` independent fetches (even though MVP fetches single bundle URL, validators still each fetch independently → hash-stable bundle ensures agreement).
 - Evidence hashing + timestamp `gl.message_raw['datetime']` authoritative.
-- Attestation storage + reputation TreeMap + BridgeProof emission.
-- Appeal path (new jury) with bond — MVP simple single re-jury.
-- Explorer proof (contract address `0x...` persistent on Bradbury 4221, tx hash per attestation).
+- Attestation storage + reputation TreeMap.
+- Explorer proof on Studio Next 61997; Bradbury remains compatibility evidence only.
 
 ---
 
 ## 8. Base Responsibilities
 
-- **VerdictRegistry (Solidity, Base Sepolia for demo):** `mapping(bytes32 => AttestationProof)` + `function claimCredit(bytes32 attestationId, bytes proof)` placeholder (no USDC transfer for MVP, just event). For hackathon, can deploy or just diagram; minimal mock is `contracts/BaseVerdictRegistry.sol` with Foundry tests if time.
+- **VerdictRegistry (Base Sepolia):** documentation-only future boundary. No Solidity registry, claim method, or settlement transaction is part of the current MVP.
 - No USDC escrow for MVP (ArcSLA does per-call escrow but we are sidecar not marketplace — no escrow needed for attestation MVP).
 
 ---
 
 ## 9. Bridge/Relay Responsibilities
 
-- **For MVP:** Mock — frontend shows `bridgeProof` hash and "Relay → Base VerdictRegistry" arrow with docs link to AgentEscrow BridgeSender→Relay→Base pattern [S24]. Judge can see path even if not live transaction on Base.
+- **For MVP:** Mock — frontend shows a labeled Relay → Base boundary with the AgentEscrow pattern [S24] as a reference. It must not show a fabricated `bridgeProof` or Base transaction.
 - **For real (post-hackathon):** Hyperlane or LayerZero V2 (like Internet Court [S20]) — BridgeSender calls `sendMessage(BaseVeridctRegistry, proof)` via Hyperlane mailbox. Relay is startup backend listening to GenLayer event and submitting to Base (gas paid by startup or caller tip).
 
 ---
@@ -133,9 +133,9 @@ u256 next_attestation_id
 |---|---|---|---|---|
 | `GET /bundle?sla_id=...` | Jury fetches bundle JSON (p50/p95/error/fill) | `web.render mode='text'` → sanitize → json parse | None (public) | Worker synthesized (mock `p95:2100 fill:0.82`) — 2 variants: breach vs no-breach presets for demo |
 | `https://httpbin.org/json` | Analog probe, not MVP jury fetch — used only for technical validation baseline (hash-stable) | not used in MVP | None | — |
-| OpenRouter `openai/gpt-4o-mini` | `exec_prompt` judge (via validator's LLM provider in GenLayer) | `response_format: json` | Via validator config, not frontend | Validators use Heurist/Comput3/Chutes etc.; not frontend key |
-| Bradbury RPC `https://rpc-bradbury.genlayer.com` chain 4221 | `genlayer-js` writes/reads | `gen_*` | Testnet faucet GEN | Real |
-| Explorer `https://explorer-bradbury.genlayer.com` | Explorer links | — | — | Real |
+| Validator LLM providers | `exec_prompt` judge (inside GenLayer validators) | JSON-shaped prompt/response | Via validator config, not frontend | No frontend API key; current contract parses and validates the returned JSON |
+| Studio Next RPC `https://studio-dev.genlayer.com/api` chain 61997 | `genlayer-js` writes/reads | `gen_*` | Studio GEN | Real |
+| Studio Explorer `https://explorer-studio-dev.genlayer.com` | Explorer links | — | — | Real |
 | Base Sepolia RPC (if VerdictRegistry deployed) | `claimCredit` mock | `eth_*` | Faucet USDC not needed for MVP | Optional |
 
 **No authenticated private API** — per 05 §2.3, private portals blocked by anti-bot and need auth (no secrets in web.render). Use public bundle only.
@@ -155,7 +155,7 @@ u256 next_attestation_id
   - `test_injection` — bundle contains `ignore previous instructions` → sanitize → still BREACH, not NO_BREACH (2/2 stable per 05 §3).
   - `test_empty` — bundle empty → INCONCLUSIVE not BREACH.
   - `test_consensus_disagree` — mock validator returns opposite breach → assert `run_validator() is False` → UNDETERMINED.
-  - `test_appeal` — appeal bond flow.
+  - No appeal test: the current contract has no application-level appeal method.
 
 **Integration:**
 
@@ -163,30 +163,30 @@ u256 next_attestation_id
 
 **Post-deploy:**
 
-- `genlayer deploy --contract ./contracts/provedown.py --network testnetBradbury --fee-profile ./fee-profile.json` (via `estimate-fees`).
-- Frontend `readContract`/`writeContract` via `genlayer-js` on Bradbury, verify explorer `tx/0x...` shows `commit→reveal→accepted`, appeal with bond.
+- Historical compatibility command: `genlayer deploy --contract ./contracts/provedown.py --network testnetBradbury --fee-profile ./fee-profile.json` (current Studio deployment uses the WSL-safe `genlayer-js` path).
+- Frontend `readContract`/`writeContract` via `genlayer-js` on Studio Next, verify finalized receipt + `isSuccessful` + stored readback + Explorer link.
 
 ---
 
 ## 12. Demo Flow (5 min, per final-product §20 updated)
 
 1. **Hook (30s):** "Your Datadog is buyer-hired, provider dashboard is vendor — neither trusted when $50K at stake. Pingoru $15 covers status pages $15 but not functional quality; ArcSLA deterministic too but needs LLM for quality (their DisputeModule future)." Show Updog 32 min before AWS + ArcSLA 9 providers + our quality wedge.
-2. **Run on GenLayer (90s):** Register SLA (preset: enrichment API, P95 2000, fill 80), click Attest now → Bundle Worker serves JSON (p95 2100 fill 82) → 5 validators fetch bundle independently + judge breach, consensus BREACH LATENCY confidence 900, evidence hash + p50/p95 display, click View on GenLayer Explorer → real Bradbury tx.
-3. **Why not backend AI? (60s):** Remove GenLayer → no evidence hash, provider says biased; replace Chainlink → single oracle bribed; show jury diverse LLMs vs single API, appeal doubles validators, bridge proof hash audit.
-4. **Bridge & reputation (60s):** Show bridge proof mock + reputation graph update (score 92 → 88 after breach), composite SLA (5 APIs at 99.9→99.5) diagram.
+2. **Run on GenLayer (90s):** Register an enrichment SLA (P95 2000, fill 80), click Attest now → the Worker serves deterministic JSON → validators fetch and judge it → Studio Next finalizes BREACH/NO_BREACH/INCONCLUSIVE, with evidence hash, observed metrics, readback, and Explorer link.
+3. **Why not backend AI? (60s):** Remove GenLayer → no independent validator consensus or finalized attestation; replace it with a single oracle → one operator controls the result.
+4. **Relay boundary & reputation (60s):** Show the explicitly mocked downstream arrow and the on-chain reputation update; do not imply a Base transaction.
 5. **Live sandbox (30s):** Type any API bundle params (wider tolerance) → real attestation via same contract (proves generic, not preset only).
 6. **Beyond (30s):** Roadmap + economics ($0.04 spot, $99/mo sidecar, one $5k recovery covers 10mo, no token, quality wedge → procurement 90d).
 
-Backup mocked mode if Bradbury congested (like Jury Retry-After + timeout fallback).
+Backup: show the pinned Studio Next records if a fresh wallet write is unavailable; label the read-only demo data as finalized prior evidence.
 
 ---
 
 ## 13. Acceptance Criteria (Narrow Slice Must Pass)
 
 - [ ] `genvm-lint` 0 errors on `contracts/provedown.py`.
-- [ ] `pytest tests/direct/` 8 tests pass (incl. injection resist 2/2, hash-stable bundle 1/1 like httpbin/json not 5/5 dynamic, `UNDETERMINED` first-class).
-- [ ] One Studio/Bradbury integration attestation returns BREACH with tx hash and explorer link, verifiable via `genlayer receipt <txId>` shows `ACCEPTED` then `FINALIZED` window.
-- [ ] Frontend can register + attest + show verdict + explorer link + reputation for two presets (breach vs no-breach) without editing contract.
+- [x] `python3 -m pytest tests/test_provedown.py -q` passes 13 analog tests, including injection resistance, hash stability, malformed evidence, and strict consensus parsing.
+- [x] Studio Next integration attestations return NO_BREACH, BREACH, and INCONCLUSIVE with finalized receipts, readback, and Explorer links.
+- [x] Static frontend reads the pinned cases and contains wallet-backed register + attest paths; injected-wallet runtime smoke remains an open release gate.
 - [ ] Removal test: remove GenLayer → frontend has no verdicts (not cosmetic, per Jury v1 lesson [S19]).
 - [ ] Demo completes in 5 min even with mocked mode fallback.
 - [ ] No speculative infra added: no continuous poller, no batch Merkle, no USDC escrow, no DAO, no multi-chain beyond mocked bridge diagram.
@@ -209,6 +209,6 @@ Backup mocked mode if Bradbury congested (like Jury Retry-After + timeout fallba
 
 ## 15. Decision: Validation Gate PASSED with Reframing
 
-**Thesis preserved:** ProveDown is *functional SLO attestation* for agent pipelines (fill/match/error + bundle-quoted latency with tolerance), sidecar on top of Datadog/Pingoru not replacement, targeting on-chain native (x402/Arc) first where bridge to Base is live settlement. Not generic status page uptime attestation (would be dupe of Pingoru $15 [S50] + Updog free [S51]) and not deterministic deadline marketplace (ArcSLA live [S54]).
+**Thesis preserved:** ProveDown is *functional SLO attestation* for agent pipelines (fill/match/error + bundle-quoted latency with tolerance), a sidecar on top of Datadog/Pingoru rather than a replacement. The current wedge ends at a GenLayer attestation and reputation record; any Base settlement path is future work. It is not generic status-page uptime attestation (Pingoru/Updog) or a deterministic deadline marketplace (ArcSLA).
 
-**Next:** Proceed to smallest E2E implementation per Task 8 — `contracts/provedown.py` + `frontend/` register→attest→explorer + `hosting/bundle-worker/` mock. No speculative infra.
+**Current status:** The smallest E2E implementation and injected-wallet browser lifecycle are verified on Studio Next. Local release hardening is complete; remaining gates are the separate frontend visual-polish pass, final scan of the assembled public package, and the already-disclosed evidence-provenance limitations. No speculative infra is authorized.

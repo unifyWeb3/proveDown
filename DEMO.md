@@ -1,35 +1,35 @@
 # DEMO — Deterministic 3-Case Functional Attestation (60–90s)
 
-**Goal:** In 60–90 seconds the audience understands: HTTP 200 does not mean the service fulfilled the agreement. Jury fetches **our Worker** (hash-stable 116 chars, 1/8 not 5/5), not live flaky APIs.
-**Live:** Studio Next 61997, contract `0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF` (deploy `0x5a34f359d575b4e74742ccc3ec7ea2e1d919911be90c47b9fdb125b53837a782` FINALIZED FINISHED_WITH_RETURN). Worker `https://provedown-bundle.contentbounty.workers.dev/bundle` (200, hash stable `b4fc2013...` twice).
+**Goal:** In 60–90 seconds the audience understands: HTTP 200 does not mean the service fulfilled the agreement. Jury fetches **our synthetic Worker fixture** (deterministic 132–155 byte presets, 1/8-style stability), not live customer APIs.
+**Live:** Studio Next 61997, hardened contract `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1` (deploy `0x6cdb3d3d7f86a4a449f656ebd6b1e3e2e4ee7ec405afa3d494dc0828b3b36cbb` FINALIZED FINISHED_WITH_RETURN). Worker `https://provedown-bundle.contentbounty.workers.dev/bundle` (200, full SHA-256 stable across repeated reads).
 
 ## The 3 cases (all real, explorer-verifiable)
 
 | # | Case | Bundle (HTTP 200 always) | SLO | Jury verdict (real tx) |
 |---|---|---|---|---|
-| 1 | **Healthy** | `?preset=no_breach` → p50 320, p95 1600, error 0.004, fill 0.95 | P95≤2000+500, error<0.01, fill≥0.80 | **NO_BREACH** OK conf 980, hash `64e6c84f01418b89` — tx `0x5b1cb325b5b27d6d0603a6cea6a33c1b4cb173788093bb87036609314d7ac497` |
-| 2 | **Functionally broken** | `?preset=breach` → p50 1561, p95 4800, error 0.02, fill 0.72 | same | **BREACH** LATENCY conf 1000, hash `b4fc2013862e316e` — tx `0xe04dae35608f65b703cfcd2f80a197cb402330c5776f5e634e419f9519bc7383` |
-| 3 | **Bad evidence** | `?preset=empty` → all metrics null | same | **INCONCLUSIVE** UNAVAILABLE conf 0 — tx `0xa218c962dbe7aa23dee7d705e5a7ec8a2dcdf5bdbbc9bdfdfef01dd2a7cdea43`. Missing evidence never becomes definitive. |
+| 1 | **Healthy** | `?preset=no_breach` → p50 320, p95 1600, error 0.004, fill 0.95 | P95≤2000+500, error<0.01, fill≥0.80 | **NO_BREACH** OK conf 1000, hash `64e6c84f01418b89` — tx `0xa5a1aae059d49895719afed202f58804a12b7bcab28d90b3eee63e0942cc0faf` |
+| 2 | **Functionally broken** | `?preset=breach` → p50 1561, p95 4800, error 0.02, fill 0.72 | same | **BREACH** ERROR_QUALITY conf 1000, hash `b4fc2013862e316e` — tx `0xf566a8305212cc52e899ed2a1294eea5d9ed4b89fec3aba5d5e1eb24fb8ed505` |
+| 3 | **Bad evidence** | `?preset=empty` → all metrics null | same | **INCONCLUSIVE** UNAVAILABLE conf 0 — tx `0x90b9e1b983b3ebe2490f812b6696317031ce6b4cb65c7c3a7bb75b51a5af6f8a`. Missing evidence never becomes definitive. |
 
-Reputation after A+B (+C inconclusive, no rep change): `{"score":60,"total":2,"breaches":1}`.
+Canonical first-three reputation after A+B (+C inconclusive, no rep change) was `60 / 100`, `2 checks`, `1 breach`. The later finalized browser run added attestation 4 (NO_BREACH), so the current live reputation is `66 / 100`, `3 checks`, `1 breach`; registration `0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a`, attestation `0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110`.
 
 ## Script (60–90s)
 
 1. **Hook (15s):** "Both APIs returned HTTP 200. Uptime says both are UP. But one delivered 72% fill against an agreed 80% — your agent just scored 800 leads on empty data. Who decides, neutrally, at machine speed?"
-2. **Run (45s):** Open `frontend/index.html` → live reads show Case 1 NO_BREACH + Case 2 BREACH + Case 3 INCONCLUSIVE with evidence hashes → click through to `https://explorer-studio-dev.genlayer.com/tx/0xe04d...` (FINALIZED FINISHED_WITH_RETURN, `isSuccessful`).
-3. **Why GenLayer (15s):** Remove GenLayer → biased dashboard; replace with oracle/single AI → single bribe target. Only independent jury + bond/slash + appeal is neutral to both sides. Bridge arrow to Base is mock (labeled) — attestation, hash, reputation, consensus are real.
+2. **Run (45s):** Open `frontend/index.html` → live reads show Case 1 NO_BREACH + Case 2 BREACH + Case 3 INCONCLUSIVE with evidence hashes → click through to `https://explorer-studio-dev.genlayer.com/tx/0xf566a8305212cc52e899ed2a1294eea5d9ed4b89fec3aba5d5e1eb24fb8ed505` (FINALIZED FINISHED_WITH_RETURN, `isSuccessful`).
+3. **Why GenLayer (15s):** Remove GenLayer → biased dashboard; replace with oracle/single AI → single bribe target. Independent jury consensus is the neutral adjudication primitive demonstrated here. Appeals and bond/slash are deferred, not implemented. Bridge arrow to Base is mock (labeled) — attestation, hash, reputation, consensus are real.
 4. **Beyond (15s):** Same jury pattern extends to procurement/RFP, reputation marketplace, temporal rechecks (documented, not built — no kitchen-sink).
 
 ## Honesty labels
 
-**REAL:** Studio Next contract, jury consensus, attestations 1/2/3, evidence hashes, reputation, explorer txs above, Worker bundles.
+**REAL:** Studio Next contract, jury consensus, attestations 1/2/3 plus browser attestation 4, evidence hashes, current reputation, explorer transactions, Worker bundles.
 **MOCK (labeled):** Base relay / cross-chain settlement arrow, future poller (bundles synthesized), `NEXT_PUBLIC_LIVE_JURY=false` SSE fallback.
 
 **Do NOT fake verdicts.** If studio-dev congested, show these exact prior real txs (they remain verifiable) — never present SSE fallback as live.
 
 ## Verification
 
-Every verdict: `get_attestation` → breach bool, `evidence_hash` == `sha256(bundle)`, explorer `/tx/0x...` FINALIZED + FINISHED_WITH_RETURN + `isSuccessful`. Reputation: `get_reputation("https://example.com")`.
+Every verdict: `get_attestation` → breach bool, `evidence_hash` == `sha256(sanitized-and-truncated bundle bytes)` (the clean presets also match the fetched Worker bytes), explorer `/tx/0x...` FINALIZED + FINISHED_WITH_RETURN + `isSuccessful`. Reputation: `get_reputation("https://example.com")`.
 
 ## Bundle synthesis vs live probe
 

@@ -1,5 +1,7 @@
 # ProveDown Thesis Check — Strong Framing
 
+> **Historical thesis stress test.** Business numbers, settlement language, bridge plans, and appeal/bond assumptions below are research context, not current product evidence. Use `PRODUCT-THESIS.md`, `EVIDENCE.md`, and `CLAIM-PACKET.md` for current claims.
+
 **Date:** 2026-09-03
 **Test:** Is stronger framing “verification/attestation layer for agreements between autonomous systems, beginning with API/service SLAs as wedge” correct vs “uptime monitoring” or “SLA dashboard”? Challenge it.
 
@@ -39,4 +41,3 @@ Not monitoring (Pingoru polls status page, Updog aggregates APM), not dashboard 
 This is **not** "uptime monitoring" (Pingoru), not "SLA dashboard" (Datadog), but **verification/attestation with evidence hash**. Strong framing stands after narrowing to quality bundle + on-chain native first + sidecar not replacement.
 
 **Wrong framings to avoid:** Calling it uptime monitoring would invite comparison to Pingoru $15 / Updog free where we lose on price and coverage (we are 116-char synthetic not 6k status pages). Calling it generic verification for all autonomous agreements would be kitchen-sink (procurement, code, carbon) — correctly deferred per feature synthesis.
-

@@ -4,6 +4,8 @@
 **Sources:** Hackathon page (Track: Agentic Commerce Infrastructure, Requested: SLA and uptime enforcement — API escrow that releases against signed logs or decentralized monitoring, Live project: Uptime), `04-competitive-intelligence/uptime-gap-analysis.md`, `01-genlayer-recon/05-benchmark-alignment.md` + `06-consensus-v06-migration.md`, `https://docs.genlayer.com/developers/consensus-v06-migration`
 **Rule:** Do NOT reopen funnel. Adapt validated thesis to actual track + env.
 
+> **Historical alignment note.** This 2026-09-04 planning document predates the current hardened Studio deployment. Treat references to `run_nondet_unsafe`, eventual settlement, appeal economics, old reputation values, and old Uptime snapshots as design history. Current implementation evidence is in `research/current-hackathon-rules.md`, `research/current-genlayer-environment.md`, and `research/CODEX_FULL_AUDIT.md`.
+
 ## 1. Track Fit
 
 Track explicitly asks for **SLA and uptime enforcement — API escrow that releases against signed logs or decentralized monitoring**. ProveDown is **neutral functional attestation for service-quality agreements (bundle p95>2000+500 OR error/fill/match), beginning with API functional SLOs** — clearly within track, but NOT a clone of Uptime:

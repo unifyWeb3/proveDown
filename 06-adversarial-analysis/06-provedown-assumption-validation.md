@@ -1,5 +1,7 @@
 # 06 — ProveDown Assumption Validation (Final Gate Task 1)
 
+> **Historical assumption audit.** Customer willingness, pricing, settlement, poller, and bridge statements below are hypotheses or kill criteria, not implemented or validated release claims.
+
 **Date:** 2026-09-02
 **Source thesis:** `startup/07-final-thesis/final-product.md`
 **Method:** Identify 5 most critical assumptions; for each: evidence supports / missing / falsify / cheapest highest-signal test. No manufactured certainty.

@@ -1,8 +1,8 @@
-# LAUNCH READINESS — 2026-09-04 (Studio Next 61997 LIVE, v0.6 migrated)
+# LAUNCH READINESS — 2026-09-12 (Studio Next 61997 LIVE, v0.6 hardened)
 
-**Date:** 2026-09-04
+**Date:** 2026-09-11
 **Thesis:** ProveDown — neutral functional attestation for service-quality agreements (bundle `p95>2000+500 OR error>=1% OR fill<80%`), beginning with API functional SLOs. Track: Agentic Commerce Infrastructure, SLA enforcement via signed logs/decentralized monitoring. Validation gate PASSED with reframing; v0.6 migration audit done; Uptime gap proven.
-**Primary env:** Studio-dev `https://studio-dev.genlayer.com/api` 61997 with `genlayer@0.40.0-rc.3` + `genlayer-js@2.0.0-rc.1` + `genlayer-py==0.19.0rc2` + `genlayer-test==0.30.0rc2` + `genvm-linter==0.11.1rc2`. Bradbury `0x72a6...` is compatibility/reference, not primary until v0.6 promoted there.
+**Primary env:** Studio-dev `https://studio-dev.genlayer.com/api` 61997 with live writes via `genlayer-js@2.0.0-rc.1`, `genlayer-py==0.19.0rc2`, `genlayer-test==0.30.0rc2`, and `genvm-linter==0.11.1rc2`. The Windows-backed `genlayer` CLI 0.39.2 is compatibility-only; Bradbury `0x72a6...` is historical reference, not primary.
 
 ---
 
@@ -12,37 +12,33 @@
 |---|---|---|
 | Research + Gym | ✅ 05-benchmark-alignment (93.7% resolvable, 89.6% direct/alt, 6.3% blocked) + 06-migration audit | `01-genlayer-recon/05-benchmark-alignment.md:1`, `06-consensus-v06-migration.md:1`, Gym Polymarket/Sources fetched |
 | Uptime gap | ✅ 14-section analysis, positioning validated (functional vs factual) | `04-competitive-intelligence/uptime-gap-analysis.md:1` (`uptime_monitor.py` strict_eq is_up, `sla_verifier` linear/tiered/full+10%, `sla_agreement` worst-shortfall) |
-| Contract | ✅ v0.6 `contracts/provedown.py` (`# v0.3.0` + `5jycge...`, `gl.contract.Contract`, JSON-string storage, `run_nondet_default`, fenceless `exec_prompt`, strict evidence guard) `py_compile` OK, `pytest` 9 passed | `bash run-lint.sh` (venv 0.11.1rc2) + `run-tests.sh` 2026-09-04. Lint reachability advisory is false-positive (nested-closure pattern proven on-chain ×9 txs) |
-| Worker | ✅ Live `https://provedown-bundle.contentbounty.workers.dev/bundle` 200×5 presets (healthy/breach/ambig/empty/invalid→breach), hash `b4fc2013...` twice same, no timestamp/random/secret | `curl -s ...?preset=breach` 200 verified 2026-09-04; Wrangler 4.129.0 cwd error diagnosed (autoconfig in `startup/` root per log, fixed comment to mandate `--cwd`/`-c`, no `[assets]` needed) |
-| Env | ✅ `.env.local` present, `check-env.mjs` 4 ✓ (RPC, PRIVATE_KEY present masked, CONTRACT 0x72a6... 42-char, WORKER 200) | `node scripts/check-env.mjs` 2026-09-04 (Bradbury RPC ETIMEDOUT transient, curl live proves reachable) |
+| Contract | ✅ v0.6 `contracts/provedown.py` (`# v0.3.1` + `5jycge...`, `gl.contract.Contract`, JSON-string storage, `run_nondet_default`, fenceless `exec_prompt`, strict evidence/judge guards) `py_compile` OK, `pytest` 13 passed | `bash scripts/run-lint.sh` (two documented nested-reachability advisories) + `bash scripts/run-tests.sh` 2026-09-11; live deployment evidence in `EVIDENCE.md` |
+| Worker | ✅ Live `https://provedown-bundle.contentbounty.workers.dev/bundle` 200×4 presets (healthy/breach/ambig/empty; unknown falls back to breach), hashes stable across repeated reads, no timestamp/random/secret | `bash scripts/check-bundle.sh https://provedown-bundle.contentbounty.workers.dev/bundle` 2026-09-11 |
+| Env | ✅ Required values present and masked; both local public contract variables resolve to the current Studio contract | `node scripts/check-env.mjs` 2026-09-11; its CLI/connectivity probes timed out in this runner, while the independent Worker check passed |
 | Account/toolchain | ✅ Node 22.22.3, `genlayer-js@2.0.0-rc.1` (startup/node_modules), `genvm-linter==0.11.1rc2` + `genlayer-py==0.19.0rc2` + `genlayer-test==0.30.0rc2` (`--no-deps` venv), deployer 0x3211... ~0.099 GEN on studio-dev | `npm list genlayer-js` → 2.0.0-rc.1, `eth_getBalance` `0x162fdf55b87bd39` |
-| Frontend | ✅ Static `frontend/index.html` on esm.sh `2.0.0-rc.1` + `studioDevnet` + contract `0x8faE...` + explorer-studio-dev + live reads + fee-aware write path + state handling | `grep studioDevnet frontend/index.html` non-empty |
-| Studio-dev E2E | ✅ Contract `0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF` (deploy `0x5a34...` FINALIZED FINISHED_WITH_RETURN). Case A `0x5b1c...` NO_BREACH 980 hash `64e6...`; Case B `0xe04d...` BREACH 1000 hash `b4fc20...` reason LATENCY; Case C `0xa218...` INCONCLUSIVE conf 0; REP 60/2/1 | `scripts/attest-studio-dev.mjs`, explorer-studio-dev `/tx/0x...` |
+| Frontend | ✅ Static `frontend/index.html` (live reads + wallet-backed writes) on esm.sh `2.0.0-rc.1` + `studioDevnet` + current contract `0x278C...` + explorer-studio-dev + hash-bound evidence rows | `npm --prefix frontend test`, `npm --prefix frontend run build`, dynamic Chromium smoke |
+| Studio-dev E2E | ✅ Current contract `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1` (deploy `0x6cdb...` FINALIZED FINISHED_WITH_RETURN). Case A `0xa5a1...` NO_BREACH 1000 hash `64e6...`; Case B `0xf566...` BREACH 1000 hash `b4fc20...` reason ERROR_QUALITY; Case C `0x90b9...` INCONCLUSIVE conf 0. Browser registration `0x63f386...` + attestation 4 `0xfe160a...` finalized successfully; current REP 66/3/1. | `EVIDENCE.md`, explorer-studio-dev `/tx/0x...` |
 | Studio-dev | ✅ RPC live (GET 405, POST `gen_chainId` → `Method not found` JSON-RPC proves responsive) | `curl -s https://studio-dev.genlayer.com/api` 2026-09-04 |
 | Bradbury compat | ✅ Prior real deployment `0x72a67E0cF59bCb526AEF0D81391e399C56703590` tx `0x89f1...` ACCEPTED, healthy register `0x0947...`, healthy att `0xed5a...` att 1 breach false 1000 hash `64e6...` resolved | Explorer `https://explorer-bradbury.genlayer.com/address/0x72a6...`, `get_attestation 1` JSON in `memory.md:Checkpoint 4` |
 | Fees | ✅ Measured on studio-dev: deposit `feeValue=100000000000010352` (~0.1 GEN), deploy consumed `78628000000000` (~7.9e-5 GEN), attest consumed `[127878000000000]` (~1.3e-4 GEN), refunded majority at FINALIZED. Fiat UNKNOWN (GEN testnet price unknown). Old `$0.04–0.08` retired | Receipt `fee_accounting` in `06-consensus-v06-migration.md:9`; economics in GEN: ~1e-4 consumed/verification |
 
-## P0 blockers (must fix for studio-dev E2E)
+## Remaining release gates
 
-| ID | Missing | Why required | Exact manual action (no secret in chat) | Expected result (masked) |
-|---|---|---|---|---|
-| P0-M1 | RC toolchain not installed | Fee-aware deploy/write requires coherent RC set; 0.39.2/1.1.8 lack `FeesDistribution`, `studioDevnet`, `isSuccessful`, `appealTransaction` | `npm install -g genlayer@0.40.0-rc.3` (or `npm i -D genlayer-js@2.0.0-rc.1`), `pip install genlayer-py==0.19.0rc2 genlayer-test==0.30.0rc2 genvm-linter==0.11.1rc2` — pin exact RC, do NOT use `latest` | `genlayer --version` → `0.40.0-rc.3`, `npm list genlayer-js` → `2.0.0-rc.1`, `pip show genlayer-py` → `0.19.0rc2` |
-| P0-M2 | No `fee-profile.json` | Every v0.6 deploy/write must carry profile-derived `distribution` + live `feeValue`; hardcoded fees cancel at activation if price rose | `python3 -m pytest tests/ --fee-profile frontend/fee-profile.json -v -s --rpc-url https://studio-dev.genlayer.com/api` (cover deploy, cheap `register_sla`, expensive `request_attestation`, failure paths), commit `fee-profile.json` | `frontend/fee-profile.json` exists with `deploy` + `methods.register_sla`/`request_attestation` entries (max-observed + headroom 1.25) |
-| P0-M3 | Scripts use old SDK (no fees, wrong chain, ACCEPTED-only) | Studio-dev rejects fee-less writes; `studionet` object pointed at preview RPC mismatches chain identity + consensus address | Update `scripts/deploy-with-js.mjs`, `attest_test.mjs`, `verify-live.mjs`, `simple_test.mjs`, `frontend/index.html` to `import {studioDevnet} from 'genlayer-js/chains'`, `estimateTransactionFees({... appealRounds, rotations})`, `fees:{distribution, feeValue}`, `isSuccessful(receipt)` (ACCEPTED/FINALIZED + FINISHED_WITH_RETURN) per `06-consensus-v06-migration.md:5` | `grep -r studioDevnet scripts/ frontend/` non-empty, `grep -r estimateTransactionFees` non-empty, no bare `deployContract({code,args:[]})` |
-| P0-M4 | Studio-dev deploy not yet proven | Need one fee-bearing deploy + write + read + nondet + FINALIZED to prove lifecycle | `export GENLAYER_PRIVATE_KEY` (variable name only, value in `.env.local`, never print) → `node scripts/deploy-with-js.mjs` with `GENLAYER_NETWORK=studio-dev` → `register_sla demo-healthy` → `request_attestation` → `get_attestation` + `get_reputation` + Explorer fee panel (deposit vs consumed vs refund) | Contract `0x...` 42-char on studio-dev 61997, tx `0x...` `isSuccessful` true, attestation `breach false` hash `64e6...`-like, fee panel shows refund |
-| P0-W1 | Wrangler `deploy` cwd error (already diagnosed, Worker live) | `npx wrangler deploy` from `startup/` root triggers autoconfig static detection → `Could not detect static files` | Run with `workdir=/home/unify/startup/hosting/bundle-worker npx wrangler deploy` OR `npx wrangler deploy -c hosting/bundle-worker/wrangler.toml` OR `npx wrangler deploy --cwd hosting/bundle-worker`. Do NOT add `[assets]`. Config already correct (`main="worker.js"`, no assets). No redeploy needed while `curl .../bundle?preset=breach` 200 + hash stable | `curl -s .../bundle?preset=breach` 200, `check-bundle.sh` 2/2 stable (already PASS 2026-09-04) |
+| Gate | Current state | Required action |
+|---|---|---|
+| Browser wallet E2E | ✅ Browser registration + attestation completed with finalized receipts and chain readbacks | Preserve the two transaction links in `EVIDENCE.md`; repeat only if Studio resets |
+| Submission package | Repository remains private and the final public package has not been scanned | Curate the public app/package, verify every direct link and receipt, run the secret scan, then publish only with explicit approval |
+| Evidence provenance | Worker returns deterministic synthesized fixtures | Keep the fixture and mocked Base relay labels visible; do not describe them as production monitoring or settlement |
+| Full linter | Two nested nondeterministic reachability advisories remain | Retain the documented exception with live deployment evidence, or resolve against a newer official linter |
 
 **Security note:** Never print `GENLAYER_PRIVATE_KEY`, `BASE_SEPOLIA_PRIVATE_KEY`, `OPENROUTER_API_KEY`. Use `scripts/check-env.mjs` (`present/missing` only) + `grep ... | sed 's/=.*/=***/'`. `.env.local` gitignored (`git check-ignore -v .env.local` → `.gitignore:3`).
 
-## P1 issues (should fix before demo)
+## Bounded limitations
 
-- Frontend `INCONCLUSIVE`/`no_consensus` amber + `UserError` toast (contract returns both, UI must branch).
-- Malformed bundle guard before `exec_prompt` (`if not isinstance(maybe,dict) or "p95" not in maybe: return inconclusive`).
-- 403 HTML via `web.render` not detected (use `web.get` status_code post-hackathon; Worker always 200 for MVP).
-- Same private key for both chains (rotate Base via `cast wallet new`, testnet-only comment).
-- `genvm-lint` fallback → install `0.11.1rc2` and run `genvm-lint check contracts/provedown.py --json`.
-- `appeal_attestation` missing vs readiness → keep mocked, use `appealTransaction`/`getAppealCharge` only if implemented (do NOT use direct `submitAppeal`).
-- `py-genlayer:1jb45aa...` pragma verify via 0.11.1rc2; update only if linter says so.
+- Studio timestamps are empty in current reads; use the Explorer transaction time.
+- `appeal_attestation` and Base settlement are not implemented; protocol appeal support is not a ProveDown feature claim.
+- The Worker is startup-operated fixture evidence; a real poller and signed/TEE provenance are post-MVP.
+- Public registration and repeated attestation writes have no owner/rate policy yet; assess after the narrow wedge is stable.
 
 ## P2 deferred (do NOT build)
 
@@ -50,7 +46,7 @@ Continuous poller, Merkle batch, USDC escrow `emit_transfer`, DAO/token, multi-c
 
 ## Benchmark alignment (Gym + track)
 
-Gym 93.7% coverage (611k direct 46% + 624k alt 47% + 83k blocked 6.3%: paywall 5k, hard blocked 56k), Sources 182 (121 direct 66% + 42 alt 23% + 19 blocked 10%). Rewards source URL + public host + supported family. ProveDown bundle is direct stable JSON 116 chars 1/8 (Gym direct), not blocked. Remaining gap is accuracy backtest (open) — our breach/no_breach 3/3 stable analog needs studio-dev per-preset backtest. Mapping 6 caps in `05-benchmark-alignment.md:Benchmark-to-Product` all High except subjective Medium. Outside strongest: arbitrary paywalled status pages — correctly avoided.
+Gym 93.7% coverage (611k direct 46% + 624k alt 47% + 83k blocked 6.3%: paywall 5k, hard blocked 56k), Sources 182 (121 direct 66% + 42 alt 23% + 19 blocked 10%). Rewards source URL + public host + supported family. ProveDown bundle is direct stable JSON (132–155 byte presets) with 1/8-style deterministic hashing, not blocked. Remaining gap is accuracy backtest (open) — stable analogs and three Studio cases are not a per-SLO accuracy study. Mapping 6 caps in `05-benchmark-alignment.md:Benchmark-to-Product` all High except subjective Medium. Outside strongest: arbitrary paywalled status pages — correctly avoided.
 
 Track fit: SLA enforcement via signed logs/decentralized monitoring. Decisive difference vs Uptime: 200-but-empty still BREACH (functional quality), evidence hash + confidence + breach reason + reputation + amber splits. See `uptime-gap-analysis.md:14` + `hackathon-alignment.md:2`.
 
@@ -60,67 +56,33 @@ Reuse BridgeSender→Base (AgentEscrow), Bayesian reputation (ArcSLA, already in
 
 ## Feature synthesis (CORE / REINFORCING / 90-DAY / LONG-TERM / REJECT)
 
-Core 7 (functional jury, bundle hash, breach-only consensus, attestation+reputation, INCONCLUSIVE/UNDETERMINED, mock bridge, sanitize) already in 362-line contract + worker + 5 tests. Reinforcing (automation, policy, observability already in verdict card, dispute via appealTransaction) earns place only if same workflow. 90-DAY (temporal recheck, Merkle batch, reputation marketplace, auditability 12-mo, procurement supplier attestation). LONG-TERM (multi-party settlement, security verification, cross-chain real, agent delegation, payments x402, guards). REJECT (betting, stigmergy, carbon, health). See `feature-synthesis.md:Addendum 2026-09-04`. No kitchen-sink.
+Core 7 (functional jury, bundle hash, breach-only consensus, attestation+reputation, INCONCLUSIVE/UNDETERMINED, mocked downstream boundary, sanitize) are present in the contract + Worker + tests. Reinforcing (automation, policy, observability) earns a place only if it strengthens the same workflow. 90-DAY (temporal recheck, Merkle batch, reputation marketplace, auditability 12-mo, procurement supplier attestation). LONG-TERM (multi-party settlement, security verification, cross-chain real, agent delegation, payments x402, guards). REJECT (betting, stigmergy, carbon, health). See `feature-synthesis.md:Addendum 2026-09-04`. No kitchen-sink.
 
 ## Final MVP boundary
 
-Single functional SLO (P50 500 P95 2000+500 error 1% fill 80% match 85%) via bundle; one jury `1×web.render bundle + 1×exec_prompt` breach-only; one attestation `evidence_hash p50/p95` + explorer; one mock BridgeProof arrow; one reputation TreeMap; one frontend flow `register→attest→BREACH/NO_BREACH/UNDETERMINED + hash + explorer + reputation + sandbox`; presets healthy/breach/ambig/empty; no poller/Merkle/USDC/ENS/residential/TLS. Fees via profile + live estimate, `isSuccessful` required, FINALIZED for fee panel.
+Single functional SLO (P50 500 P95 2000+500 error 1% fill 80% match 85%) via bundle; one jury `1×web.render bundle + 1×exec_prompt` with breach-only consensus; one attestation `evidence_hash` + observed metrics + Explorer readback; one labeled mock Relay → Base boundary; one reputation TreeMap; one frontend flow `register→attest→BREACH/NO_BREACH/INCONCLUSIVE/NO_CONSENSUS + hash + explorer + reputation + sandbox`; presets healthy/breach/ambig/empty; no poller/Merkle/USDC/ENS/residential/TLS. Fees via profile + live estimate, `isSuccessful` required, FINALIZED for fee panel.
 
-## What must be built today
-
-1. P0-M1: install coherent RC set + lock versions.
-2. P0-M2: generate + commit `fee-profile.json` on studio-dev.
-3. P0-M3: migrate 5 scripts + frontend to `studioDevnet` + fees + `isSuccessful`.
-4. P0-M4: studio-dev deploy → register 2 SLAs → attest healthy/breach → `isSuccessful` + FINALIZED + fee panel + `get_attestation`/`get_reputation`.
-5. P1 frontend amber/toast (to avoid demo failure).
-
-## What must NOT be built today
+## What must NOT be built before the wedge is proven
 
 Per P2 + Gym blocked 6.3% (no paywall/login/captcha). No generic uptime ping, no deterministic marketplace rebuild, no token/DAO.
 
-## Exact manual actions required (no secret in chat)
-
-| # | Variable / Where | Action | Expected result (masked) |
-|---|---|---|---|
-| M1 | `GENLAYER_PRIVATE_KEY` in `startup/.env.local` | Ensure present for `deploy-with-js.mjs` via `export GENLAYER_PRIVATE_KEY=$(grep ...)`; fund studio-dev address via studio-dev faucet (URL in release notes / `testnet-faucet` equivalent for 61997) | `node scripts/check-env.mjs` → `GENLAYER_PRIVATE_KEY: (present, not shown)`, `genlayer account show` (after `0.40.0-rc.3` install) balance >0 |
-| M2 | `NEXT_PUBLIC_BUNDLE_WORKER_URL` in `startup/.env.local` | Already `https://provedown-bundle.contentbounty.workers.dev/bundle` live 200 — no action unless redeploy needed; if redeploy: `workdir=hosting/bundle-worker npx wrangler deploy` (NOT from root) | `bash scripts/check-bundle.sh` 2/2 stable `b4fc2013...` (already PASS) |
-| M3 | `CLOUDFLARE_API_TOKEN` (if wrangler login expires) | `npx wrangler login` (browser OAuth, already complete per user) — only if `wrangler whoami` fails | `npx wrangler whoami` shows account `db5a77...` |
-
-## Exact commands for next execution step
-
-```bash
-# verify current (no secrets printed)
-node scripts/check-env.mjs
-bash scripts/run-tests.sh  # 5 passed
-bash scripts/run-lint.sh   # py_compile OK (until 0.11.1rc2)
-curl -s "https://provedown-bundle.contentbounty.workers.dev/bundle?preset=breach" | head -c 200
-curl -s -X POST https://studio-dev.genlayer.com/api -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"gen_chainId","params":[]}' | head -c 200
-
-# migrate (after M1):
-npm install -g genlayer@0.40.0-rc.3
-npm install -D genlayer-js@2.0.0-rc.1
-pip install genlayer-py==0.19.0rc2 genlayer-test==0.30.0rc2 genvm-linter==0.11.1rc2
-python3 -m pytest tests/ --fee-profile frontend/fee-profile.json -v -s --rpc-url https://studio-dev.genlayer.com/api
-export GENLAYER_PRIVATE_KEY=$(grep GENLAYER_PRIVATE_KEY .env.local | cut -d= -f2 | tr -d '\r\n ')
-GENLAYER_NETWORK=studio-dev node scripts/deploy-with-js.mjs  # after P0-M3 migration
-```
-
 ## Definition of done
 
-- [ ] P0-M1–M4 done (RC set + fee-profile + studio-dev deploy with fees + `isSuccessful` FINALIZED + fee panel)
-- [ ] `verify-post-deploy.sh`-equivalent on studio-dev → 2 txs `isSuccessful` with `/tx/0x...` links, `get_attestation` BREACH (4800) and NO_BREACH (1600), `get_reputation` 66→60/75
-- [ ] Frontend consumes real studio-dev result (no mocked verdict as live, bridge arrow labeled mock)
-- [ ] Demo answers “Why not just Uptime?” in 60s (200-but-empty→BREACH + hash + reputation + amber splits)
-- [ ] `check-env.mjs` shows studio-dev 61997 + contract 42-char + worker 200 + fee-profile exists
+- [x] RC fee-aware Studio deployment, finalized receipts, on-chain readback, and Worker hash verification
+- [x] Frontend consumes real Studio results; mocked relay and fixture boundaries are labeled
+- [x] Demo answers “Why not just Uptime?” with 200-but-functional-breach, hash, reputation, and amber states
+- [x] Masked environment and release checks pass
+- [x] Injected-wallet browser smoke
+- [ ] Public submission package and final secret/link audit
 
 ---
 
 ## Hard decision
 
-### `GREEN — BUILD NOW (hackathon-ready on Studio Next, P1s tracked)`
+### `READY FOR SUBMISSION PACKAGING`
 
-**Why GREEN:** Full sequence proven on studio-dev 61997 with v0.6 fee flow: Worker live 200×5 presets → contract `0xeE85...` deployed with fees (FINALIZED FINISHED_WITH_RETURN isSuccessful=true) → Case A NO_BREACH 980 + Case B BREACH 1000 LATENCY (the 200-but-empty-fill differentiator vs Uptime) + Case C INCONCLUSIVE + reputation 60/2/1 → evidence hashes + explorer-studio-dev txs → frontend reads live via v2 RC. Fee economics measured in GEN (deposit ~0.1, consumed ~1e-4/verification, refunded majority). No secret leaked, no kitchen-sink, Bradbury kept as compatibility evidence only.
+**Why controlled demo:** The full contract/Worker/readback sequence is proven on Studio Next 61997 with finalized receipts: Case A NO_BREACH, Case B BREACH (the 200-but-empty-fill differentiator vs Uptime), Case C INCONCLUSIVE, evidence hashes, and reputation. The static frontend reads those finalized records and contains the real wallet write path. Fee economics are measured in GEN, not fiat. No secret leaked, no kitchen-sink, and Bradbury is compatibility evidence only.
 
-**P1s tracked (do NOT block demo):** `timestamp` empty (`message_raw["datetime"]` absent on studio-dev; `gl.block.timestamp` fallback added but still empty in these txs — tx time + evidence hash suffice); `appeal_attestation` still mocked (use `appealTransaction`/`getAppealCharge` if implemented); `genvm-lint check` reachability warning is false-positive (proven on-chain); studio-dev may reset (re-run `attest-studio-dev.mjs`); CLI remains 0.39.2 (deploys via JS per KEYCHAIN-WLS2, unaffected); testnet key reused for Base (testnet only).
+**Remaining release gates:** The final curated public-package, direct-link, and masked-secret scan remains; the repository is still private and uncommitted. The dynamic browser smoke and CDP accessibility-tree pass are complete. `timestamp` is empty on Studio reads (use Explorer transaction time); the Worker is synthesized fixture evidence; the Base relay is mocked; and two nested `genvm-lint` reachability advisories remain documented. The contract has no application-level appeal method, so protocol `appealTransaction` must not be presented as a ProveDown feature.
 
 Do NOT reopen funnel, do NOT add P2, do NOT search random repos for credentials. Demo the studio-dev E2E now.

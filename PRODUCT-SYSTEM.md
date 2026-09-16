@@ -1,4 +1,4 @@
-# PRODUCT-SYSTEM.md — ProveDown Product Layers (2026-09-05)
+# PRODUCT-SYSTEM.md — ProveDown Product Layers (2026-09-11)
 
 Loop: **Agreement → Evidence → Adjudication → Attestation → Downstream action.** Every feature must reinforce this loop or be deferred/rejected.
 
@@ -28,17 +28,17 @@ Content: single question — "did this bundle breach this SLO?" — answered by 
 
 State: CORE NOW (proven: `run_nondet_default`, `validator_fn` breach-only + unanimous-refusal rule, 3/3 FINALIZED).
 
-Why GenLayer is load-bearing (FACT per docs.genlayer.com + genlayer.com): Optimistic Democracy (random validators, diverse undisclosed models = greyboxing), Independent web + LLM calls inside contract, bond/slash + appeal escalation. No other component provides neutrality both sides accept.
+Why GenLayer is load-bearing (FACT per docs.genlayer.com + genlayer.com): Optimistic Democracy, independent web + LLM calls inside the contract, and protocol-level finality/appeal mechanics. The current ProveDown application does not implement its own appeal method or bond/slash policy; those remain future work. The live slice demonstrates neutral consensus, not complete economic enforcement.
 
 ## Layer 4 — Attestation: what verifiable result is produced?
 
-Content: `Attestation{attestation_id, sla_id, requester, timestamp, breach, reason, confidence, evidence_hash, evidence_summary, p50/p95, status}`. Explorer-verifiable (`/tx/0x...` FINALIZED + FINISHED_WITH_RETURN + isSuccessful). `evidence_hash == sha256(bundle the jury saw)` — independently re-checkable.
+Content: `Attestation{attestation_id, sla_id, requester, timestamp, breach, reason, confidence, evidence_hash, evidence_summary, p50/p95, status}`. Explorer-verifiable (`/tx/0x...` FINALIZED + FINISHED_WITH_RETURN + isSuccessful). `evidence_hash == sha256(sanitized-and-truncated bundle bytes)`; the prompt judges normalized numeric metrics, so do not describe this as an exact raw-provider snapshot.
 
-State: CORE NOW (proven A/B/C cases). Missing-bit: fee panel display (deposit vs consumed vs refund) is measured but not yet surfaced in UI — HCI P0-adjacent, cheap.
+State: CORE NOW (proven A/B/C cases plus browser attestation 4). The frontend now surfaces deposit/consumed/refund fields when the finalized receipt returns them and shows an explicit unavailable state otherwise.
 
 ## Layer 5 — Reputation: how does history affect trust?
 
-Content: Bayesian `score = (good+2)/(total+3)*100` per api_url, resolved attestations only (inconclusive excluded FACT). `get_reputation` view. Score 60/2/1 live.
+Content: Bayesian `score = (good+2)/(total+3)*100` per api_url, resolved attestations only (inconclusive excluded FACT). `get_reputation` view. Current live read is 66/3/1 after browser attestation 4; the canonical three-case snapshot was 60/2/1.
 
 State: CORE NOW (storage + update proven) but THIN (2 resolved samples). Value unlocks with volume: routing ("pick fill≥80% provider"), trend ("down after breach"), history list. No formula in UI (design.md §21).
 
@@ -72,8 +72,8 @@ State: PLATFORM VISION (V3). Only exception: keep `get_*` views stable and docum
 |---|---|---|---|
 | 1 Agreement | CORE NOW (proven) | presets, tolerance field, versioning | machine-readable SLA standard |
 | 2 Evidence | CORE NOW (synthesized, labeled) | real poller, hourly bundles | signed-log + probe hybrid |
-| 3 Adjudication | CORE NOW (proven) | appeal path real (`appealTransaction`) | multi-round / high-value fast finality |
-| 4 Attestation | CORE NOW (proven) | fee panel in UI, claim packet | cross-chain attestation standard |
+| 3 Adjudication | CORE NOW (proven) | surface protocol appeal status when the app supports it | multi-round / high-value fast finality |
+| 4 Attestation | CORE NOW (proven, including receipt fee panel) | claim packet | cross-chain attestation standard |
 | 5 Reputation | CORE NOW (thin) | query API, history, trend | reputation marketplace / routing |
 | 6 Automation | — | poller→attest, webhooks, failover | autonomous failover / procurement |
 | 7 Settlement | MOCK (labeled) | VerdictRegistry read API, claim helper | real relay, escrow/insurance integrations |

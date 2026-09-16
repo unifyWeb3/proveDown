@@ -1,5 +1,7 @@
 # 03 — Security Models
 
+> **Historical design research.** Validator stake, VRF, appeal, bond/slash, private holdout, and settlement mitigations below are hypotheses or future controls unless current evidence is explicitly cited. They are not shipped ProveDown features.
+
 ## Common Attacks (per §21 + SoK [S33])
 
 | Attack | Method | Impact | Detection | Mitigation | Residual |

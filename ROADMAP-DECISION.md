@@ -1,8 +1,10 @@
 # ROADMAP-DECISION.md — Final Productization Decision (2026-09-05)
 
+> **Historical decision record with current-state addendum.** The original decision remains useful for scope; current deployment facts and receipts are authoritative in `EVIDENCE.md`.
+
 ## What ProveDown is today (FACT)
 
-Neutral functional-attestation sidecar on Studio Next 61997: buyer registers API+SLO → jury fetches hash-stable bundle → `exec_prompt` judges breach vs SLO with tolerance → consensus on breach bool → attestation `{breach, reason, confidence, evidence_hash, p50/p95}` + Bayesian reputation, all FINALIZED with explorer proof. 3 cases live (NO_BREACH 980 / BREACH 1000 / INCONCLUSIVE 0), `pytest` 9 passed, Worker live, frontend reads live, bridge mocked and labeled.
+Neutral functional-attestation sidecar on Studio Next 61997: buyer registers API+SLO → jury fetches hash-stable bundle → `exec_prompt` judges breach vs SLO with tolerance → consensus on breach bool → attestation `{breach, reason, confidence, evidence_hash, p50/p95}` + Bayesian reputation, all FINALIZED with explorer proof. The canonical three-case run is retained as history; the current deployment also has browser attestation 4 (NO_BREACH), 13 analog tests, Worker live, frontend reads live, and a mocked/labeled relay.
 
 ## What it must become during this hackathon (Sep 5–17)
 
@@ -56,7 +58,7 @@ If the loop compounds (verification → trust → volume → reputation → rout
 - Product or feature pile? PRODUCT — layers 1–5 shipped as a loop; 6–8 gated consumers, not bundled features.
 - First customer obvious? YES — pipeline operator buying API capacity (named, budgeted, reachable).
 - Willingness to pay plausible? PLAUSIBLE, UNPROVEN — $99 vs $5k-claim ROI + failover value; kill criterion (3/5 interviews) is the falsification test.
-- GenLayer load-bearing? YES — neutrality + independent fetches + bond/appeal; removal/replace tests PASS (`02-genlayer-necessity-tests.md`).
+- GenLayer load-bearing? YES — neutrality, independent fetches, and protocol-level finality/appeal mechanics; ProveDown's application-level appeal, bond, and slashing remain deferred. Removal/replace tests PASS (`02-genlayer-necessity-tests.md`).
 - Survives without hackathon? YES as V1.5 tool (poller + presets + webhooks serve real pipelines); hackathon accelerates trust proof, not existence.
 - Real company? PATH EXISTS — 100 growth-tier customers on batched economics; platform only on retention evidence.
 - Copyable MVP? YES — acknowledge; advantage converts to history + integrations (moat section).

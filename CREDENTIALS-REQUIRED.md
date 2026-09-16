@@ -1,5 +1,7 @@
 # CREDENTIALS REQUIRED — ProveDown MVP
 
+> **Historical / superseded setup notes.** This document describes the earlier Bradbury-first credential path. The current demonstrated target is Studio Next chain 61997; use `EVIDENCE.md`, `scripts/check-env.mjs`, and `research/RELEASE-INVENTORY.md` for current values and release checks. No credential values are contained here.
+
 **Rule:** Never commit secrets. Never print private keys. Use `.env.local` (gitignored). Verify existence without exposing value (`scripts/check-env.mjs` does this).
 
 All credentials below are **required where noted**. Where a value is `Public — no secret`, you still configure the URL.

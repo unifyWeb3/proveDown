@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# HISTORICAL / COMPATIBILITY ONLY: this verifier targets the old Bradbury path
+# and ACCEPTED-era flow. The current release uses Studio Next receipts/readbacks.
 set -e
 CONTRACT=${1:-$NEXT_PUBLIC_PROVEDOWN_CONTRACT_ADDRESS}
 if [ -z "$CONTRACT" ] || [[ "$CONTRACT" == *"0x..."* ]]; then

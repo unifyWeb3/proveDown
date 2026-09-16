@@ -4,6 +4,8 @@ echo "=== lint: genvm-lint check contracts/provedown.py ==="
 # Try genlayer lint (venv RC first) if available, else python -m py_compile fallback
 if [ -x /tmp/provedown-rc-venv/bin/genvm-lint ]; then
   /tmp/provedown-rc-venv/bin/genvm-lint lint contracts/provedown.py
+elif [ -x /tmp/provedown-linter/bin/genvm-lint ]; then
+  PYTHONPATH=/tmp/provedown-linter /tmp/provedown-linter/bin/genvm-lint lint contracts/provedown.py
 elif command -v genvm-lint >/dev/null 2>&1; then
   genvm-lint check contracts/provedown.py --json || genvm-lint check contracts/provedown.py
 else

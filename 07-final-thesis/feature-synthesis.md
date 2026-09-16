@@ -1,5 +1,7 @@
 # Feature Synthesis — Primitives Pool → ProveDown
 
+> **Historical feature-selection record.** Only the narrow functional-SLO attestation path described in `CORE_NOW.md` is implemented. Appeals, polling, settlement, cross-chain, procurement, and other extensions below remain deferred unless explicitly marked current elsewhere.
+
 **Date:** 2026-09-03
 **Rule:** Combine strongest primitives from multiple researched ideas *around ONE customer/problem/workflow* (pipeline owner, functional SLO breach, neutral attestation). Do not bolt features because they sound impressive.
 

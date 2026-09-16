@@ -1,11 +1,11 @@
-# PRODUCT-INTERFACE-CONTRACT.md — Backend/UI Interface Contract (2026-09-05)
+# PRODUCT-INTERFACE-CONTRACT.md — Backend/UI Interface Contract (2026-09-11)
 
-**Purpose:** exact shapes the frontend (HCI agent) consumes. No guessing. Verified against live Studio Next contract `0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF`, chain 61997, `genlayer-js@2.0.0-rc.1`. Re-verified 2026-09-05: attestations 4/5/6 fresh FINALIZED.
+**Purpose:** exact shapes the frontend consumes. No guessing. Verified against live Studio Next contract `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`, chain 61997, `genlayer-js@2.0.0-rc.1`. Re-verified 2026-09-11: canonical attestations 1/2/3 and browser attestation 4 are finalized.
 
 ## Connection
 
 - Chain: `studioDevnet` from `genlayer-js/chains`, id **61997**, RPC `https://studio-dev.genlayer.com/api`.
-- Contract: `0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF` (env `NEXT_PUBLIC_PROVEDOWN_CONTRACT_STUDIO_DEV`).
+- Contract: `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1` (env `NEXT_PUBLIC_PROVEDOWN_CONTRACT_STUDIO_DEV`).
 - Explorer base: `https://explorer-studio-dev.genlayer.com` — address `/address/0x…`, tx `/tx/0x…`.
 - Reads: `client.readContract({ address, functionName, args })`. Retry on transient `fetch failed` (observed 2026-09-05: `sim_getFeeConfig` flake, succeeds on retry).
 - Writes: estimate first — `client.estimateTransactionFees({ preset: 'standard' })` → `client.writeContract({ address, functionName, args, fees: { distribution: est.distribution, feeValue: est.feeValue } })` → `client.waitForTransactionReceipt({ hash, waitUntil: 'finalized', retries: 60+ })` → gate on `isSuccessful(receipt)` (ACCEPTED alone is NOT final — show pending tracker).
@@ -16,20 +16,20 @@
 ### `get_attestation(attestation_id: str) -> Attestation`
 ```json
 {
-  "attestation_id": "5", "sla_id": "demo-breach",
+  "attestation_id": "2", "sla_id": "demo-breach",
   "requester": "0x3211…", "timestamp": "",
-  "breach": true, "reason": "LATENCY", "confidence": 1000,
+  "breach": true, "reason": "ERROR_QUALITY", "confidence": 1000,
   "evidence_hash": "b4fc2013862e316e…(64 hex)",
   "evidence_summary": "<bundle_url>: 155 chars sha256:b4fc2013862e316e p95=4800",
   "p50": "1561", "p95": "4800",
   "status": "resolved | inconclusive | no_consensus"
 }
 ```
-Notes: `timestamp` is `""` on studio-dev (known P1 — use tx time from explorer). `p50/p95` are strings. Unknown id → **throws** (`[EXPECTED] attestation not found` surfaced as RPC `execution failed`) — catch, do not treat as null. Absent ids probe: 4/5/6 exist; 7+ absent as of 2026-09-05.
+Notes: `timestamp` is `""` on studio-dev (known P1 — use tx time from explorer). `p50/p95` are strings. Unknown id → **throws** (`[EXPECTED] attestation not found` surfaced as RPC `execution failed`) — catch, do not treat as null. Current deployment contains canonical ids 1/2/3 plus browser-smoke attestation 4; later ids are absent until another attestation is written.
 
 ### `get_reputation(api_url: str) -> Reputation`
 ```json
-{ "api_url": "https://example.com", "score": 57, "total": 4, "breaches": 2 }
+{ "api_url": "https://example.com", "score": 66, "total": 3, "breaches": 1 }
 ```
 Notes: never throws (unknown API → `{score: 66, total: 0, breaches: 0}`). Formula: `score = round((total-breaches+2)/(total+3)*100)` — do NOT show formula in UI (design.md §21). Only `resolved` attestations count (inconclusive excluded — verified: attestation 6 changed nothing except id counter).
 

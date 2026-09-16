@@ -5,6 +5,8 @@
 **Date:** 2026-09-02 (compressed sprint)
 **Workspace:** `/home/unify/startup` — full evidence in `01-06` + `SOURCES.md`
 
+> **Historical pre-build thesis.** This document records assumptions and proposed scope from 2026-09-02. It is not current implementation evidence. In particular, bond/slash, application appeals, cross-chain settlement, live polling, exact raw-byte binding, and the older cost estimates are not shipped in the current MVP. Use `research/CODEX_FULL_AUDIT.md`, `CLAIM-PACKET.md`, and `DEMO.md` for current claims.
+
 ---
 
 ## 1. Executive Summary

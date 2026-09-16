@@ -4,6 +4,8 @@
 **Sources:** `https://docs.genlayer.com/developers/consensus-v06-migration` (fetched 2026-09-04, last_updated 2026-09-03), `/developers/decentralized-applications/fees-and-transaction-kit`, `/fee-profiling-and-estimation`, `/transaction-kit-integration`, `startup/package.json (genlayer-js 1.1.8)`, `genlayer --version 0.39.2`, `pip show genlayer-py (not found)`, `npm view genlayer-js (1.1.8 → 2.0.0-rc.1 available)`
 **Rule:** Audit before modifying product logic. Migrate only what is necessary.
 
+> **Historical migration record.** This document captures the v0.6 migration investigation and older assumptions. The installed/live environment and current lifecycle evidence are maintained in `research/current-genlayer-environment.md`; do not treat old contract addresses or planned appeal/fee behavior here as current ProveDown features.
+
 ## 1. Old vs New Versions
 
 | Component | Old (installed) | New (official v0.6 RC family) | Action |

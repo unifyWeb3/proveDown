@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# HISTORICAL / COMPATIBILITY ONLY: this Bradbury deployment helper is not part of
+# the current Studio Next 61997 release path. Do not run it for the current demo.
 set -e
 echo "=== Bradbury deployment (persistent, for hackathon demo) ==="
 echo "Pre-req: GENLAYER_PRIVATE_KEY funded via https://testnet-faucet.genlayer.foundation"

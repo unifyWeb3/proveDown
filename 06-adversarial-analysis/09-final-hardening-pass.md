@@ -2,6 +2,8 @@
 
 **Scope:** Attack the v0.6 implementation once more. Verdict per issue: PASS (verified), FIX (changed now), DOCUMENT (known limitation). No hidden risk.
 
+> **Historical / superseded baseline.** The addresses, test counts, and conclusions below refer to an earlier deployment. Use `research/CODEX_FULL_AUDIT.md`, `research/current-genlayer-environment.md`, and `research/65-final-release-blockers.md` for the current contract and release status.
+
 **Base evidence:** contract `0xeE85DFbB4C419dD27D730D105EEeEA213DD7c0FF` (deploy `0x5a34...` FINALIZED FINISHED_WITH_RETURN), Case A `0x5b1c...` NO_BREACH 980, Case B `0xe04d...` BREACH 1000 LATENCY, Case C `0xa218...` INCONCLUSIVE conf 0, `pytest` 8 passed (now 9 with guard tests), `genvm-lint lint` reachability advisory is false-positive (proven on-chain).
 
 | # | Attack | Result | Evidence / Fix |

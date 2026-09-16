@@ -3,6 +3,8 @@
 **Date:** 2026-09-02
 **Reference:** `CREDENTIALS-REQUIRED.md`, `07-final-thesis/implementation-readiness.md`, validation `06-adversarial-analysis/05-08`
 
+> **Historical / superseded checklist.** This is the pre-deployment Bradbury-first checklist from 2026-09-02. Do not use its pending tasks or old chain references as current release instructions; use `EVIDENCE.md`, `LAUNCH-READINESS.md`, and `research/RELEASE-INVENTORY.md` for the current Studio Next deployment.
+
 ---
 
 ## 1. What is Already Working? (self-checked 2026-09-02)

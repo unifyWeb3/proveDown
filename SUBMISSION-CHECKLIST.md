@@ -10,7 +10,7 @@ ProveDown is a consensus-backed attestation sidecar for agent pipelines: a pipel
 ## Links
 
 - Repo: `https://github.com/unifyWeb3/proveDown` (PRIVATE until submission/publication point — do NOT make public early)
-- Demo: public `https://frontend-k4z1tmaco-oxunify.vercel.app/` (static; live reads studio-dev 61997; verified 2026-09-16) + local `frontend/index.html` + `DEMO.md` 60–90s script
+- Demo: public `https://provedowngen.vercel.app/` (static; live reads studio-dev 61997; verified 2026-09-16) + local `frontend/index.html` + `DEMO.md` 60–90s script
 - Deployed hardened contract (Studio Next 61997): `0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`
 - Explorer: `https://explorer-studio-dev.genlayer.com/address/0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1`
 - Worker: `https://provedown-bundle.contentbounty.workers.dev/bundle`

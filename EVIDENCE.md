@@ -2,6 +2,8 @@
 
 No secrets. All values verifiable on `https://explorer-studio-dev.genlayer.com` (chain 61997, Consensus v0.6 RC).
 
+**Public frontend (verified 2026-09-16):** `https://frontend-k4z1tmaco-oxunify.vercel.app/` — static `frontend/dist` build of release commit `d90ac57`; routes `/`, `/verify`, `/proof` (+ `?contract=0x278C…7aC1&cases=4,1,2` variants) return HTTP 200 with live Studio reads, unknown paths 404. Headless verification: attestations 1/2/4 hashes, reputation, Explorer links, observed-vs-limit rows, and REAL/SYNTHETIC/MOCK disclosures all render; zero console errors; 390/768/1280 viewports pass.
+
 **Current deployment source of truth:** this file. Older addresses and receipts are retained only in explicitly labeled historical sections.
 
 ## Deployment

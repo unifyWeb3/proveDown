@@ -16,7 +16,7 @@ Canonical first-three reputation after A+B (+C inconclusive, no rep change) was 
 ## Script (60–90s)
 
 1. **Hook (15s):** "Both APIs returned HTTP 200. Uptime says both are UP. But one delivered 72% fill against an agreed 80% — your agent just scored 800 leads on empty data. Who decides, neutrally, at machine speed?"
-2. **Run (45s):** Open `frontend/index.html` → live reads show Case 1 NO_BREACH + Case 2 BREACH + Case 3 INCONCLUSIVE with evidence hashes → click through to `https://explorer-studio-dev.genlayer.com/tx/0xf566a8305212cc52e899ed2a1294eea5d9ed4b89fec3aba5d5e1eb24fb8ed505` (FINALIZED FINISHED_WITH_RETURN, `isSuccessful`).
+2. **Run (45s):** Open the public demo `https://frontend-k4z1tmaco-oxunify.vercel.app/` (or local `frontend/index.html`) → live reads show Case 1 NO_BREACH + Case 2 BREACH + Case 3 INCONCLUSIVE with evidence hashes → click through to `https://explorer-studio-dev.genlayer.com/tx/0xf566a8305212cc52e899ed2a1294eea5d9ed4b89fec3aba5d5e1eb24fb8ed505` (FINALIZED FINISHED_WITH_RETURN, `isSuccessful`).
 3. **Why GenLayer (15s):** Remove GenLayer → biased dashboard; replace with oracle/single AI → single bribe target. Independent jury consensus is the neutral adjudication primitive demonstrated here. Appeals and bond/slash are deferred, not implemented. Bridge arrow to Base is mock (labeled) — attestation, hash, reputation, consensus are real.
 4. **Beyond (15s):** Same jury pattern extends to procurement/RFP, reputation marketplace, temporal rechecks (documented, not built — no kitchen-sink).
 

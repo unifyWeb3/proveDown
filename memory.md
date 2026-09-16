@@ -321,3 +321,17 @@
 **Unresolved risk:** Five legacy Bradbury scripts await explicit REMOVE/ARCHIVE approval. No live `NO_CONSENSUS` receipt, Studio timestamps unavailable, Worker synthetic, relay mocked — all disclosed. Demo video not recorded. Repo private, dirty, uncommitted by design.
 
 **Next action:** Obtain explicit approval for legacy-script disposition, then a separately authorized release-checkpoint commit. Submission deadline 2026-09-17 15:30 UTC.
+
+## Checkpoint 22 — Milestone 3 release checkpoint + public frontend (2026-09-16)
+
+**What changed:** Created ONE release checkpoint `d90ac57` (`checkpoint: ProveDown submission release candidate`, 54 modified + 13 new files) and pushed branch `provedown-app-shell` to the PRIVATE repo (visibility verified PRIVATE; `scripts/` on the branch holds only the 10 release scripts; no `frontend/dist`; README present). Added minimal `frontend/vercel.json` (build `npm run build`, output `dist`, rewrites for `/verify` + `/proof` only) and deployed the existing static frontend to production: `https://frontend-k4z1tmaco-oxunify.vercel.app/`. The first deploy was SSO-gated by Vercel's default deployment protection, so project SSO protection was disabled via the Vercel API (user's own CLI credential, never printed) and the deployment re-verified ungated. No product, contract, wallet, receipt, or scope change; no GenLayer transaction; repo still private.
+
+**Why:** The submission needs a stable public app URL for judging and for the Milestone 4 video; the repo must stay private until the explicitly authorized publication step.
+
+**Evidence:** Public routes `/`, `/verify`, `/proof`, `/verify?contract=0x278C…7aC1&cases=4,1,2`, `/proof?...&cases=4,1,2` all HTTP 200 with the app shell; `/nope` 404. Headless Chromium DOM shows live reads (NO_BREACH case 4, BREACH, INCONCLUSIVE, hashes `e33f6897`/`b4fc2013`/`64e6c84f`, Explorer links, FINALIZED markers, observed rows); no rendered error banners; zero console errors/failed loads; 390/768/1280 screenshots render with no overflow. Release docs updated with the URL + commit hash (`README.md`, `DEMO.md`, `EVIDENCE.md`, `SUBMISSION-CHECKLIST.md`, `LAUNCH-READINESS.md`, this file, `CHANGELOG.md`).
+
+**Test result:** Pre-commit gate all green: frontend 15 passed, build 25 checks, analog 13 passed, `py_compile` passed, lint exit 1 with only the two documented advisories (`:214`, `:311`), `git diff --check` passed, Worker hashes stable, masked env OK, tracked/candidate/dist secret scans clean, all seven Explorer links HTTP 200.
+
+**Unresolved risk:** A second commit (hosting config + URL records) still needs pushing; one extra `UNKNOWN`-status production deployment (`frontend-m7u0j80eq`) exists from a timed-out CLI call — canonical URL is the Ready `frontend-k4z1tmaco` deployment. Five legacy scripts remain local-only untracked. Demo video not recorded (Milestone 4).
+
+**Next action:** Milestone 4 — record and upload the final demo video against the public URL. Do not make the repo public; do not submit yet.

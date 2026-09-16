@@ -38,6 +38,8 @@ node scripts/attest-studio-dev.mjs # registers demo-healthy/breach/empty → att
 open frontend/index.html # or any static server; live reads via esm.sh genlayer-js@2.0.0-rc.1
 ```
 
+**Public demo (verified 2026-09-16):** `https://frontend-k4z1tmaco-oxunify.vercel.app/` — routes `/`, `/verify`, `/proof` (+ query variants, e.g. `/verify?contract=0x278CbC20EFeA21C9B6603059963FCb6b7d407aC1&cases=4,1,2`) serve the same static shell; unknown paths 404. Release commit `d90ac57` on private branch `provedown-app-shell` (repo still private; publication is a separate authorized step).
+
 ## 6. Real vs mocked
 
 **REAL:** Studio Next contract, GenLayer jury consensus, attestations, evidence hashes, reputation, explorer-studio-dev transactions, and the Bundle Worker transport.

@@ -10,6 +10,10 @@
 
 **Unresolved risk:** Five legacy Bradbury scripts await explicit REMOVE/ARCHIVE approval (recommendation only, untouched). No live `NO_CONSENSUS` receipt; Studio timestamps unavailable; Worker synthetic; relay mocked. Repo private, dirty, uncommitted. Submission deadline 2026-09-17 15:30 UTC.
 
+## [0.4.0] — 2026-09-16 — Milestone 3 release checkpoint + public frontend
+
+**Changed:** Release commit `d90ac57` pushed on private branch `provedown-app-shell` (repo verified PRIVATE; legacy scripts, secrets, and `frontend/dist` excluded). Added `frontend/vercel.json` (static build + `/verify` + `/proof` rewrites only) and deployed to `https://frontend-k4z1tmaco-oxunify.vercel.app/`; disabled default Vercel SSO deployment protection so the URL is public. Verified: all routes + query variants HTTP 200, unknown paths 404, live Studio reads with attestation-4 hash/reputation/Explorer proof, zero console errors, 390/768/1280 pass. Updated `README.md`, `DEMO.md`, `EVIDENCE.md`, `SUBMISSION-CHECKLIST.md`, `LAUNCH-READINESS.md`, `memory.md`, and this file. No runtime, contract, or scope change; no GenLayer transaction; repo still private; video deferred to Milestone 4.
+
 ## [Unreleased] — 2026-09-15 — Milestone 1 frontend release gate restored
 
 **Changed:** Updated only `frontend/tests/release.test.mjs` and `frontend/scripts/build.mjs` so the proof-scope release assertions match the current `proofScopeFor(contract, caseIds)` implementation (`ids.indexOf('4')` and the explicit `scope === 'browser-smoke'` branch). The implementation was correct; the failing `visibleCaseIds.indexOf('4')` and `hasBrowserCase` checks were stale refactor-specific assertions. No runtime behavior, contract, wallet, receipt, deployment, or product scope changed.

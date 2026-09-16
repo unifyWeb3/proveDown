@@ -11,6 +11,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ProveDown - functional service verification">
 <meta name="twitter:description" content="Agreement, observed evidence, GenLayer decision, proof, and reputation in one focused application.">
+<link rel="canonical" href="https://frontend-k4z1tmaco-oxunify.vercel.app/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%235a5ee6'/%3E%3Cpath d='M8 8h16v4H12v4h9v4h-9v4H8z' fill='white'/%3E%3C/svg%3E">
 <title>ProveDown - did the service keep its agreement?</title>
 <style>
@@ -237,6 +238,11 @@ li { margin: 7px 0; }
 @media (max-width: 840px) { main, .app-header-inner { width: min(100% - 36px, 1180px); } h1 { font-size: 36px; } .overview-grid, .comparison-grid { grid-template-columns: 1fr; } .flow-strip { grid-template-columns: repeat(5, minmax(120px, 1fr)); overflow-x: auto; padding-bottom: 4px; } .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { main, .app-header-inner { width: calc(100% - 24px); } main { padding-bottom: 34px; } .app-header { position: static; } .app-header-inner { grid-template-columns: 1fr; padding: 12px 0 8px; } .app-status { grid-row: 1; grid-column: 1; justify-content: flex-end; } .brand-home { grid-row: 1; grid-column: 1; } .primary-nav { grid-row: 2; grid-column: 1; width: 100%; margin: 10px 0 0; } .primary-nav a { padding-right: 8px; padding-left: 8px; font-size: 13px; } .masthead { padding-top: 34px; } h1 { font-size: 30px; } .route-header { padding-top: 30px; } .route-header h1 { font-size: 28px; } .lede { font-size: 16px; } .card { padding: 17px; } .signal-card { padding: 18px; } .signal-result { font-size: 25px; } .comparison-path { grid-template-columns: 1fr; gap: 4px; } .comparison-arrow { transform: rotate(90deg); width: fit-content; } .case-card.featured { padding: 18px; } .case-card.featured .verdict-result { font-size: 25px; } .metric-grid, .proof-grid, .reputation-layout { grid-template-columns: 1fr; } .rep-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .action-row, .workspace-actions { display: grid; grid-template-columns: 1fr; } .action-row button, .workspace-actions button, .route-actions .button-link { width: 100%; } .truth-row { grid-template-columns: 84px minmax(0, 1fr); } .fee-row { grid-template-columns: 1fr; gap: 2px; } .hash-value.short { max-width: calc(100vw - 96px); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; } }
+.sdk-banner { margin: 0 0 16px; padding: 10px 12px; border-left: 3px solid var(--warn); background: #202018; color: #f6d365; font-size: 13px; }
+.sdk-banner[hidden] { display: none; }
+.query-banner { margin: 0 0 16px; padding: 10px 12px; border-left: 3px solid var(--warn); background: var(--surface-2); color: var(--text-2); font-size: 13px; }
+.query-banner[hidden] { display: none; }
+.flow-strip:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -255,6 +261,9 @@ li { margin: 7px 0; }
 <div class="sr-only" id="routeAnnouncer" aria-live="polite"></div>
 
 <main id="routeContent" tabindex="-1">
+  <noscript><div class="sdk-banner">JavaScript is required for live ProveDown reads and verification. Pinned Explorer references below were verified in a wallet-backed browser session; live readback requires JavaScript. Registration <a href="https://explorer-studio-dev.genlayer.com/tx/0x63f386deb52cf7f9caf36c32fe713c10d7132e95b9f737c1da99de4dc599756a">0x63f386…</a> · Attestation 4 <a href="https://explorer-studio-dev.genlayer.com/tx/0xfe160a9481e9476ad7dceacbad5545a829c8abc5bcc462151fd0ec55ee15d110">0xfe160a…</a></div></noscript>
+  <div class="sdk-banner" id="sdkStatus" hidden role="status"></div>
+  <div class="query-banner" id="queryNotice" hidden role="status"></div>
   <section class="route-view" data-view="overview" aria-labelledby="overviewHeading">
     <header class="masthead">
       <p class="section-kicker">FUNCTIONAL SERVICE ATTESTATION</p>
@@ -288,7 +297,7 @@ li { margin: 7px 0; }
           </dl>
         </aside>
       </div>
-      <ol class="flow-strip" aria-label="Verification sequence">
+      <ol class="flow-strip" aria-label="Verification sequence" tabindex="0">
         <li class="flow-step"><strong>1 · Define</strong><span>Agree on limits</span></li>
         <li class="flow-step"><strong>2 · Observe</strong><span>Read the bundle</span></li>
         <li class="flow-step"><strong>3 · Decide</strong><span>GenLayer jury result</span></li>
@@ -309,6 +318,7 @@ li { margin: 7px 0; }
         <div class="field"><label for="bundlePreset">Fixture evidence</label><p class="field-hint" id="presetHint">These bundles are synthetic deterministic fixtures. A breach can exist even when the endpoint returns HTTP 200.</p><select id="bundlePreset" aria-describedby="presetHint"><option value="breach">Degraded · p95 4800 ms, fill 72% · expect BREACH</option><option value="no_breach">Healthy · p95 1600 ms, fill 95% · expect NO_BREACH</option><option value="ambig">Borderline · near the limit · expect an uncertain outcome</option><option value="empty">Missing data · metrics unavailable · expect INCONCLUSIVE</option></select></div>
         <div class="field"><label for="sloJson">Service-quality limits</label><p class="field-hint" id="sloHint">p95 is milliseconds; the other limits are fractions from 0 to 1. The jury applies a 500 ms p95 tolerance.</p><textarea id="sloJson" rows="3" aria-describedby="sloHint sloError">{"p95_threshold":2000,"error_threshold":0.01,"fill_threshold":0.80,"match_threshold":0.85}</textarea><p class="field-error" id="sloError" hidden>Provide JSON with finite p95, error, fill, and match limits in safe ranges.</p></div>
         <div class="action-row"><button id="previewBtn" class="secondary" type="button">Preview evidence</button><button id="registerBtn" type="button" aria-describedby="writeNotice">Register agreement</button></div>
+        <div id="previewStatus" class="status-line" aria-live="polite"></div>
         <p class="write-notice is-live" id="writeNotice"><span class="badge warn">◐ WALLET WRITE</span> Registration estimates fees first and opens a wallet signature only after you click. Closing or rejecting the wallet creates no transaction.</p>
         <div id="registerStatus" class="status-line" aria-live="polite"></div>
       </form>
@@ -317,7 +327,7 @@ li { margin: 7px 0; }
     <section class="card" id="workspace" aria-labelledby="workspaceTitle">
       <div class="card-header"><div><span class="step-number">02 / VERIFY</span><h2 id="workspaceTitle">Inspect or request an attestation</h2><p>Live reads never require a wallet. A new request uses the selected registered agreement and remains pending until GenLayer finalizes it.</p></div></div>
       <p class="network-line"><span class="network-chip">STUDIO NEXT · 61997</span><span>Five validators evaluate the same functional obligation.</span></p>
-      <div class="field case-selector"><label for="caseSet">Case set</label><select id="caseSet" aria-describedby="caseSetHint"><option value="breach-focus">Breach-first · cases 2, 4, 3</option><option value="browser-smoke">Browser proof · cases 4, 1, 2</option><option value="three-case">Three-case demo · cases 1, 2, 3</option><option value="custom" hidden>URL selection</option></select><p class="field-hint" id="caseSetHint">Case 2 is the functional-breach centerpiece; case 4 is the verified wallet-backed read.</p></div>
+      <div class="field case-selector"><label for="caseSet">Case set</label><select id="caseSet" aria-describedby="caseSetHint caseBusyNote"><option value="breach-focus">Breach-first · cases 2, 4, 3 (BREACH · NO_BREACH · INCONCLUSIVE)</option><option value="browser-smoke">Browser proof · cases 4, 1, 2 (NO_BREACH · NO_BREACH · BREACH)</option><option value="three-case">Three-case demo · cases 1, 2, 3 (NO_BREACH · BREACH · INCONCLUSIVE)</option><option value="custom" hidden>URL selection</option></select><p class="field-hint" id="caseSetHint">Case 2 is the functional-breach centerpiece; case 4 is the verified wallet-backed read.</p><p class="meta" id="caseBusyNote" hidden>A contract read is in progress. The case selector is paused so the displayed results always match your selection.</p></div>
       <div class="workspace-actions"><button id="refreshBtn" class="secondary" type="button">Refresh live results</button><button id="attestBtn" type="button" aria-describedby="attestNotice">Request new attestation</button></div>
       <p class="write-notice is-live" id="attestNotice"><span class="badge warn">◐ WALLET WRITE</span> The request estimates fees, asks for one signature, waits for finality, then reads the stored attestation and reputation. No result is inferred from submission alone.</p>
       <details class="write-lifecycle"><summary>Transaction lifecycle</summary><ol class="tracker" aria-label="Attestation write lifecycle"><li>ESTIMATING FEES</li><li>AWAITING SIGNATURE</li><li>WAITING FOR FINALITY</li><li>FINALIZED + READ BACK</li></ol></details>
@@ -348,7 +358,7 @@ li { margin: 7px 0; }
         <article class="proof-item"><h3>Stored evidence fingerprint</h3><p><span class="badge real">✓ VERIFIED READBACK</span> current browser-smoke bundle</p><code class="hash-value">sha256:e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3</code><button class="copybtn" type="button" data-copy-hash="e33f68976f1f4b467211f73e6ac5293db8933ec573de4b6fb023cc1bfe1ea0b3">Copy hash</button></article>
         <article class="proof-item"><h3>Current reputation snapshot</h3><p><span class="badge real">✓ VERIFIED READBACK</span> Studio Next</p><p><strong>66 / 100</strong> · 3 checks · 1 breach</p><p class="meta">Pinned from the verified browser proof; the live card reads the contract again.</p></article>
       </div>
-      <div class="fee-panel" id="pinnedFeePanel" aria-labelledby="feeTitle" hidden><h3 id="feeTitle">Measured receipt fees</h3><p class="meta">Measured on Studio Devnet under these transactions/configuration. These are not permanent network prices.</p><div class="proof-grid"><div><h3>Registration receipt</h3><div class="fee-row"><span class="label">Deposit</span><span>0.000613834800010352 GEN</span></div><div class="fee-row"><span class="label">Consumed</span><span>0.00007863225 GEN</span></div><div class="fee-row"><span class="label">Refund</span><span>0.000535202550009529 GEN</span></div></div><div><h3>Attestation receipt</h3><div class="fee-row"><span class="label">Deposit</span><span>0.000624289200010352 GEN</span></div><div class="fee-row"><span class="label">Consumed</span><span>0.00008020625 GEN</span></div><div class="fee-row"><span class="label">Refund</span><span>0.000544082950009529 GEN</span></div></div></div></div>
+      <div class="fee-panel" id="pinnedFeePanel" aria-labelledby="feeTitle" hidden><h3 id="feeTitle">Measured receipt fees</h3><p class="meta">Measured on Studio Devnet under these transactions/configuration. These are not permanent network prices. Deposit is the pre-authorized amount, Consumed is the execution cost, Refund is the returned remainder.</p><div class="proof-grid"><div><h3>Registration receipt</h3><div class="fee-row"><span class="label">Deposit</span><span>0.000613834800010352 GEN</span></div><div class="fee-row"><span class="label">Consumed</span><span>0.00007863225 GEN</span></div><div class="fee-row"><span class="label">Refund</span><span>0.000535202550009529 GEN</span></div></div><div><h3>Attestation receipt</h3><div class="fee-row"><span class="label">Deposit</span><span>0.000624289200010352 GEN</span></div><div class="fee-row"><span class="label">Consumed</span><span>0.00008020625 GEN</span></div><div class="fee-row"><span class="label">Refund</span><span>0.000544082950009529 GEN</span></div></div></div></div>
       <details><summary>Three fixture cases and what they demonstrate</summary><ul><li><strong>Healthy</strong> → NO_BREACH when observed metrics stay within the stored limits.</li><li><strong>Degraded</strong> → BREACH: p95 4800 ms and fill 72% violate p95 ≤ 2500 ms and fill ≥ 80% even though HTTP returns 200.</li><li><strong>Missing data</strong> → INCONCLUSIVE: no definitive decision is made when required metrics are absent.</li></ul><p class="meta">Worker: <code>https://provedown-bundle.contentbounty.workers.dev/bundle</code>. Its deterministic content is synthetic fixture evidence, not a live customer probe.</p></details>
       <details><summary>What is real, derived, synthetic, or mocked?</summary><p><span class="badge real">✓ REAL</span> Studio contract reads, finalized attestation records, evidence hashes, reputation readback, and the full Explorer references above.</p><p><span class="badge warn">◆ DERIVED</span> Confidence bars, observed-versus-required comparisons, case labels, and plain-language summaries are views of returned data.</p><p><span class="badge mock">○ SYNTHETIC / MOCK</span> Worker bundles are deterministic fixtures. Base/Hyperlane relay, future polling, and any SSE fallback are mocked and never represented as finalized.</p></details>
       <details><summary>Protocol detail</summary><p class="meta">The contract stores resolved, inconclusive, or no_consensus status. A write is presented as successful only after a finalized successful receipt and authoritative readback.</p></details>
@@ -358,9 +368,103 @@ li { margin: 7px 0; }
   <footer class="footer">ProveDown verifies functional quality, not uptime alone. Current Worker evidence is synthetic and downstream settlement remains mocked.</footer>
 </main>
 
+<script>
+(function () {
+  const ROUTES = {
+    '/': { view: 'overview', title: 'ProveDown - functional service verification', heading: 'overviewHeading', announcement: 'Overview' },
+    '/verify': { view: 'verify', title: 'Verify an agreement - ProveDown', heading: 'verifyHeading', announcement: 'Verify agreement' },
+    '/proof': { view: 'proof', title: 'Decision proof - ProveDown', heading: 'proofHeading', announcement: 'Decision proof' }
+  };
+  function normalizedPath(pathname) {
+    var path = String(pathname || '/').replace(/\/+$/, '') || '/';
+    return ROUTES[path] ? path : '/';
+  }
+  function updateRouteLinks() {
+    var suffix = location.search;
+    document.querySelectorAll('[data-route-link]').forEach(function (link) {
+      var target = link.getAttribute('data-route') || new URL(link.getAttribute('href'), location.origin).pathname;
+      link.setAttribute('href', target + suffix);
+    });
+  }
+  function renderRoute(pathname, focusHeading) {
+    var path = normalizedPath(pathname);
+    var route = ROUTES[path];
+    document.querySelectorAll('[data-view]').forEach(function (view) {
+      view.hidden = view.getAttribute('data-view') !== route.view;
+    });
+    document.querySelectorAll('[data-route]').forEach(function (link) {
+      if (link.getAttribute('data-route') === path) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    document.title = route.title;
+    updateRouteLinks();
+    var announcer = document.getElementById('routeAnnouncer');
+    if (announcer) announcer.textContent = route.announcement + ' view loaded';
+    if (focusHeading) {
+      var heading = document.getElementById(route.heading);
+      if (heading) heading.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+    return path;
+  }
+  function navigateTo(pathname) {
+    var path = normalizedPath(pathname);
+    history.pushState({ route: path }, '', path + location.search);
+    renderRoute(path, true);
+  }
+  document.addEventListener('click', function (event) {
+    var routeLink = event.target.closest && event.target.closest('a[data-route-link]');
+    if (routeLink && routeLink.origin === location.origin && ROUTES[routeLink.pathname]) {
+      event.preventDefault();
+      navigateTo(routeLink.pathname);
+    }
+  });
+  window.addEventListener('popstate', function () { renderRoute(location.pathname, true); });
+  window.__provedown = window.__provedown || {};
+  window.__provedown.ROUTES = ROUTES;
+  window.__provedown.normalizedPath = normalizedPath;
+  window.__provedown.updateRouteLinks = updateRouteLinks;
+  window.__provedown.renderRoute = renderRoute;
+  window.__provedown.navigateTo = navigateTo;
+  renderRoute(location.pathname, false);
+})();
+</script>
 <script type="module">
-import { createClient, isSuccessful } from "https://esm.sh/genlayer-js@2.0.0-rc.1";
-import { studioDevnet } from "https://esm.sh/genlayer-js@2.0.0-rc.1/chains";
+const GENLAYER_SDK_URL = "https://esm.sh/genlayer-js@2.0.0-rc.1";
+let createClient = null;
+let isSuccessful = null;
+let studioDevnet = null;
+let sdkLoadError = null;
+try {
+  var sdkModule = await import("https://esm.sh/genlayer-js@2.0.0-rc.1");
+  var sdkChains = await import("https://esm.sh/genlayer-js@2.0.0-rc.1/chains");
+  createClient = sdkModule.createClient;
+  isSuccessful = sdkModule.isSuccessful;
+  studioDevnet = sdkChains.studioDevnet;
+  if (typeof createClient !== 'function' || typeof isSuccessful !== 'function' || !studioDevnet) throw new Error('GenLayer SDK shape unrecognized');
+} catch (sdkError) {
+  sdkLoadError = sdkError;
+}
+function sdkAvailable() {
+  return !sdkLoadError && typeof createClient === 'function' && typeof isSuccessful === 'function' && Boolean(studioDevnet);
+}
+function showSdkDegraded() {
+  var banner = document.getElementById('sdkStatus');
+  if (banner) {
+    banner.hidden = false;
+    banner.textContent = 'Live chain reads unavailable. Product navigation remains available.';
+  }
+  var heroVerdict = document.getElementById('heroVerdict');
+  if (heroVerdict) heroVerdict.textContent = 'Live chain reads unavailable';
+  var heroContext = document.getElementById('heroContext');
+  if (heroContext) heroContext.textContent = 'Product navigation remains available. The GenLayer SDK could not be loaded, so no contract data is shown and no result is inferred.';
+  var verdict = document.getElementById('verdict');
+  if (verdict) verdict.innerHTML = errorHtml('SDK UNAVAILABLE', 'The GenLayer SDK could not be loaded from the pinned CDN.', 'No contract data is shown and no verdict is inferred.', 'Check the network connection and retry the live read.', sdkLoadError ? errorText(sdkLoadError) : 'Import failed.');
+  var reputation = document.getElementById('reputation');
+  if (reputation) reputation.innerHTML = errorHtml('SDK UNAVAILABLE', 'The GenLayer SDK could not be loaded from the pinned CDN.', 'The reliability record is unavailable, not zero.', 'Check the network connection and retry the live read.', sdkLoadError ? errorText(sdkLoadError) : 'Import failed.');
+  setTracker('FAILED', 'SDK unavailable; navigation remains available');
+  setHero(null, visibleCaseIds[0]);
+}
 
 const QS = new URLSearchParams(location.search);
 const EXPLORER = "https://explorer-studio-dev.genlayer.com";
@@ -475,7 +579,7 @@ function shortHash(value, size) {
 function txHtml(tx, label) {
   var safe = /^0x[0-9a-fA-F]{64}$/.test(String(tx || '')) ? String(tx) : '';
   if (!safe) return '<span class="meta">No pinned Explorer receipt is available for this contract and ID.</span>';
-  return '<a class="tx-link" href="' + EXPLORER + '/tx/' + safe + '" target="_blank" rel="noopener" aria-label="' + esc(label || 'Explorer proof') + ' ' + esc(safe) + '">' + esc(label || 'Explorer proof') + ' ↗</a><code class="tx-full">' + esc(safe) + '</code>';
+  return '<a class="tx-link" href="' + EXPLORER + '/tx/' + safe + '" target="_blank" rel="noopener" aria-label="' + esc((label || 'Explorer proof') + ' (opens in new tab) ' + safe) + '">' + esc(label || 'Explorer proof') + ' ↗</a><code class="tx-full">' + esc(safe) + '</code>';
 }
 function retryHtml(label, action) {
   return '<button type="button" class="secondary inline-action" data-action="' + esc(action || 'refresh') + '">' + esc(label || 'Retry live read') + '</button>';
@@ -551,7 +655,7 @@ function receiptFeeHtml(receipt) {
     var formatted = formatGen(value);
     return '<div class="fee-row"><span class="label">' + label + '</span><span>' + (formatted ? esc(formatted) : 'Receipt fee detail unavailable') + '</span></div>';
   }
-  return '<div class="fee-panel"><h3>Finalized receipt fees</h3>' + row('Deposit', values.deposit) + row('Consumed', values.consumed) + row('Refund', values.refund) + '<p class="meta">Only fields present in the finalized Studio receipt are shown. No missing value is inferred.</p></div>';
+  return '<div class="fee-panel"><h3>Finalized receipt fees</h3>' + row('Deposit', values.deposit) + row('Consumed', values.consumed) + row('Refund', values.refund) + '<p class="meta">Only fields present in the finalized Studio receipt are shown. No missing value is inferred. Deposit is the pre-authorized amount, Consumed is the execution cost, Refund is the returned remainder.</p></div>';
 }
 async function ensureStudioNetwork() {
   var expected = '0x' + CHAIN_ID.toString(16);
@@ -577,6 +681,12 @@ async function ensureStudioNetwork() {
   }
   var switched = await window.ethereum.request({ method: 'eth_chainId' });
   if (String(switched).toLowerCase() !== expected) throw taggedError('The wallet is not on Studio Devnet, chain ' + CHAIN_ID + '.', 'wrong_network');
+}
+function hasInjectedWallet() {
+  return Boolean(window.ethereum);
+}
+function noWalletHtml() {
+  return errorHtml('NO WALLET', 'No compatible browser wallet is available.', 'Reads are available. Registering or requesting a new attestation requires a wallet.', 'Install or enable a GenLayer-compatible wallet, then retry.', '', false);
 }
 async function walletClient() {
   if (!window.ethereum) throw taggedError('No compatible browser wallet was detected. No transaction was created.', 'no_wallet');
@@ -744,14 +854,43 @@ async function hashBundle(raw) {
   var digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
   return Array.from(new Uint8Array(digest)).map(function (byte) { return byte.toString(16).padStart(2, '0'); }).join('');
 }
-function parseSlo() {
+function describeAgreementError(rawId) {
+  var id = String(rawId == null ? '' : rawId).trim();
+  if (!id) return 'Enter an agreement ID before continuing.';
+  if (id.length > 128) return 'Use 1–128 characters: letters, numbers, dot, dash, underscore, colon.';
+  if (!/^[A-Za-z0-9._:-]+$/.test(id)) return 'Use 1–128 characters: letters, numbers, dot, dash, underscore, colon.';
+  return null;
+}
+function describeSloError() {
+  var raw = document.getElementById('sloJson').value;
+  var value;
   try {
-    var value = JSON.parse(document.getElementById('sloJson').value);
-    var required = ['p95_threshold', 'error_threshold', 'fill_threshold', 'match_threshold'];
-    if (!value || typeof value !== 'object' || required.some(function (key) { return typeof value[key] !== 'number' || !Number.isFinite(value[key]); })) return null;
-    if (value.p95_threshold <= 0 || value.p95_threshold > 600000) return null;
-    if ([value.error_threshold, value.fill_threshold, value.match_threshold].some(function (number) { return number < 0 || number > 1; })) return null;
-    return value;
+    value = JSON.parse(raw);
+  } catch (error) {
+    return 'Service limits must be valid JSON.';
+  }
+  var required = ['p95_threshold', 'error_threshold', 'fill_threshold', 'match_threshold'];
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'Service limits must be a JSON object with p95_threshold, error_threshold, fill_threshold, and match_threshold.';
+  for (var i = 0; i < required.length; i += 1) {
+    var key = required[i];
+    if (!(key in value)) return 'Service limits are missing "' + key + '".';
+    var field = value[key];
+    if (typeof field !== 'number') return '"' + key + '" must be a number.';
+    if (!Number.isFinite(field)) return '"' + key + '" must be finite.';
+    if (field < 0) return '"' + key + '" must be 0 or higher.';
+  }
+  if (value.p95_threshold <= 0) return '"p95_threshold" must be higher than 0 ms.';
+  if (value.p95_threshold > 600000) return '"p95_threshold" must be 600000 ms or lower.';
+  var fractions = ['error_threshold', 'fill_threshold', 'match_threshold'];
+  for (var j = 0; j < fractions.length; j += 1) {
+    if (value[fractions[j]] > 1) return '"' + fractions[j] + '" must be between 0 and 1.';
+  }
+  return null;
+}
+function parseSlo() {
+  if (describeSloError()) return null;
+  try {
+    return JSON.parse(document.getElementById('sloJson').value);
   } catch (error) { return null; }
 }
 function bundleUrlForPreset(preset, slaId) {
@@ -811,16 +950,22 @@ function validateSetup() {
   var id = document.getElementById('slaId');
   var api = document.getElementById('apiUrl');
   var slo = document.getElementById('sloJson');
-  var idOk = id.value.trim().length > 0;
+  var idError = describeAgreementError(id.value);
+  var idOk = !idError;
   var apiOk = false;
   try { apiOk = new URL(api.value.trim()).protocol === 'https:'; } catch (error) { apiOk = false; }
-  var sloOk = Boolean(parseSlo());
+  var sloError = describeSloError();
+  var sloOk = !sloError;
   id.setAttribute('aria-invalid', String(!idOk));
   api.setAttribute('aria-invalid', String(!apiOk));
   slo.setAttribute('aria-invalid', String(!sloOk));
-  document.getElementById('slaIdError').hidden = idOk;
+  var idErrorNode = document.getElementById('slaIdError');
+  idErrorNode.hidden = idOk;
+  if (!idOk) idErrorNode.textContent = idError;
   document.getElementById('apiUrlError').hidden = apiOk;
-  document.getElementById('sloError').hidden = sloOk;
+  var sloErrorNode = document.getElementById('sloError');
+  sloErrorNode.hidden = sloOk;
+  if (!sloOk) sloErrorNode.textContent = sloError;
   document.getElementById('previewBtn').disabled = !(idOk && apiOk && sloOk);
   document.getElementById('registerBtn').disabled = !(idOk && apiOk && sloOk);
   return idOk && apiOk && sloOk;
@@ -833,7 +978,7 @@ function previewMetrics(bundle) {
 async function previewEvidence() {
   if (previewInFlight) return previewInFlight;
   if (!validateSetup()) return;
-  var box = document.getElementById('registerStatus');
+  var box = document.getElementById('previewStatus');
   var previewButton = document.getElementById('previewBtn');
   var preset = document.getElementById('bundlePreset').value;
   var url = bundleUrlForPreset(preset, document.getElementById('slaId').value.trim());
@@ -907,6 +1052,13 @@ function setBusy(busy) {
   var refresh = document.getElementById('refreshBtn');
   refresh.disabled = busy;
   refresh.setAttribute('aria-busy', String(busy));
+  var caseSet = document.getElementById('caseSet');
+  if (caseSet) {
+    caseSet.disabled = busy;
+    caseSet.setAttribute('aria-busy', String(busy));
+  }
+  var caseNote = document.getElementById('caseBusyNote');
+  if (caseNote) caseNote.hidden = !busy;
   document.getElementById('verdict').setAttribute('aria-busy', String(busy));
 }
 function trackerHtml(state, detail) {
@@ -949,7 +1101,12 @@ function applyProofScope() {
   fee.innerHTML = '<h3>Receipt fee accounting</h3><p>Receipt fee detail unavailable because the browser-smoke case is not selected. No pinned value is reused or guessed.</p>';
 }
 async function liveRead() {
+  if (!sdkAvailable()) {
+    showSdkDegraded();
+    return;
+  }
   if (readInFlight) return readInFlight;
+  var requestedIds = visibleCaseIds.slice();
   readInFlight = (async function () {
     setBusy(true);
     document.getElementById('verdict').innerHTML = '<div class="skeleton wide"></div><div class="skeleton medium"></div><div class="skeleton short"></div>';
@@ -972,19 +1129,20 @@ async function liveRead() {
           document.getElementById('reputation').innerHTML = errorHtml('CHAIN READ FAILED', 'The reliability record could not be read from Studio Next.', 'No reputation value is shown for this session.', 'Check the network and refresh.', errorText(error));
         }
       }
-      setTracker('CHECKING EVIDENCE', visibleCaseIds.length + ' case' + (visibleCaseIds.length === 1 ? '' : 's'));
-      for (var i = 0; i < visibleCaseIds.length; i += 1) {
-        var id = visibleCaseIds[i];
+      setTracker('CHECKING EVIDENCE', requestedIds.length + ' case' + (requestedIds.length === 1 ? '' : 's'));
+      for (var i = 0; i < requestedIds.length; i += 1) {
+        var id = requestedIds[i];
         try {
           var att = await client.readContract({ address: CONTRACT, functionName: 'get_attestation', args: [id] });
           results.push({ id: id, att: att, tx: caseTx(id) });
         } catch (error) {
           results.push({ id: id, att: null, tx: caseTx(id), error: error });
         }
+        setTracker('CHECKING EVIDENCE', 'case ' + id + ' ' + (i + 1) + ' of ' + requestedIds.length);
       }
       var loaded = results.filter(function (item) { return item.att; });
       var featured = loaded[0];
-      setHero(featured && featured.att, featured ? featured.id : visibleCaseIds[0]);
+      setHero(featured && featured.att, featured ? featured.id : requestedIds[0]);
       document.getElementById('verdict').innerHTML = '<div class="case-grid">' + results.map(function (item, index) {
         return verdictHtml(item.att, item.tx, item.id, index === 0, item.error);
       }).join('') + '</div>';
@@ -1007,9 +1165,21 @@ async function liveRead() {
   return readInFlight;
 }
 
+function writePhaseIndex(phase) {
+  if (phase === 'ESTIMATING FEES') return 0;
+  if (phase === 'AWAITING SIGNATURE') return 1;
+  return 2;
+}
+function writeTrackerHtml(activeIndex) {
+  var phases = ['ESTIMATING FEES', 'AWAITING SIGNATURE', 'WAITING FOR FINALITY', 'FINALIZED + READ BACK'];
+  return '<ol class="tracker" aria-label="Write progress">' + phases.map(function (phase, i) {
+    var className = i < activeIndex ? 'done' : (i === activeIndex ? 'current' : '');
+    return '<li class="' + className + '">' + phase + '</li>';
+  }).join('') + '</ol>';
+}
 function phaseStatusHtml(phase, tx, meta, subject) {
   var detail = phase === 'ESTIMATING FEES' ? 'Reading the Studio fee policy for ' + subject + '.' : phase === 'AWAITING SIGNATURE' ? 'Review the estimated deposit in your wallet. No transaction exists until you approve.' : 'The transaction was submitted and is not yet presented as successful.';
-  return '<div class="status-line">' + badge('pending', phase) + ' ' + esc(detail) + (meta && meta.estimate ? feeEstimateHtml(meta.estimate) : '') + (tx ? '<div class="tx-line">' + txHtml(tx, 'Track transaction') + '</div>' : '') + '</div>';
+  return '<div class="status-line">' + badge('pending', phase) + ' ' + esc(detail) + writeTrackerHtml(writePhaseIndex(phase)) + (meta && meta.estimate ? feeEstimateHtml(meta.estimate) : '') + (tx ? '<div class="tx-line">' + txHtml(tx, 'Track transaction') + '</div>' : '') + '</div>';
 }
 async function registerAgreement() {
   if (!validateSetup()) return;
@@ -1020,6 +1190,16 @@ async function registerAgreement() {
   var bundleUrl = bundleUrlForPreset(document.getElementById('bundlePreset').value, slaId);
   var sloJson = canonicalSloJson(parseSlo());
   button.disabled = true;
+  if (!hasInjectedWallet()) {
+    status.innerHTML = noWalletHtml();
+    validateSetup();
+    return;
+  }
+  if (!sdkAvailable()) {
+    status.innerHTML = errorHtml('SDK UNAVAILABLE', 'The GenLayer SDK could not be loaded from the pinned CDN.', 'No transaction was created.', 'Check the network connection and retry.', sdkLoadError ? errorText(sdkLoadError) : 'Import failed.');
+    validateSetup();
+    return;
+  }
   try {
     var preflightClient = createClient({ chain: studioDevnet });
     var preflight = await preflightAgreementId(preflightClient, slaId);
@@ -1054,6 +1234,16 @@ async function requestAttestation() {
   var button = document.getElementById('attestBtn');
   var slaId = document.getElementById('slaId').value.trim();
   if (!slaId) { status.innerHTML = errorHtml('MISSING AGREEMENT', 'No agreement ID is selected.', 'The jury cannot determine which obligation to evaluate.', 'Enter a registered agreement ID.', '', false); return; }
+  var idError = describeAgreementError(slaId);
+  if (idError) { status.innerHTML = errorHtml('INVALID AGREEMENT', idError, 'The jury cannot determine which obligation to evaluate.', 'Enter a registered agreement ID using 1–128 characters: letters, numbers, dot, dash, underscore, colon.', '', false); return; }
+  if (!hasInjectedWallet()) {
+    status.innerHTML = noWalletHtml();
+    return;
+  }
+  if (!sdkAvailable()) {
+    status.innerHTML = errorHtml('SDK UNAVAILABLE', 'The GenLayer SDK could not be loaded from the pinned CDN.', 'No transaction was created.', 'Check the network connection and retry.', sdkLoadError ? errorText(sdkLoadError) : 'Import failed.');
+    return;
+  }
   button.disabled = true;
   try {
     var readClient = createClient({ chain: studioDevnet });
@@ -1112,7 +1302,7 @@ document.getElementById('setupForm').addEventListener('submit', function (event)
   if (id === 'slaId') { try { sessionStorage.setItem('provedownAgreementId', document.getElementById(id).value); } catch (error) { /* storage is optional */ } }
 }); });
 document.getElementById('bundlePreset').addEventListener('change', function (event) {
-  document.getElementById('registerStatus').innerHTML = '<p class="meta">Preview source: <code>' + esc(WORKER_BASE) + '?preset=' + esc(event.target.value) + '</code> · synthetic fixture; no transaction has been created.</p>';
+  document.getElementById('previewStatus').innerHTML = '<p class="meta">Preview source: <code>' + esc(WORKER_BASE) + '?preset=' + esc(event.target.value) + '</code> · synthetic fixture; no transaction has been created.</p>';
 });
 document.getElementById('previewBtn').addEventListener('click', function () { void previewEvidence(); });
 document.getElementById('registerBtn').addEventListener('click', function () { void registerAgreement(); });
@@ -1127,16 +1317,28 @@ document.getElementById('caseSet').addEventListener('change', function (event) {
   void liveRead();
 });
 document.addEventListener('click', function (event) {
-  var routeLink = event.target.closest('a[data-route-link]');
-  if (routeLink && routeLink.origin === location.origin && ROUTES[routeLink.pathname]) {
-    event.preventDefault();
-    navigateTo(routeLink.pathname);
-    return;
-  }
   var copy = event.target.closest('[data-copy-hash]');
   if (copy) {
     var value = copy.getAttribute('data-copy-hash') || '';
-    if (!navigator.clipboard) { copy.textContent = 'Copy unavailable'; return; }
+    if (!navigator.clipboard) {
+      try {
+        var fallback = document.createElement('textarea');
+        fallback.value = value;
+        fallback.setAttribute('readonly', '');
+        fallback.style.position = 'fixed';
+        fallback.style.opacity = '0';
+        document.body.appendChild(fallback);
+        fallback.select();
+        var copied = document.execCommand('copy');
+        fallback.remove();
+        copy.textContent = copied ? 'Copied' : 'Copy unavailable';
+      } catch (fallbackError) { copy.textContent = 'Copy unavailable'; }
+      if (copy.textContent === 'Copied') {
+        copy.setAttribute('aria-label', 'Evidence hash copied');
+        setTimeout(function () { copy.textContent = 'Copy hash'; }, 1400);
+      }
+      return;
+    }
     navigator.clipboard.writeText(value).then(function () {
       var previous = copy.textContent;
       copy.textContent = 'Copied';
@@ -1148,7 +1350,6 @@ document.addEventListener('click', function (event) {
   if (action && action.getAttribute('data-action') === 'refresh') void liveRead();
   if (action && action.getAttribute('data-action') === 'preview') void previewEvidence();
 });
-window.addEventListener('popstate', function () { renderRoute(location.pathname, true); });
 var queryWarning = (QS.has('cases') && !parsedCases) || (QS.has('contract') && !validAddress(QS.get('contract')));
 syncCaseSetControl();
 try {
@@ -1159,10 +1360,21 @@ defaultProofReferenceHtml = document.getElementById('proofReference').innerHTML;
 defaultPinnedFeeHtml = document.getElementById('pinnedFeePanel').innerHTML;
 validateSetup();
 applyProofScope();
+var queryNotice = document.getElementById('queryNotice');
+if (queryNotice) {
+  if (queryWarning) {
+    queryNotice.hidden = false;
+    queryNotice.textContent = 'Invalid link parameters were ignored. Showing the default verified configuration.';
+  } else {
+    queryNotice.hidden = true;
+  }
+}
 document.getElementById('walletStatus').textContent = window.ethereum ? 'Wallet available · approval only on write' : 'No wallet detected · reads remain available';
 document.getElementById('attestStatus').innerHTML = '<p class="meta">Finalized records are available without a wallet.' + (queryWarning ? ' Invalid URL parameters were ignored; the safe default contract and case set are shown.' : '') + '</p>';
-renderRoute(location.pathname, false);
-void liveRead();
+if (window.__provedown && typeof window.__provedown.renderRoute === 'function') window.__provedown.renderRoute(location.pathname, false);
+else renderRoute(location.pathname, false);
+if (!sdkAvailable()) showSdkDegraded();
+else void liveRead();
 </script>
 </body>
 </html>

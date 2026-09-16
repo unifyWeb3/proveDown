@@ -33,6 +33,14 @@ const checks = [
   ['no decorative gradients', !html.includes('linear-gradient')],
   ['quote escaping', html.includes(".replace(/\"/g, '&quot;')") && html.includes(".replace(/'/g, '&#39;')")],
   ['data-only copy and retry controls', html.includes('data-copy-hash=') && html.includes('data-action=') && html.includes("getAttribute('data-action')") && !html.includes('onclick=' )],
+  ['routing survives SDK failure', !/^import\s/m.test(html) && html.includes('await import("https://esm.sh/genlayer-js@2.0.0-rc.1")') && html.includes('function showSdkDegraded()') && html.includes('Live chain reads unavailable. Product navigation remains available.') && html.includes('window.__provedown')],
+  ['preview and registration outputs are separated', html.includes('id="previewStatus"') && html.includes("getElementById('previewStatus')") && html.includes("document.getElementById('registerStatus')")],
+  ['case selector is gated during reads', html.includes('id="caseBusyNote"') && html.includes('caseSet.disabled = busy') && html.includes('var requestedIds = visibleCaseIds.slice()')],
+  ['wallet gate precedes write preflight', html.includes('function hasInjectedWallet()') && html.includes('Reads are available. Registering or requesting a new attestation requires a wallet.')],
+  ['query fallback banner is visible', html.includes('id="queryNotice"') && html.includes('Invalid link parameters were ignored. Showing the default verified configuration.')],
+  ['agreement and SLO errors name the field', html.includes('function describeAgreementError(') && html.includes('function describeSloError()') && html.includes('Use 1–128 characters')],
+  ['write progress tracker is explicit', html.includes('function writeTrackerHtml(') && html.includes('aria-label="Write progress"')],
+  ['noscript fallback is present', html.includes('<noscript>') && html.includes('JavaScript is required for live ProveDown reads')],
   ['no public private-key variable', !/NEXT_PUBLIC_[A-Z0-9_]*(PRIVATE|SECRET|KEY)/.test(html)]
 ];
 

@@ -4,6 +4,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/verify", "destination": "/index.html" },
-    { "source": "/proof", "destination": "/index.html" }
+    { "source": "/verify/", "destination": "/index.html" },
+    { "source": "/proof", "destination": "/index.html" },
+    { "source": "/proof/", "destination": "/index.html" }
   ]
 }

@@ -9,7 +9,8 @@ const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 const appRoutes = new Set(['/', '/verify', '/proof']);
 
 const server = createServer(async (req, res) => {
-  const pathname = new URL(req.url || '/', 'http://localhost').pathname;
+  const rawPath = new URL(req.url || '/', 'http://localhost').pathname;
+  const pathname = rawPath.length > 1 ? rawPath.replace(/\/+$/, '') : rawPath;
   const path = resolve(root, appRoutes.has(pathname) ? 'index.html' : `.${pathname}`);
   if (!path.startsWith(root)) { res.writeHead(403).end('Forbidden'); return; }
   try {
